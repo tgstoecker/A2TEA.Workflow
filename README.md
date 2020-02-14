@@ -20,9 +20,9 @@ Then, you can install Snakemake with
 Preparing a working directory
 First, create a new directory and change into that directory in your terminal.
 
-Download/Clone the current release of the RAW-ABS workflow into the directory.
+Download/Clone the current release of the A2TEA workflow into the directory.
 
-The included environment.yaml file can be used to install all required software into an isolated Conda environment with a name of your choice - in the following we will call it "RAW-ABS":
+The included environment.yaml file can be used to install all required software into an isolated Conda environment with a name of your choice - in the following we will call it "A2TEA":
 
 `conda env create --name A2TEA --file environment.yaml`
 
