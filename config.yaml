@@ -1,0 +1,82 @@
+
+### enter genome and gtf file names without extension/ending
+genome: Hordeum_vulgare.IBSC_v2.dna.toplevel
+annotation: Hordeum_vulgare.IBSC_v2.46
+
+#### Single end or Paired end ####
+### choose either SE or PE in the following option ###
+
+#sequencing_type: "single_end"
+sequencing_type: "paired_end"
+
+### define format of the files by uncommenting the appropriate file  ###
+#sample_names: "rawreads/{sample}.fq.gz"
+sample_names: "rawreads/{sample}_1.fq.gz"
+
+
+#### define options of your individual rules here: #####
+### number of maximum threads for each run of sample during a specfifc rule: ###
+### for fastqc and trimmomatic the the thread usage is put to 2 and 4 respectively - IMO best in most cases ###
+
+threads_bbduk: 2
+threads_star_index: 4
+threads_trimmomatic: 4
+threads_star: 6
+threads_index_sorted_bams_with_dups: 4
+threads_index_sorted_bams_without_dups: 4
+threads_featureCounts: 16
+
+### this workflow creates csi indexes because I usually work with larger genomes  ###
+### if bai indexes are specifically needed then: ###
+## 1.) go into the Snakefile and change .csi entries to .bai under rule all  ###
+## 2.) do the same to the two index steps at the end of the file and also change samtools index flag -c into -b  ##
+
+
+### concerning the final report, be aware that the featureCounts info is based on the gene level counts without multimappers and dups!  ###
+
+
+### other options for the individual rules; in order of the Snakefile ###
+
+##BBduk
+kmer_length: 27
+
+### Trimmomatic
+trim.options: "SLIDINGWINDOW:4:20 MINLEN:40"
+
+### STAR
+## default parameters change these to your specific needs
+
+##change STAR's --sjdbOverhang option; ideal value here is read_length-1
+##e.g.: 2x100b paired-end reads, the ideal value is 100-1=99; varying length? then, do this with the max length
+limitGenomeGenerateRAM: 60000000000
+read_length_star_index: 99
+
+
+
+## parameters when running usual pipeline ##
+## option --genomeLoad NoShared memory will load into memory the whole index on each mapping run and delete it after the mapping ##
+## with big genomes this is VERY memory intensive! e.g. the index for barley is ~ 40 Gb - so keep this in mind when setting the amount of paralelisation ##
+## for example with 24 cores specified and a 6 threads per STAR align job: 24/6 = 4; 4 x 40 Gb ~ around 160  Gb of memory required! ##
+## you can change the --genomeLoad parameter to other options e.g. keeping in memory one index for all mappings - however this can't be used in conjunction with 2-PASS mapping ##
+## also removal of the index from memory would require an additional rule or manual removal via ipcs/ipcrm after everything is finished -- might change this in the future.. ## 
+STAR: >
+    --genomeLoad NoSharedMemory
+    --outSAMtype BAM SortedByCoordinate
+    --outSAMattributes NH   HI   AS   nM   NM   MD   jM   jI   XS
+    --outSJfilterOverhangMin 30 12 12 12
+    --outFilterMultimapNmax 1
+    --outFilterScoreMin 0
+    --outFilterMatchNminOverLread 0.66
+    --outFilterMismatchNmax 10
+    --outFilterMismatchNoverLmax 0.3
+    --alignIntronMin 21
+    --alignIntronMax 0
+    --alignMatesGapMax 0
+    --alignSJoverhangMin 5
+    --alignSJDBoverhangMin 3
+    --alignSoftClipAtReferenceEnds Yes
+    --chimSegmentMin 0
+    --chimScoreMin 0
+    --chimScoreSeparation 10
+    --chimJunctionOverhangMin 20
+    --outFilterMultimapScoreRange 0
