@@ -338,9 +338,9 @@ rule featureCounts:
         gtf = expand("FGS/{annotation}.gtf", annotation=config["annotation"])
     log:
         with_dups_gene_level="logs/FC/with_dups/with_dups_featurecount_gene.log",
-        with_dups_exon_level="logs/FC/with_dups/with_dups_featurecount_transcript.log",
+        with_dups_transcript_level="logs/FC/with_dups/with_dups_featurecount_transcript.log",
         without_dups_gene_level="logs/FC/without_dups/without_dups_featurecount_gene.log",
-        without_dups_exon_level="logs/FC/without_dups/without_dups_featurecount_transcript.log"
+        without_dups_transcript_level="logs/FC/without_dups/without_dups_featurecount_transcript.log"
     threads: config["threads_featureCounts"]
     shell:
         "featureCounts -T {threads} -p -O -M -t exon -g gene_id -a {params.gtf} -o {output.with_dups_gene_level} {input.with_dups_bams} 2> {log.with_dups_gene_level} && "
