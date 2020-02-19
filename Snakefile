@@ -148,7 +148,7 @@ if config["sequencing_type"] == "single_end":
             expand("logs/trimmomatic/{sample}.log", sample=SAMPLES),
             expand("fastqc/trimmed/{sample}_fastqc.zip", sample=SAMPLES),
             expand("star/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLES),
-            expand("removed_duplicates_alignments/{sample}.dedup.bam", sample=SAMPLES),
+#            expand("removed_duplicates_alignments/{sample}.dedup.bam", sample=SAMPLES),
             "FC/without_dups_gene_level/counts.txt.summary"
         output:
             "multiqc/multiqc.html"
@@ -261,7 +261,7 @@ if config["sequencing_type"] == "paired_end":
             expand("logs/trimmomatic/{sample}.log", sample=SAMPLES),
             expand("fastqc/trimmed/{sample}.{mate}_paired_fastqc.zip", sample=SAMPLES, mate=["forward", "reverse"]),
             expand("star/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLES),
-            expand("removed_duplicates_alignments/{sample}.dedup.bam", sample=SAMPLES),
+#            expand("removed_duplicates_alignments/{sample}.dedup.bam", sample=SAMPLES),
             "FC/without_dups_gene_level/counts.txt.summary"
         output:
             "multiqc/multiqc.html"
@@ -284,21 +284,46 @@ rule index_sorted_bams_with_dups:
     output:
         "star/{sample}.Aligned.sortedByCoord.out.bam.csi"
     params:
-        threads = config["threads_index_sorted_bams_with_dups"]
+        threads = config["threads_index_sorted_bams_with_dups"],
+        index_type = config["index_type"]
     shell:
-        "samtools index -c -@ {params.threads} {input}"
+        "samtools index {params.index_type} -@ {params.threads} {input}"
 
 
-rule remove_duplicates_picard:
-    input:
-         "star/{sample}.Aligned.sortedByCoord.out.bam"
-    output:
-         bam="removed_duplicates_alignments/{sample}.dedup.bam",
-         txt="removed_duplicates_alignments/{sample}.dedup.txt"
-    log:
-         "logs/picard/{sample}.dedup.log"
-    shell:
-         "picard MarkDuplicates I={input} O={output.bam} M={output.txt} REMOVE_DUPLICATES=true > {log} 2>&1"
+if config["genome_size"] == "small_genome":
+    rule remove_duplicates_picard:
+        input:
+            "star/{sample}.Aligned.sortedByCoord.out.bam"
+        output:
+            bam="removed_duplicates_alignments/{sample}.dedup.bam",
+            txt="removed_duplicates_alignments/{sample}.dedup.txt"
+        log:
+            "logs/picard/{sample}.dedup.log"
+        shell:
+            "picard MarkDuplicates I={input} O={output.bam} M={output.txt} REMOVE_DUPLICATES=true > {log} 2>&1"
+
+
+if config["genome_size"] == "big_genome":
+    rule remove_duplicates_samtools:
+        input:
+            "star/{sample}.Aligned.sortedByCoord.out.bam"
+        output:
+            "removed_duplicates_alignments/{sample}.dedup.bam"
+        threads:
+            config["threads_samtools_markdup"]
+        log:
+            "logs/samtools_markdup/{sample}.dedup.log"
+        shell:
+            "samtools sort -@ {threads} -n -o removed_duplicates_alignments/{wildcards.sample}.namesort.bam {input} &&"
+            "samtools fixmate -@ {threads} -m removed_duplicates_alignments/{wildcards.sample}.namesort.bam removed_duplicates_alignments/{wildcards.sample}.fixmate.bam &&"
+            "samtools sort -@ {threads} -o removed_duplicates_alignments/{wildcards.sample}.positionsort.bam removed_duplicates_alignments/{wildcards.sample}.fixmate.bam &&"
+            "samtools markdup -@ {threads} -r removed_duplicates_alignments/{wildcards.sample}.positionsort.bam {output} 1>{log}"
+
+
+# The first sort could be omitted if the file were already name ordered
+# Add ms and MC tags for markdup to use later
+# Markdup needs position order
+# Finally mark duplicates
 
 
 rule index_sorted_bams_without_dups:
@@ -307,9 +332,10 @@ rule index_sorted_bams_without_dups:
     output:
         "removed_duplicates_alignments/{sample}.dedup.bam.csi"
     params:
-        threads = config["threads_index_sorted_bams_without_dups"]
+        threads = config["threads_index_sorted_bams_without_dups"],
+        index_type = config["index_type"]
     shell:
-        "samtools index -c -@ {params.threads} {input}"
+        "samtools index {params.index_type} -@ {params.threads} {input}"
 
 #The "-O" option is not necessary if your aligner is not junction-aware,
 #namely they don't report the exon-exon junctions in the CIGAR strings in your mapping results.
@@ -344,6 +370,6 @@ rule featureCounts:
     threads: config["threads_featureCounts"]
     shell:
         "featureCounts -T {threads} -p -O -M -t exon -g gene_id -a {params.gtf} -o {output.with_dups_gene_level} {input.with_dups_bams} 2> {log.with_dups_gene_level} && "
-        "featureCounts -T {threads} -p -O -M -t exon -g transcript_id -a {params.gtf} -o {output.with_dups_transcript_level} {input.with_dups_bams} 2> {log.with_dups_exon_level} && "
+        "featureCounts -T {threads} -p -O -M -t exon -g transcript_id -a {params.gtf} -o {output.with_dups_transcript_level} {input.with_dups_bams} 2> {log.with_dups_transcript_level} && "
         "featureCounts -T {threads} -p -O -t exon -g gene_id -a {params.gtf} -o {output.without_dups_gene_level} {input.without_dups_bams} 2> {log.without_dups_gene_level} && "
-        "featureCounts -T {threads} -p -O -t exon -g transcript_id -a {params.gtf} -o {output.without_dups_transcript_level} {input.without_dups_bams} 2> {log.without_dups_exon_level}"
+        "featureCounts -T {threads} -p -O -t exon -g transcript_id -a {params.gtf} -o {output.without_dups_transcript_level} {input.without_dups_bams} 2> {log.without_dups_transcript_level}"

@@ -22,14 +22,31 @@ threads_bbduk: 2
 threads_star_index: 4
 threads_trimmomatic: 4
 threads_star: 6
+threads_samtools_markdup: 4
 threads_index_sorted_bams_with_dups: 4
 threads_index_sorted_bams_without_dups: 4
 threads_featureCounts: 16
+
+
+
+## genome size: choose big_genome if your contiqs exceed the 2^29 .bai index limit 
+## this option determines whether picard or samtools markdup is used for removal of duplicates
+## also, if big_genome is chosen mutlqic is run without the expectation of the picard output (samtools markdup is not yet supported by multiqc - however we save some stats in the logs directory)
+## this is the standard, if you switch to small_genome you have to uncomment the line corresponding to picard in the multiqc rule(s)
+genome_size: "big_genome"
+#genome_size: "small_genome"
+
+
 
 ### this workflow creates csi indexes because I usually work with larger genomes  ###
 ### if bai indexes are specifically needed then: ###
 ## 1.) go into the Snakefile and change .csi entries to .bai under rule all  ###
 ## 2.) do the same to the two index steps at the end of the file and also change samtools index flag -c into -b  ##
+
+#choose -b for bai index and -c for .csi index - .bai index will lead to errors if used with genomes whose contiqs exceed the 2^29 size limit (so barley, wheat, etc.!!) 
+index_type: -c
+
+
 
 
 ### concerning the final report, be aware that the featureCounts info is based on the gene level counts without multimappers and dups!  ###
