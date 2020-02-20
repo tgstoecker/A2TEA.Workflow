@@ -13,20 +13,23 @@ CHUNKS_ORTHO = 2
 
 rule all:
     input:
-        expand(RAW + "{species}.fa", species=SPECIES),
-        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
-        ORTHOFINDER + "prepare.txt",
-        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
-        expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)]),
-        expand(ORTHOFINDER + "Species{species_number}.fa.fai", species_number=[x for x in range(0, N_SPECIES)]),
-        expand(ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv", species_number=[x for x in range(0, N_SPECIES)], chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)]),
-        expand(ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv",
-            species_number=[x for x in range(0, N_SPECIES)],
-                chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)],
-                    database_number=[x for x in range(0, N_SPECIES)]),
-        expand(ORTHOFINDER + "Blast{species_number}_{database_number}.txt", species_number=[x for x in range(0, N_SPECIES)], database_number=[x for x in range(0, N_SPECIES)]),
-        ORTHOFINDER + "groups.ok",
-        ORTHOFINDER + "trees.ok",
+#        expand(RAW + "{species}.fa", species=SPECIES),
+#        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
+#        ORTHOFINDER + "prepare.txt",
+#        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "Species{species_number}.fa.fai", species_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv", species_number=[x for x in range(0, N_SPECIES)], chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)]),
+#        expand(ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv",
+#            species_number=[x for x in range(0, N_SPECIES)],
+#                chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)],
+#                    database_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "Blast{species_number}_{database_number}.txt", species_number=[x for x in range(0, N_SPECIES)], database_number=[x for x in range(0, N_SPECIES)]),
+#        ORTHOFINDER + "groups.ok",
+#        ORTHOFINDER + "trees.ok",
+#        ORTHOFINDER + "orthologues.ok",
+        ORTHOFINDER + "cleanup.ok",
+        ORTHOFINDER + "complete.ok",
 
 
 ##### add: usage of only the longest isoform!!
@@ -180,11 +183,10 @@ rule orthofinder_groups:
     params:
         fasta_dir = ORTHOFINDER,
         temp_dir = ORTHOFINDER + "OrthoFinder/Results_*",
-        results_dir = ORTHOFINDER + "results/"
+#        results_dir = ORTHOFINDER + "results/"
 #        out_dir = ORTHOFINDER + "results",
 #        inflation = params["orthofinder"]["mcl_inflation"],
-    threads:
-        8 # There is no reason to go beyond this value - really?
+    threads: 24 # There is no reason to go beyond this value - really?
     log:
         ORTHOFINDER + "groups.log"
     benchmark:
@@ -197,9 +199,8 @@ rule orthofinder_groups:
         "--inflation 1.5 "
         "--blast {params.fasta_dir} "
         "--only-groups "
-        "2> {log} 1>&2 "
-#        "mkdir {params.results_dir} && "
-#        "mv {params.temp_dir}/* {params.results_dir} && "
+        "2> {log} 1>&2 && "
+        "mv {params.temp_dir}/ {params.fasta_dir} "
 #        "rm --recursive --force {params.temp_dir}"
 
 
@@ -208,9 +209,11 @@ rule orthofinder_trees:
     output:
         touch(ORTHOFINDER + "trees.ok")
     params:
-        orthofinder_dir = ORTHOFINDER + "OrthoFinder/Results_*",
+        orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
         msa_program = "mafft",
+#        orthofinder_dir = ORTHOFINDER,
+#        orthofinder_dir = ORTHOFINDER + "OrthoFinder",
 #        tree_program = params["orthofinder"]["tree_program"],
 #        msa_program = params["orthofinder"]["msa_program"],
 #        muscle as alternative? - what is the difference??
@@ -240,12 +243,59 @@ rule orthofinder_orthologues:
     output: touch(ORTHOFINDER + "orthologues.ok")
 #    conda: "orthofinder.yml"
     params:
-        orthofinder_dir = ORTHOFINDER,
+        orthofinder_dir = ORTHOFINDER + "Results_*_1",
     log: ORTHOFINDER + "orthologues.log"
     threads: 24
     shell:
         "orthofinder "
-        "    --from-trees {params.orthofinder_dir}/Orthologues_*/ "
-        "    --algthreads {threads} "
-        "    --threads {threads} "
+        "--from-trees {params.orthofinder_dir} "
+        "--algthreads {threads} "
+        "--threads {threads} "
         "2> {log} 1>&2"
+
+
+#rule orthofinder_cleanup:
+#    input: ORTHOFINDER + "orthologues.ok"
+#    output: touch(ORTHOFINDER + "cleanup.ok")
+#    params:
+#        orthofinder_dir = ORTHOFINDER,
+#        n_species = N_SPECIES - 1
+#    log: ORTHOFINDER + "clean.log"
+#    shell:
+#        "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
+#        "mkdir search/ && "
+#        "for i in {{0..{params.n_species}}} ; do "
+#        "mv ${{i}} search/ ; "
+#        "done"
+
+
+rule orthofinder_cleanup:
+    input: ORTHOFINDER + "orthologues.ok"
+    output: touch(ORTHOFINDER + "cleanup.ok")
+    params:
+        orthofinder_dir = ORTHOFINDER,
+        n_species = N_SPECIES - 1,
+        results_dir_1 = "Results_*_1",
+        results_dir_2 = "Results_*_2",
+    log: ORTHOFINDER + "clean.log"
+    shell:
+        "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
+        "mkdir search/ && "
+        "for i in {{0..{params.n_species}}} ; do "
+        "mv ${{i}} search/ ; "
+        "done && "
+        "mv Blast* search/ &&"
+        "mv diamond* search/ && "
+        ""
+        "mv {params.results_dir_1}/Gene_Trees/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/MultipleSequenceAlignments/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/Orthogroup_Sequences/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/WorkingDirectory/SpeciesTree_unrooted* {params.results_dir_2}/WorkingDirectory/ && "
+        "mv {params.results_dir_1}/WorkingDirectory/*_ids/ {params.results_dir_2}/WorkingDirectory/ && "
+        "mv {params.results_dir_2} final-results/ &&"
+        "rm -rf Results_*"
+
+
+rule orthofinder_complete:
+    input: ORTHOFINDER + "cleanup.ok"
+    output: touch(ORTHOFINDER + "complete.ok")
