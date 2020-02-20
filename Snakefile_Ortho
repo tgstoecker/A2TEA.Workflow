@@ -15,7 +15,7 @@ rule all:
     input:
 #        expand(RAW + "{species}.fa", species=SPECIES),
 #        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
-#        ORTHOFINDER + "prepare.txt",
+#        ORTHOFINDER + "prepare.check",
 #        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
 #        expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)]),
 #        expand(ORTHOFINDER + "Species{species_number}.fa.fai", species_number=[x for x in range(0, N_SPECIES)]),
@@ -25,11 +25,11 @@ rule all:
 #                chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)],
 #                    database_number=[x for x in range(0, N_SPECIES)]),
 #        expand(ORTHOFINDER + "Blast{species_number}_{database_number}.txt", species_number=[x for x in range(0, N_SPECIES)], database_number=[x for x in range(0, N_SPECIES)]),
-#        ORTHOFINDER + "groups.ok",
-#        ORTHOFINDER + "trees.ok",
-#        ORTHOFINDER + "orthologues.ok",
-        ORTHOFINDER + "cleanup.ok",
-        ORTHOFINDER + "complete.ok",
+#        ORTHOFINDER + "groups.check",
+#        ORTHOFINDER + "trees.check",
+#        ORTHOFINDER + "orthologues.check",
+#        ORTHOFINDER + "cleanup.check",
+        ORTHOFINDER + "complete.check",
 
 
 ##### add: usage of only the longest isoform!!
@@ -56,7 +56,7 @@ rule orthofinder_prepare:
     input:
         fastas = expand(ORTHOFINDER + "{species}.fa", species=SPECIES)
     output:
-        txt = touch(ORTHOFINDER + "prepare.txt"),
+        check = touch(ORTHOFINDER + "prepare.check"),
         fastas = expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
         db = expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)])
     params:
@@ -64,9 +64,9 @@ rule orthofinder_prepare:
         temp_dir1 = ORTHOFINDER + "OrthoFinder/Results_*",
         temp_dir2 = ORTHOFINDER + "OrthoFinder/Results_*/WorkingDirectory/"
     log:
-        ORTHOFINDER + "prepare.log"
+        "logs/orthofinder/prepare.log"
     benchmark:
-        ORTHOFINDER + "prepare.json"
+        "benchmarks/orthofinder/prepare.json"
 #    conda:
 #        "orthofinder.yml"
     shell:
@@ -99,9 +99,9 @@ rule orthofinder_split:
         number_of_chunks = CHUNKS_ORTHO,
         species = "{species_number}"
     log:
-        ORTHOFINDER + "{species_number}/split.log"
+        "logs/orthofinder/{species_number}/split.log"
     benchmark:
-        ORTHOFINDER + "{species_number}/split.json"
+        "benchmarks/orthofinder/{species_number}/split.json"
 #    conda:
 #        "orthofinder.yml"
     shell:
@@ -125,9 +125,9 @@ rule orthofinder_blastp:
     output:
         tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv"
     log:
-        ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.log"
+        "logs/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.log"
     benchmark:
-        ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.json"
+        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
     threads: 6
 #    conda:
 #        "orthofinder.yml"
@@ -150,9 +150,9 @@ rule orthofinder_blastp_merge:
     output:
         tsv = ORTHOFINDER + "Blast{species_number}_{database_number}.txt"
     log:
-        ORTHOFINDER + "{species_number}/{database_number}/blastp_merge.log"
+        "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
     benchmark:
-        ORTHOFINDER + "{species_number}/{database_number}/blastp_merge.json"
+        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
 #    conda:
 #        "orthofinder.yml"
     shell:
@@ -166,31 +166,16 @@ rule orthofinder_groups:
                   species_number = [x for x in range(0,N_SPECIES)],
                       database_number = [x for x in range(0,N_SPECIES)])
     output:
-        touch(ORTHOFINDER + "groups.ok"),
-        # cluster_json = ORTHOFINDER + "cluster.json",
-        # cluster_log = ORTHOFINDER + "cluster.log",
-        # clusters_inflation = ORTHOFINDER + "clusters_OrthoFinder_v2.2.7_I1.5.txt",
-        # clusters_pairs = ORTHOFINDER + "clusters_OrthoFinder_v2.2.7_I1.5.txt_id_pairs.txt",
-        # graph = ORTHOFINDER + "OrthoFinder_v2.2.7_graph.txt",
-        # ortho_csv = ORTHOFINDER + "Orthogroups.csv",
-        # gene_count = ORTHOFINDER + "Orthogroups.GeneCount.csv",
-        # species_overlaps = ORTHOFINDER + "Orthogroups_SpeciesOverlaps.csv",
-        # ortho_txt = ORTHOFINDER + "Orthogroups.txt",
-        # unassigned = protected(ORTHOFINDER + "Orthogroups_UnassignedGenes.csv"),
-        # sigle_copy = protected(ORTHOFINDER + "SingleCopyOrthogroups.txt"),
-        # statistics_overall = protected(ORTHOFINDER + "Statistics_Overall.csv"),
-        # statistics_species = protected(ORTHOFINDER + "Statistics_PerSpecies.csv")
+        touch(ORTHOFINDER + "groups.check"),
     params:
         fasta_dir = ORTHOFINDER,
         temp_dir = ORTHOFINDER + "OrthoFinder/Results_*",
-#        results_dir = ORTHOFINDER + "results/"
-#        out_dir = ORTHOFINDER + "results",
 #        inflation = params["orthofinder"]["mcl_inflation"],
     threads: 24 # There is no reason to go beyond this value - really?
     log:
-        ORTHOFINDER + "groups.log"
+        "logs/orthofinder/groups.log"
     benchmark:
-        ORTHOFINDER + "groups.json"
+        "benchmarks/orthofinder/groups.json"
 #    conda:
 #        "orthofinder.yml"
     shell:
@@ -201,30 +186,23 @@ rule orthofinder_groups:
         "--only-groups "
         "2> {log} 1>&2 && "
         "mv {params.temp_dir}/ {params.fasta_dir} "
-#        "rm --recursive --force {params.temp_dir}"
 
 
 rule orthofinder_trees:
     input: rules.orthofinder_groups.output
     output:
-        touch(ORTHOFINDER + "trees.ok")
+        touch(ORTHOFINDER + "trees.check")
     params:
         orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
         msa_program = "mafft",
-#        orthofinder_dir = ORTHOFINDER,
-#        orthofinder_dir = ORTHOFINDER + "OrthoFinder",
-#        tree_program = params["orthofinder"]["tree_program"],
-#        msa_program = params["orthofinder"]["msa_program"],
 #        muscle as alternative? - what is the difference??
-#         tree_program = fasttree,
-#         msa_program = mafft,
 #    conda:
 #        "orthofinder.yml"
     log:
-        ORTHOFINDER + "trees.log"
+        "logs/orthofinder/trees.log"
     benchmark:
-        ORTHOFINDER + "trees.bmk"
+        "benchmarks/orthofinder/trees.bmk"
     threads: 24
     shell:
         "orthofinder "
@@ -239,12 +217,12 @@ rule orthofinder_trees:
 
 
 rule orthofinder_orthologues:
-    input: ORTHOFINDER + "trees.ok"
-    output: touch(ORTHOFINDER + "orthologues.ok")
+    input: ORTHOFINDER + "trees.check"
+    output: touch(ORTHOFINDER + "orthologues.check")
 #    conda: "orthofinder.yml"
     params:
         orthofinder_dir = ORTHOFINDER + "Results_*_1",
-    log: ORTHOFINDER + "orthologues.log"
+    log: "logs/orthofinder/orthologues.log"
     threads: 24
     shell:
         "orthofinder "
@@ -254,30 +232,15 @@ rule orthofinder_orthologues:
         "2> {log} 1>&2"
 
 
-#rule orthofinder_cleanup:
-#    input: ORTHOFINDER + "orthologues.ok"
-#    output: touch(ORTHOFINDER + "cleanup.ok")
-#    params:
-#        orthofinder_dir = ORTHOFINDER,
-#        n_species = N_SPECIES - 1
-#    log: ORTHOFINDER + "clean.log"
-#    shell:
-#        "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
-#        "mkdir search/ && "
-#        "for i in {{0..{params.n_species}}} ; do "
-#        "mv ${{i}} search/ ; "
-#        "done"
-
-
 rule orthofinder_cleanup:
-    input: ORTHOFINDER + "orthologues.ok"
-    output: touch(ORTHOFINDER + "cleanup.ok")
+    input: ORTHOFINDER + "orthologues.check"
+    output: touch(ORTHOFINDER + "cleanup.check")
     params:
         orthofinder_dir = ORTHOFINDER,
         n_species = N_SPECIES - 1,
         results_dir_1 = "Results_*_1",
         results_dir_2 = "Results_*_2",
-    log: ORTHOFINDER + "clean.log"
+    log: "logs/orthofinder/clean.log"
     shell:
         "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
         "mkdir search/ && "
@@ -297,5 +260,5 @@ rule orthofinder_cleanup:
 
 
 rule orthofinder_complete:
-    input: ORTHOFINDER + "cleanup.ok"
-    output: touch(ORTHOFINDER + "complete.ok")
+    input: ORTHOFINDER + "cleanup.check"
+    output: touch(ORTHOFINDER + "complete.check")
