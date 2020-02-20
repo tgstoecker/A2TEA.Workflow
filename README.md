@@ -15,7 +15,7 @@ For detailed options concerning conda/bioconda see:
 
 Then, you can install Snakemake with
 
-`conda install -c bioconda -c conda-forge snakemake`
+`conda install -c bioconda -c conda-forge snakemake=5.9.1`
 
 Preparing a working directory
 First, create a new directory and change into that directory in your terminal.
