@@ -99,7 +99,8 @@ rule orthofinder_split:
         number_of_chunks = CHUNKS_ORTHO,
         species = "{species_number}"
     log:
-        "logs/orthofinder/{species_number}/split.log"
+#send the log here as an exception; also controls the actual output 
+         "orthofinder/{species_number}/split.log"
     benchmark:
         "benchmarks/orthofinder/{species_number}/split.json"
 #    conda:
