@@ -38,5 +38,6 @@ Should you want to remove the conda environment, execute
 `conda env remove -n A2TEA`
 
 
-
+### The workflow in its current form:
+![Alt text](./rulegraph_complete_31_05_20.svg)
 
