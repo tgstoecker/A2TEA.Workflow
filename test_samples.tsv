@@ -1,5 +1,0 @@
-species	sample	unit	treatment	rep	fq1	fq2
-Hordeum_vulgare	A	control_1	control	1	A_control_1.1.fq.gz	A_control_1.2.fq.gz
-Hordeum_vulgare	A	control_2	control	2	C_control_2.1.fq.gz	C_control_2.2.fq.gz
-Zea_mays	C	control_2	control	2	C_control_2.1.fq.gz	C_control_2.2.fq.gz
-Hordeum_vulgare	B	treatment_3	treatment	3	B_control_3.1.fq.gz	
