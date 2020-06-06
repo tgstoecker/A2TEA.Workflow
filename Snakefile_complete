@@ -1,0 +1,587 @@
+import pandas as pd
+import os
+import yaml
+from snakemake.utils import validate, min_version
+
+##### load config and define samples ####
+
+configfile: "config.yaml"
+species_table = pd.read_table("species.tsv").set_index("species")
+#species = list(species_table.species.unique())
+SPECIES = species_table.index.tolist()
+
+ORTHOFINDER = "orthofinder/"
+N_SPECIES = len(SPECIES)
+CHUNKS_ORTHO = 2
+
+
+samples = pd.read_csv("samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
+samples.index = samples.index.set_levels( [i.astype(str) for i in samples.index.levels])  # enforce str in index
+
+#create SE and PE subset (makes trimmomatic much easier)
+SE_samples = samples[samples["fq2"].isna()].set_index(["sample", "unit"], drop=False)
+SE_samples.index = SE_samples.index.set_levels( [i.astype(str) for i in SE_samples.index.levels])  # enforce str in index
+
+PE_samples = samples[samples["fq2"].notna()]
+
+
+wildcard_constraints:
+    unit="|".join(samples["unit"]),
+
+
+def is_single_end(sample, unit):
+    """Determine whether unit is single-end."""
+    fq2_present = pd.isnull(samples.loc[(sample, unit), "fq2"])
+    if isinstance(fq2_present, pd.core.series.Series):
+        # if this is the case, get_fastqs cannot work properly
+        raise ValueError(
+            f"Multiple fq2 entries found for sample-unit combination {sample}-{unit}.\n"
+            "This is most likely due to a faulty units.tsv file, e.g. "
+            "a unit name is used twice for the same sample.\n"
+            "Try checking your units.tsv for duplicates."
+        )
+    return fq2_present
+
+
+def get_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"rawreads/{s.fq1}" ]
+    else:
+        u = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"rawreads/{u.fq1}", f"rawreads/{u.fq2}" ]
+
+
+def get_trimmed_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"trimmed/{s.fq1}" ]
+    else:
+        u = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]
+
+
+
+##SE_samples
+def get_SE_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = SE_samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"rawreads/{s.fq1}" ]
+    else:
+        return
+
+
+##PE_samples
+def get_PE_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        s = PE_samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"rawreads/{s.fq1}", f"rawreads/{s.fq2}"  ]
+    else:
+        return
+
+
+
+rule all:
+    input:
+##        expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+##        expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+##        "checks/trimmed/trim_cleanup.check",
+#        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=SE_samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq2}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
+        "multiqc/multiqc_report.html",
+#        expand("R/txdbs/{species}/tx2gene_{species}.tsv", species = species),
+#        expand("R/tximport/{species}/DESeqDataSet_{species}", species = species),
+        expand("R/deseq2/{species}/dea/dea_{species}", species = SPECIES),
+#        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
+#        ORTHOFINDER + "prepare.check",
+#        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "Species{species_number}.fa.fai", species_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv", species_number=[x for x in range(0, N_SPECIES)], chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)]),
+#        expand(ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv",
+#            species_number=[x for x in range(0, N_SPECIES)],
+#                chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)],
+#                    database_number=[x for x in range(0, N_SPECIES)]),
+#        expand(ORTHOFINDER + "Blast{species_number}_{database_number}.txt", species_number=[x for x in range(0, N_SPECIES)], database_number=[x for x in range(0, N_SPECIES)]),
+#        ORTHOFINDER + "groups.check",
+#        ORTHOFINDER + "trees.check",
+#        ORTHOFINDER + "orthologues.check",
+#        ORTHOFINDER + "cleanup.check",
+        ORTHOFINDER + "complete.check",
+
+
+
+#this will create (if needed) the directories for the trimmomatic rules
+FQC_RAW_DIR = "fastqc/raw/"
+if not os.path.exists(FQC_RAW_DIR):
+    os.makedirs(FQC_RAW_DIR)
+
+
+FQC_TRIM_DIR = "fastqc/trimmed/"
+if not os.path.exists(FQC_TRIM_DIR):
+    os.makedirs(FQC_TRIM_DIR)
+
+
+#rawreads fastqc
+rule fastqc_raw:
+    input:
+        "rawreads/{file}",
+    output:
+        touch("checks/fastqc/raw/{file}.check"),
+    threads: 4
+    log:
+        "logs/fastqc/raw/{file}.log"
+    shell:
+        "fastqc -t {threads} -o fastqc/raw/ {input}"
+
+
+#trimmed reads fastqc
+rule fastqc_trimmed:
+    input:
+        trim_check = "checks/trimmed/trim_cleanup.check",
+        raw = "checks/fastqc/raw/{file}.check",
+    output:
+        touch("checks/fastqc/trimmed/{file}.check"),
+    params:
+        file = "trimmed/{file}"
+    threads: 4
+    log:
+        "logs/fastqc/trimmed/{file}.log"
+    shell:
+        "fastqc -t {threads} -o fastqc/trimmed/ {params.file}"
+
+
+rule multiqc:
+    input:
+        fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
+        fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
+        fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
+        fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
+        fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
+        fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
+        trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+        trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+        kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+    output:
+        "multiqc/multiqc_report.html"
+    params:
+        plot = "-ip",
+        trimmomatic = "logs/trimmomatic/",
+        kallisto = "logs/kallisto/quant/",
+    log:
+        "logs/multiqc/multiqc.log"
+    shell:
+        "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
+
+
+########
+#trimmomatic
+########
+
+ruleorder: trimmomatic_PE > trimmomatic_SE
+
+
+def get_trimmed_PE_output(wildcards):
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"trimmed/{s.fq1}", f"trimmed/unpaired/unpaired_{s.fq1}", f"trimmed/{s.fq2}", f"trimmed/unpaired/unpaired_{s.fq2}"  ]
+
+
+def get_trimmed_SE_output(wildcards):
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"trimmed/{s.fq1}"  ]
+
+
+
+#this will create the directories needed for the trimmomatic rules
+TRIM_DIR = "trimmed/unpaired/"
+if not os.path.exists(TRIM_DIR):
+    os.makedirs(TRIM_DIR)
+
+
+rule trimmomatic_PE:
+    input:
+        get_PE_fastqs,
+    output:
+        touch("checks/trimmed/{sample}_{unit}_PE.check"),
+    log:
+        "logs/trimmomatic/PE/{sample}_{unit}.log"
+    params:
+        trimmer=["SLIDINGWINDOW:4:18 MINLEN:60"],
+        compression_level="-9",
+        out = get_trimmed_PE_output,
+    threads:
+        config["threads_trimmomatic"]
+    shell:
+        "trimmomatic PE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
+
+
+rule trimmomatic_SE:
+    input:
+        get_SE_fastqs,
+    output:
+        touch("checks/trimmed/{sample}_{unit}_SE.check"),
+    log:
+        "logs/trimmomatic/SE/{sample}_{unit}.log"
+    params:
+        trimmer=["SLIDINGWINDOW:4:18 MINLEN:60"],
+        compression_level="-9",
+        out = get_trimmed_SE_output,
+    threads:
+        config["threads_trimmomatic"]
+    shell:
+        "trimmomatic SE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
+
+
+rule trim_cleanup:
+    input:
+        expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+        expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+    output:
+        touch("checks/trimmed/trim_cleanup.check"),
+    shell:
+        "rm -r trimmed/unpaired/"
+
+
+######
+#kallisto
+######
+
+
+rule kallisto_index:
+    input:
+        fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
+    output:
+        "kallisto_indexes/{species}.idx"
+    log:
+        "logs/kallisto/indexes/{species}.log"
+    threads: 1
+    shell:
+        "kallisto index -i {output} {input.fasta}"
+
+
+def get_paired_info(wildcards):
+    """Get single/paired sample information from sample sheet."""
+    opt = ""
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        return [ f"" ]
+    else:
+        opt += "--single "
+        opt += ("--fragment-length {sample.fragment_length_mean} "
+                "--sd {sample.fragment_length_sd}").format(
+                       sample=samples.loc[(wildcards.sample, wildcards.unit)])
+        return opt
+
+
+rule kallisto_quant:
+    input:
+        trim_check = "checks/trimmed/trim_cleanup.check",
+        index = "kallisto_indexes/{species}.idx",
+    output:
+        directory("kallisto_quant/{species}/{sample}_{unit}")
+    log:
+        "logs/kallisto/quant/{species}/{sample}_{unit}.quant.log"
+    params:
+        paired = get_paired_info,
+        input = get_trimmed_fastqs,
+        bootstrap = "0", # 100; if we wanted to work on transcript level and make use of the bootstraps
+    threads:
+        config["threads_kallisto_quant"]
+    shell:
+        "kallisto quant -i {input.index} -o {output} -b {params.bootstrap} -t {threads} "
+        "{params.paired} {params.input} 2> {log}"
+
+
+########
+#diff. exp
+########
+
+
+
+rule tximport_and_setup:
+    input:
+        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+    output:
+        "R/tximport/{species}/DESeqDataSet_{species}"
+    params:
+        annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+        species = lambda wildcards: samples.species[samples.species == wildcards.species],
+    script:
+        "scripts/tximport.R"
+
+
+rule deseq2:
+    input:
+        "R/tximport/{species}/DESeqDataSet_{species}"
+    output:
+        "R/deseq2/{species}/dea/dea_{species}"
+    script:
+        "scripts/deseq2.R"
+
+
+
+#advantages kmer pseudoalignment, also easy isoform trimming etc. beforehand can reduce amount of work - generally I guess many advantages
+#trim options final
+#write fragment length and sd note
+#fastqc
+#multiqc
+#--use-conda and yaml files, to have tight version control
+#report? should check that out
+
+
+#####
+#Orthofinder part
+#####
+
+
+def get_species_fasta(wildcards):
+    return species_table.loc[wildcards.species]["pep_fasta"]
+
+
+def get_longest_isoforms(wildcards):
+    return os.path.join("PS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
+
+
+rule filter_isoforms:
+    output:
+        "PS/longest_isoforms/{species}.fa"
+    params: 
+        fa= get_species_fasta,
+        iso= get_longest_isoforms,
+    shell:
+        "python scripts/longest_isoforms.py {params.fa} && "
+        "mv {params.iso} {output}"
+
+
+rule orthofinder_link_all:
+    input:
+        "PS/longest_isoforms/{species}.fa",
+    output: ORTHOFINDER + "{species}.fa"
+    params: get_longest_isoforms,
+    shell: 
+        "ln --symbolic $(readlink --canonicalize {input}) {output}"
+
+
+rule orthofinder_prepare:
+    "Split fasta files, rename species and sequences and prepare blast databases"
+    input:
+        fastas = expand(ORTHOFINDER + "{species}.fa", species=SPECIES)
+    output:
+        check = touch(ORTHOFINDER + "prepare.check"),
+        fastas = expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
+        db = expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)])
+    params:
+        fasta_dir = ORTHOFINDER,
+        temp_dir1 = ORTHOFINDER + "OrthoFinder/Results_*",
+        temp_dir2 = ORTHOFINDER + "OrthoFinder/Results_*/WorkingDirectory/"
+    log:
+        "logs/orthofinder/prepare.log"
+    benchmark:
+        "benchmarks/orthofinder/prepare.json"
+#    conda:
+#        "orthofinder.yml"
+    shell:
+        "orthofinder -t 16 "
+         "--fasta {params.fasta_dir} "
+         "--search diamond "
+         "--only-prepare "
+         "2> {log} 1>&2 && "
+         "mv {params.temp_dir2}* {params.fasta_dir} && "
+         "rm --recursive --force {params.temp_dir1}"
+
+
+rule index_pep_fastas:
+    input:
+        ORTHOFINDER + "Species{species_number}.fa",
+    output:
+        ORTHOFINDER + "Species{species_number}.fa.fai",
+    shell:
+        "samtools faidx {input}"
+
+
+rule orthofinder_split:
+    "Split the headers of the input pep fastas into multiple files"
+    input:
+        fai = ancient(ORTHOFINDER + "Species{species_number}.fa.fai")
+    output:
+        expand(ORTHOFINDER + "{{species_number}}/chunks/ids_{chunk_id}.tsv", chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
+    params:
+        folder = ORTHOFINDER,
+        number_of_chunks = CHUNKS_ORTHO,
+        species = "{species_number}"
+    log:
+#send the log here as an exception; also controls the actual output 
+         "orthofinder/{species_number}/split.log"
+    benchmark:
+        "benchmarks/orthofinder/{species_number}/split.json"
+#    conda:
+#        "orthofinder.yml"
+    shell:
+        "split "
+        "--number l/{params.number_of_chunks} "
+        "--numeric-suffixes "
+        "--suffix-length 5 "
+        "--additional-suffix .tsv "
+        "{input.fai} "
+        "{params.folder}/{params.species}/chunks/ids_ "
+        "2> {log}"
+
+
+rule orthofinder_blastp:
+    "Run blastp of each chunk"
+    input:
+        fasta = ORTHOFINDER + "Species{species_number}.fa",
+        fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
+        chunk = ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv",
+        db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
+    output:
+        tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv"
+    log:
+        "logs/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.log"
+    benchmark:
+        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
+    threads: 6
+#    conda:
+#        "orthofinder.yml"
+    shell:
+        "cut -f 1 {input.chunk} "
+        "| xargs samtools faidx {input.fasta}"
+        "| diamond blastp "
+        "--db {input.db} "
+        "--outfmt 6 "
+        "--evalue 0.001 "
+        "--out {output.tsv} "
+        "--threads {threads} "
+        "2> {log} 1>&2"
+
+
+rule orthofinder_blastp_merge:
+    "Merge results from the different blastps"
+    input:
+        expand(ORTHOFINDER + "{{species_number}}/{{database_number}}/blastp_{chunk_id}.tsv", chunk_id = ['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
+    output:
+        tsv = ORTHOFINDER + "Blast{species_number}_{database_number}.txt"
+    log:
+        "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
+    benchmark:
+        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
+#    conda:
+#        "orthofinder.yml"
+    shell:
+        "cat {input} > {output} 2> {log}"
+
+
+rule orthofinder_groups:
+    "Join blastp results, normalize bitscores and run mcl"
+    input:
+        tsv = expand(ORTHOFINDER + "Blast{database_number}_{species_number}.txt",
+                  species_number = [x for x in range(0,N_SPECIES)],
+                      database_number = [x for x in range(0,N_SPECIES)])
+    output:
+        touch(ORTHOFINDER + "groups.check"),
+    params:
+        fasta_dir = ORTHOFINDER,
+        temp_dir = ORTHOFINDER + "OrthoFinder/Results_*",
+#        inflation = params["orthofinder"]["mcl_inflation"],
+    threads: 24 # There is no reason to go beyond this value - really?
+    log:
+        "logs/orthofinder/groups.log"
+    benchmark:
+        "benchmarks/orthofinder/groups.json"
+#    conda:
+#        "orthofinder.yml"
+    shell:
+        "orthofinder "
+        "--algthreads {threads} "
+        "--inflation 1.5 "
+        "--blast {params.fasta_dir} "
+        "--only-groups "
+        "2> {log} 1>&2 && "
+        "mv {params.temp_dir}/ {params.fasta_dir} "
+
+
+rule orthofinder_trees:
+    input: rules.orthofinder_groups.output
+    output:
+        touch(ORTHOFINDER + "trees.check")
+    params:
+        orthofinder_dir = ORTHOFINDER + "Results_*",
+        tree_program = "fasttree",
+        msa_program = "mafft",
+#        muscle as alternative? - what is the difference?
+#    conda:
+#        "orthofinder.yml"
+    log:
+        "logs/orthofinder/trees.log"
+    benchmark:
+        "benchmarks/orthofinder/trees.bmk"
+    threads: 24
+    shell:
+        "orthofinder "
+        "--from-groups {params.orthofinder_dir} "
+        "--only-trees "
+        "--method msa "
+        "--msa_program {params.msa_program} "
+        "--tree_program fasttree "
+        "--algthreads {threads} "
+        "--threads {threads} "
+        "2> {log} 1>&2"
+
+
+rule orthofinder_orthologues:
+    input: ORTHOFINDER + "trees.check"
+    output: touch(ORTHOFINDER + "orthologues.check")
+#    conda: "orthofinder.yml"
+    params:
+        orthofinder_dir = ORTHOFINDER + "Results_*_1",
+    log: "logs/orthofinder/orthologues.log"
+    threads: 24
+    shell:
+        "orthofinder "
+        "--from-trees {params.orthofinder_dir} "
+        "--algthreads {threads} "
+        "--threads {threads} "
+        "2> {log} 1>&2"
+
+
+rule orthofinder_cleanup:
+    input: ORTHOFINDER + "orthologues.check"
+    output: touch(ORTHOFINDER + "cleanup.check")
+    params:
+        orthofinder_dir = ORTHOFINDER,
+        n_species = N_SPECIES - 1,
+        results_dir_1 = "Results_*_1",
+        results_dir_2 = "Results_*_2",
+    log: "logs/orthofinder/clean.log"
+    shell:
+        "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
+        "mkdir search/ && "
+        "for i in {{0..{params.n_species}}} ; do "
+        "mv ${{i}} search/ ; "
+        "done && "
+        "mv Blast* search/ &&"
+        "mv diamond* search/ && "
+        ""
+        "mv {params.results_dir_1}/Gene_Trees/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/MultipleSequenceAlignments/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/Orthogroup_Sequences/ {params.results_dir_2}/ && "
+        "mv {params.results_dir_1}/WorkingDirectory/SpeciesTree_unrooted* {params.results_dir_2}/WorkingDirectory/ && "
+        "mv {params.results_dir_1}/WorkingDirectory/*_ids/ {params.results_dir_2}/WorkingDirectory/ && "
+        "mv {params.results_dir_2} final-results/ && "
+        "rm -rf Results_*_1 && "
+        "mv Results*/Comparative_Genomics_Statistics/* final-results/Comparative_Genomics_Statistics/ && "
+        "mv Results*/Orthogroups/ final-results/ && "
+        "rm -rf Results_* "
+
+
+rule orthofinder_complete:
+    input: ORTHOFINDER + "cleanup.check"
+    output: touch(ORTHOFINDER + "complete.check")
+

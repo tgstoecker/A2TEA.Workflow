@@ -1,0 +1,314 @@
+import pandas as pd
+import os
+from snakemake.utils import validate, min_version
+
+##### load config and define samples ####
+
+configfile: "config.yaml"
+species_table = pd.read_table("species.tsv").set_index("species")
+#species = list(species_table.species.unique())
+species = species_table.index.tolist()
+
+samples = pd.read_csv("samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
+samples.index = samples.index.set_levels( [i.astype(str) for i in samples.index.levels])  # enforce str in index
+
+#create SE and PE subset (makes trimmomatic much easier)
+SE_samples = samples[samples["fq2"].isna()].set_index(["sample", "unit"], drop=False)
+SE_samples.index = SE_samples.index.set_levels( [i.astype(str) for i in SE_samples.index.levels])  # enforce str in index
+
+PE_samples = samples[samples["fq2"].notna()]
+
+
+wildcard_constraints:
+    unit="|".join(samples["unit"]),
+
+
+def is_single_end(sample, unit):
+    """Determine whether unit is single-end."""
+    fq2_present = pd.isnull(samples.loc[(sample, unit), "fq2"])
+    if isinstance(fq2_present, pd.core.series.Series):
+        # if this is the case, get_fastqs cannot work properly
+        raise ValueError(
+            f"Multiple fq2 entries found for sample-unit combination {sample}-{unit}.\n"
+            "This is most likely due to a faulty units.tsv file, e.g. "
+            "a unit name is used twice for the same sample.\n"
+            "Try checking your units.tsv for duplicates."
+        )
+    return fq2_present
+
+
+def get_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"rawreads/{s.fq1}" ]
+    else:
+        u = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"rawreads/{u.fq1}", f"rawreads/{u.fq2}" ]
+
+
+def get_trimmed_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"trimmed/{s.fq1}" ]
+    else:
+        u = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]
+
+
+
+##SE_samples
+def get_SE_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = SE_samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"rawreads/{s.fq1}" ]
+    else:
+        return
+
+
+##PE_samples
+def get_PE_fastqs(wildcards):
+    """Get raw FASTQ files from unit sheet."""
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        s = PE_samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"rawreads/{s.fq1}", f"rawreads/{s.fq2}"  ]
+    else:
+        return
+
+
+
+rule all:
+    input:
+##        expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+##        expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+##        "checks/trimmed/trim_cleanup.check",
+#        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=SE_samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
+##        expand("fastqc/raw/{sample.fq2}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
+        "multiqc/multiqc_report.html",
+#        expand("R/txdbs/{species}/tx2gene_{species}.tsv", species = species),
+#        expand("R/tximport/{species}/DESeqDataSet_{species}", species = species),
+        expand("R/deseq2/{species}/dea/dea_{species}", species = species),
+
+
+
+#this will create (if needed) the directories for the trimmomatic rules
+FQC_RAW_DIR = "fastqc/raw/"
+if not os.path.exists(FQC_RAW_DIR):
+    os.makedirs(FQC_RAW_DIR)
+
+
+FQC_TRIM_DIR = "fastqc/trimmed/"
+if not os.path.exists(FQC_TRIM_DIR):
+    os.makedirs(FQC_TRIM_DIR)
+
+
+#rawreads fastqc
+rule fastqc_raw:
+    input:
+        "rawreads/{file}",
+    output:
+        touch("checks/fastqc/raw/{file}.check"),
+    threads: 4
+    log:
+        "logs/fastqc/raw/{file}.log"
+    shell:
+        "fastqc -t {threads} -o fastqc/raw/ {input}"
+
+
+#trimmed reads fastqc
+rule fastqc_trimmed:
+    input:
+        trim_check = "checks/trimmed/trim_cleanup.check",
+        raw = "checks/fastqc/raw/{file}.check",
+    output:
+        touch("checks/fastqc/trimmed/{file}.check"),
+    params:
+        file = "trimmed/{file}"
+    threads: 4
+    log:
+        "logs/fastqc/trimmed/{file}.log"
+    shell:
+        "fastqc -t {threads} -o fastqc/trimmed/ {params.file}"
+
+
+rule multiqc:
+    input:
+        fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
+        fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
+        fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
+        fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
+        fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
+        fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
+        trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+        trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+        kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+    output:
+        "multiqc/multiqc_report.html"
+    params:
+        plot = "-ip",
+        trimmomatic = "logs/trimmomatic/",
+        kallisto = "logs/kallisto/quant/",
+    log:
+        "logs/multiqc/multiqc.log"
+    shell:
+        "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
+
+
+########
+#trimmomatic
+########
+
+ruleorder: trimmomatic_PE > trimmomatic_SE
+
+
+def get_trimmed_PE_output(wildcards):
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+        return [ f"trimmed/{s.fq1}", f"trimmed/unpaired/unpaired_{s.fq1}", f"trimmed/{s.fq2}", f"trimmed/unpaired/unpaired_{s.fq2}"  ]
+
+
+def get_trimmed_SE_output(wildcards):
+    if is_single_end(wildcards.sample, wildcards.unit):
+        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+        return [ f"trimmed/{s.fq1}"  ]
+
+
+
+#this will create the directories needed for the trimmomatic rules
+TRIM_DIR = "trimmed/unpaired/"
+if not os.path.exists(TRIM_DIR):
+    os.makedirs(TRIM_DIR)
+
+
+rule trimmomatic_PE:
+    input:
+        get_PE_fastqs,
+    output:
+        touch("checks/trimmed/{sample}_{unit}_PE.check"),
+    log:
+        "logs/trimmomatic/PE/{sample}_{unit}.log"
+    params:
+        trimmer=["SLIDINGWINDOW:4:18 MINLEN:60"],
+        compression_level="-9",
+        out = get_trimmed_PE_output,
+    threads:
+        config["threads_trimmomatic"]
+    shell:
+        "trimmomatic PE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
+
+
+rule trimmomatic_SE:
+    input:
+        get_SE_fastqs,
+    output:
+        touch("checks/trimmed/{sample}_{unit}_SE.check"),
+    log:
+        "logs/trimmomatic/SE/{sample}_{unit}.log"
+    params:
+        trimmer=["SLIDINGWINDOW:4:18 MINLEN:60"],
+        compression_level="-9",
+        out = get_trimmed_SE_output,
+    threads:
+        config["threads_trimmomatic"]
+    shell:
+        "trimmomatic SE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
+
+
+rule trim_cleanup:
+    input:
+        expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+        expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+    output:
+        touch("checks/trimmed/trim_cleanup.check"),
+    shell:
+        "rm -r trimmed/unpaired/"
+
+
+######
+#kallisto
+######
+
+
+rule kallisto_index:
+    input:
+        fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
+    output:
+        "kallisto_indexes/{species}.idx"
+    log:
+        "logs/kallisto/indexes/{species}.log"
+    threads: 1
+    shell:
+        "kallisto index -i {output} {input.fasta}"
+
+
+def get_paired_info(wildcards):
+    """Get single/paired sample information from sample sheet."""
+    opt = ""
+    if not is_single_end(wildcards.sample, wildcards.unit):
+        return [ f"" ]
+    else:
+        opt += "--single "
+        opt += ("--fragment-length {sample.fragment_length_mean} "
+                "--sd {sample.fragment_length_sd}").format(
+                       sample=samples.loc[(wildcards.sample, wildcards.unit)])
+        return opt
+
+
+rule kallisto_quant:
+    input:
+        trim_check = "checks/trimmed/trim_cleanup.check",
+        index = "kallisto_indexes/{species}.idx",
+    output:
+        directory("kallisto_quant/{species}/{sample}_{unit}")
+    log:
+        "logs/kallisto/quant/{species}/{sample}_{unit}.quant.log"
+    params:
+        paired = get_paired_info,
+        input = get_trimmed_fastqs,
+        bootstrap = "0", # 100; if we wanted to work on transcript level and make use of the bootstraps
+    threads:
+        config["threads_kallisto_quant"]
+    shell:
+        "kallisto quant -i {input.index} -o {output} -b {params.bootstrap} -t {threads} "
+        "{params.paired} {params.input} 2> {log}"
+
+
+########
+#diff. exp
+########
+
+
+
+rule tximport_and_setup:
+    input:
+        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
+    output:
+        "R/tximport/{species}/DESeqDataSet_{species}"
+    params:
+        annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+        species = lambda wildcards: samples.species[samples.species == wildcards.species],
+    script:
+        "scripts/tximport.R"
+
+
+rule deseq2:
+    input:
+        "R/tximport/{species}/DESeqDataSet_{species}"
+    output:
+        "R/deseq2/{species}/dea/dea_{species}"
+    script:
+        "scripts/deseq2.R"
+
+
+
+#advantages kmer pseudoalignment, also easy isoform trimming etc. beforehand can reduce amount of work - generally I guess many advantages
+#trim options final
+#write fragment length and sd note
+#fastqc
+#multiqc
+#--use-conda and yaml files, to have tight version control
+#report? should check that out

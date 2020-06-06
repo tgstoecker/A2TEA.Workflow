@@ -1,6 +1,7 @@
 channels:
   - bioconda
   - conda-forge
+  - r
 dependencies:
   - snakemake-minimal =5.7.0
   - bbmap =38.75
@@ -13,4 +14,7 @@ dependencies:
   - picard =2.18.7
   - samtools =1.9
   - subread =1.6.4
-
+  - bioconductor-edger =3.28.0
+  - orthofinder =2.3.11
+  - pandas =1.0.1
+  - diamond =0.9.30

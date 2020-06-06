@@ -1,8 +1,8 @@
-import os
 import pandas as pd
 import yaml
 
 
+RAW = "PS2/"
 ORTHOFINDER = "orthofinder/"
 
 species = pd.read_table("species.tsv").set_index("species")
@@ -13,6 +13,7 @@ CHUNKS_ORTHO = 2
 
 rule all:
     input:
+#        expand(RAW + "{species}.fa", species=SPECIES),
 #        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
 #        ORTHOFINDER + "prepare.check",
 #        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
@@ -38,28 +39,16 @@ def get_species_fasta(wildcards):
     return species.loc[wildcards.species]["pep_fasta"]
 
 
-def get_longest_isoforms(wildcards):
-    return os.path.join("PS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
-
-
-rule filter_isoforms:
-    output:
-        "PS/longest_isoforms/{species}.fa"
-    params: 
-        fa= get_species_fasta,
-        iso= get_longest_isoforms,
-    shell:
-        "python scripts/longest_isoforms.py {params.fa} && "
-        "mv {params.iso} {output}"
+rule raw_link_fa:
+    output: RAW + "{species}.fa"
+    params: get_species_fasta
+    shell: "ln --symbolic $(readlink --canonicalize {params}) {output}"
 
 
 rule orthofinder_link_all:
-    input:
-        "PS/longest_isoforms/{species}.fa",
     output: ORTHOFINDER + "{species}.fa"
-    params: get_longest_isoforms,
-    shell: 
-        "ln --symbolic $(readlink --canonicalize {input}) {output}"
+    params: get_species_fasta
+    shell: "ln --symbolic $(readlink --canonicalize {params}) {output}"
 
 
 rule orthofinder_prepare:
@@ -208,7 +197,7 @@ rule orthofinder_trees:
         orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
         msa_program = "mafft",
-#        muscle as alternative? - what is the difference?
+#        muscle as alternative? - what is the difference??
 #    conda:
 #        "orthofinder.yml"
     log:
@@ -267,11 +256,8 @@ rule orthofinder_cleanup:
         "mv {params.results_dir_1}/Orthogroup_Sequences/ {params.results_dir_2}/ && "
         "mv {params.results_dir_1}/WorkingDirectory/SpeciesTree_unrooted* {params.results_dir_2}/WorkingDirectory/ && "
         "mv {params.results_dir_1}/WorkingDirectory/*_ids/ {params.results_dir_2}/WorkingDirectory/ && "
-        "mv {params.results_dir_2} final-results/ && "
-        "rm -rf Results_*_1 && "
-        "mv Results*/Comparative_Genomics_Statistics/* final-results/Comparative_Genomics_Statistics/ && "
-        "mv Results*/Orthogroups/ final-results/ && "
-        "rm -rf Results_* "
+        "mv {params.results_dir_2} final-results/ &&"
+        "rm -rf Results_*"
 
 
 rule orthofinder_complete:

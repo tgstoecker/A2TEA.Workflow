@@ -1,0 +1,17 @@
+species	sample	unit	treatment	rep	fq1	fq2	fragment_length_mean	fragment_length_sd
+Hordeum_vulgare	Scarlett	control_1	control	1	Scarlett_control_1.1.fq.gz	Scarlett_control_1.2.fq.gz		
+Hordeum_vulgare	Scarlett	control_2	control	2	Scarlett_control_2.1.fq.gz	Scarlett_control_2.2.fq.gz		
+Hordeum_vulgare	Scarlett	control_3	control	3	Scarlett_control_3.1.fq.gz	Scarlett_control_3.2.fq.gz		
+Hordeum_vulgare	Scarlett	control_4	control	4	Scarlett_control_4.1.fq.gz	Scarlett_control_4.2.fq.gz		
+Hordeum_vulgare	Scarlett	treatment_1	treatment	1	Scarlett_drought_1.1.fq.gz	Scarlett_drought_1.2.fq.gz		
+Hordeum_vulgare	Scarlett	treatment_2	treatment	2	Scarlett_drought_2.1.fq.gz	Scarlett_drought_2.2.fq.gz		
+Hordeum_vulgare	Scarlett	treatment_3	treatment	3	Scarlett_drought_3.1.fq.gz	Scarlett_drought_3.2.fq.gz		
+Hordeum_vulgare	Scarlett	treatment_4	treatment	4	Scarlett_drought_4.1.fq.gz	Scarlett_drought_4.2.fq.gz		
+Zea_mays	B73	control_1	control	1	B73_con_1.fq.gz		100	15
+Zea_mays	B73	control_2	control	2	B73_con_2.fq.gz		100	15
+Zea_mays	B73	control_3	control	3	B73_con_3.fq.gz		100	15
+Zea_mays	B73	control_4	control	4	B73_con_4.fq.gz		100	15
+Zea_mays	B73	treatment_1	treatment	1	B73_drought_1.fq.gz		100	15
+Zea_mays	B73	treatment_2	treatment	2	B73_drought_2.fq.gz		100	15
+Zea_mays	B73	treatment_3	treatment	3	B73_drought_3.fq.gz		100	15
+Zea_mays	B73	treatment_4	treatment	4	B73_drought_4.fq.gz		100	15
