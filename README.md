@@ -9,7 +9,7 @@ We use Orthofinder2 to infer gene duplication events and correlate these with si
 
 # Current 08.06.2020:
 Installation of necessary software currently not implemented.  
-Idea is to offer two solutions - the first as decribed in the paragraph using a conda environment and a second in which all software will be installed at runtime.  
+Idea is to offer two solutions - the first as decribed in the next paragraph using a conda environment and a second in which all software will be installed at runtime.  
 Also some cleanup is necessary, namely removal of redundancy or deletion of aspects which are unused ideas, e.g. the layout of the species table still includes a genome fasta.  
 
 
