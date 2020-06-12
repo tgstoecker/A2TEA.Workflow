@@ -1,4 +1,4 @@
-species	sample	unit	treatment	rep	fq1	fq2	fragment_length_mean	fragment_length_sd
+species	sample	unit	condition	rep	fq1	fq2	fragment_length_mean	fragment_length_sd
 Hordeum_vulgare	Scarlett	control_1	control	1	Scarlett_control_1.1.fq.gz	Scarlett_control_1.2.fq.gz		
 Hordeum_vulgare	Scarlett	control_2	control	2	Scarlett_control_2.1.fq.gz	Scarlett_control_2.2.fq.gz		
 Hordeum_vulgare	Scarlett	control_3	control	3	Scarlett_control_3.1.fq.gz	Scarlett_control_3.2.fq.gz		

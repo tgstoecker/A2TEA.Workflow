@@ -133,8 +133,8 @@ rule all:
         "multiqc/multiqc_report.html",
 #        expand("R/txdbs/{species}/tx2gene_{species}.tsv", species = species),
 #        expand("R/tximport/{species}/DESeqDataSet_{species}", species = species),
-        expand("R/deseq2/{species}/dea_cdna/dea_{species}", species = CDNA_FASTA_SPECIES),
-        expand("R/deseq2/{species}/dea_gen/dea_{species}", species = GEN_FASTA_SPECIES),
+#########        expand("R/deseq2/{species}/dea_cdna/dea_{species}", species = CDNA_FASTA_SPECIES),
+#########        expand("R/deseq2/{species}/dea_gen/dea_{species}", species = GEN_FASTA_SPECIES),
 #######        expand("R/deseq2/{species}/dea/dea_{species}", species = SPECIES),
 #######        "R/deseq2/dea_final/",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
@@ -498,7 +498,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             merged.to_csv(output[0], sep="\t", index=True)
 
 
-    rule gen_fasta_deseq2:
+    rule gen_deseq2:
         input:
             "featureCounts/{species}/gene_level/counts_merged.txt",
         output:
@@ -585,13 +585,13 @@ if len(CDNA_FASTA_SPECIES) != 0:
             "scripts/tximport.R"
 
 
-    rule deseq2:
+    rule cdna_deseq2:
         input:
             "R/tximport/{species}/DESeqDataSet_{species}"
         output:
             "R/deseq2/{species}/dea_cdna/dea_{species}"
         script:
-            "scripts/deseq2.R"
+            "scripts/cdna_deseq2.R"
 
 
 
