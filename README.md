@@ -44,6 +44,13 @@ For detailed options of snakemake see: https://snakemake.readthedocs.io/en/v5.5.
 Should you want to remove the conda environment, execute
 `conda env remove -n A2TEA`
 
+# Some pointers on usage:
+Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
+However using cDNA fasta for one species and genome fasta for another is totally fine.  
+If you are using genome fasta please also provida file and path to annotation .gtf.  
+If you are using cDNA fasta then also URL to the the annotation file suffices.  
+
+
 
 ### The workflow in its current form:
 ![Alt text](./rulegraph_complete_31_05_20.svg)
