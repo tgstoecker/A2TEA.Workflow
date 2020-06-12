@@ -25,10 +25,10 @@ txi.kallisto_snakemake.wildcards <- tximport(files_snakemake.wildcards, type = "
 
 library(DESeq2)
 
-#sampleTable <- samples[1:8,"treatment", drop=FALSE]
+#sampleTable <- samples[1:8,"condition", drop=FALSE]
 rownames(samples_snakemake.wildcards) <- colnames(txi.kallisto_snakemake.wildcards$counts)
 
 
-DESeqDataSet_snakemake.wildcards <- DESeqDataSetFromTximport(txi.kallisto_snakemake.wildcards, samples_snakemake.wildcards, ~treatment)
+DESeqDataSet_snakemake.wildcards <- DESeqDataSetFromTximport(txi.kallisto_snakemake.wildcards, samples_snakemake.wildcards, ~condition)
 
 saveRDS(DESeqDataSet_snakemake.wildcards, file=snakemake@output[[1]])
