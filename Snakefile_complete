@@ -84,6 +84,42 @@ def get_PE_fastqs(wildcards):
         return
 
 
+def is_genomic_fasta_present(w):
+    """Determine whether species is to be analysed with genomic or transcriptomic read workflow"""
+    """If genomic fasta is given in species table, genomic workflow is chosen"""
+    genomic_fasta_present = pd.isnull(species_table.loc[(w), "cDNA_fasta"])
+    return genomic_fasta_present
+
+
+def all_species_with_genomic_fasta(sp):
+    gen_fasta_species = []
+    for i in sp:
+        if is_genomic_fasta_present(i) == True:
+            gen_fasta_species.append(i)
+    return gen_fasta_species
+
+def all_species_with_cDNA_fasta(sp):
+    cDNA_fasta_species = []
+    for i in sp:
+        if is_genomic_fasta_present(i) == False:
+            cDNA_fasta_species.append(i)
+    return cDNA_fasta_species
+
+
+GEN_FASTA_SPECIES = all_species_with_genomic_fasta(SPECIES)  
+CDNA_FASTA_SPECIES = all_species_with_cDNA_fasta(SPECIES)
+
+
+#create subsets of samples depending on which input is given
+CDNA_FASTA_SAMPLES = samples[samples['species'].isin(CDNA_FASTA_SPECIES)]
+GEN_FASTA_SAMPLES = samples[samples['species'].isin(GEN_FASTA_SPECIES)]
+
+#write GEN_FASTA_SAMPLES to file for easy use in R later on
+GEN_FASTA_SAMPLES.to_csv(r'gen_fasta_samples.csv', sep='\t', index = False)
+
+
+
+
 
 rule all:
     input:
@@ -97,7 +133,11 @@ rule all:
         "multiqc/multiqc_report.html",
 #        expand("R/txdbs/{species}/tx2gene_{species}.tsv", species = species),
 #        expand("R/tximport/{species}/DESeqDataSet_{species}", species = species),
-        expand("R/deseq2/{species}/dea/dea_{species}", species = SPECIES),
+        expand("R/deseq2/{species}/dea_cdna/dea_{species}", species = CDNA_FASTA_SPECIES),
+        expand("R/deseq2/{species}/dea_gen/dea_{species}", species = GEN_FASTA_SPECIES),
+#######        expand("R/deseq2/{species}/dea/dea_{species}", species = SPECIES),
+#######        "R/deseq2/dea_final/",
+        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
 #        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
 #        ORTHOFINDER + "prepare.check",
 #        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
@@ -157,27 +197,88 @@ rule fastqc_trimmed:
         "fastqc -t {threads} -o fastqc/trimmed/ {params.file}"
 
 
-rule multiqc:
-    input:
-        fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
-        fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
-        fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
-        fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
-        fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
-        fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
-        trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
-        trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
-        kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
-    output:
-        "multiqc/multiqc_report.html"
-    params:
-        plot = "-ip",
-        trimmomatic = "logs/trimmomatic/",
-        kallisto = "logs/kallisto/quant/",
-    log:
-        "logs/multiqc/multiqc.log"
-    shell:
-        "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
+
+####there has to be a better way than to have three different multiqc rules here...
+
+if len(GEN_FASTA_SPECIES) != 0:
+    if len(CDNA_FASTA_SPECIES) != 0:
+        rule multiqc:
+            input:
+                fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+                trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+                kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
+                star = expand("star/{sample.species}/{sample.sample}_{sample.unit}_Log.final.out", sample=GEN_FASTA_SAMPLES.itertuples()),
+                featureCounts = expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
+            output:
+                "multiqc/multiqc_report.html"
+            params:
+                plot = "-ip",
+                trimmomatic = "logs/trimmomatic/",
+                kallisto = "logs/kallisto/quant/",
+                star = "star/",
+                featureCounts = "featureCounts/",
+            log:
+                "logs/multiqc/multiqc.log"
+            shell:
+                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} {params.star} {params.featureCounts} -o multiqc/"
+
+
+if len(GEN_FASTA_SPECIES) != 0:
+    if len(CDNA_FASTA_SPECIES) == 0:
+        rule multiqc:
+            input:
+                fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+                trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+                star = expand("star/{sample.species}/{sample.sample}_{sample.unit}_Log.final.out", sample=GEN_FASTA_SAMPLES.itertuples()),
+                featureCounts = expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
+            output:
+                "multiqc/multiqc_report.html"
+            params:
+                plot = "-ip",
+                trimmomatic = "logs/trimmomatic/",
+                star = "star/",
+                featureCounts = "featureCounts/",
+            log:
+                "logs/multiqc/multiqc.log"
+            shell:
+                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.star} {params.featureCounts} -o multiqc/"
+
+
+if len(GEN_FASTA_SPECIES) == 0:
+    if len(CDNA_FASTA_SPECIES) != 0:
+        rule multiqc:
+            input:
+                fqc_raw_1 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_raw_2 = expand("checks/fastqc/raw/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_raw_3 = expand("checks/fastqc/raw/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_1 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=SE_samples.itertuples()),
+                fqc_trimmed_2 = expand("checks/fastqc/trimmed/{sample.fq1}.check", sample=PE_samples.itertuples()),
+                fqc_trimmed_3 = expand("checks/fastqc/trimmed/{sample.fq2}.check", sample=PE_samples.itertuples()),
+                trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
+                trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
+                kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
+            output:
+                "multiqc/multiqc_report.html"
+            params:
+                plot = "-ip",
+                trimmomatic = "logs/trimmomatic/",
+                kallisto = "logs/kallisto/quant/",
+            log:
+                "logs/multiqc/multiqc.log"
+            shell:
+                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
 
 
 ########
@@ -250,80 +351,287 @@ rule trim_cleanup:
         "rm -r trimmed/unpaired/"
 
 
-######
+
+if len(GEN_FASTA_SPECIES) != 0:
+#######
+#STAR
+#######
+    rule STAR_index:
+        input:
+            fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species],
+            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+        output:
+            directory("FGS/{species}")
+        message:
+            "Creating STAR index"
+        params:
+            extra = "",
+            threads= config["threads_star_index"],
+            length = config["read_length_star_index"],
+            size = config["limitGenomeGenerateRAM"],
+            temp_dir = "STAR_tmp_{species}",
+            #possible to add params here, by referring to the table like this:
+            #SampleSM = lambda wildcards: list(units_table.SampleSM[units_table.Unit == wildcards.unit]),
+        log:
+            "logs/star_index/{species}.log"
+        shell:
+            'mkdir {output} && '
+            'STAR --runThreadN {params.threads} '
+            '--runMode genomeGenerate '
+            '--genomeDir {output} '
+            '--limitGenomeGenerateRAM {params.size} '
+            '--genomeFastaFiles {input.fasta} '
+            '--sjdbGTFfile {input.annotation} '
+            '--sjdbOverhang {params.length} '
+            '--outTmpDir {params.temp_dir}'
+
+
+    def get_GEN_FASTA_trimmed_fastqs(wildcards):
+        """Get raw FASTQ files from unit sheet."""
+        if is_single_end(wildcards.sample, wildcards.unit):
+            s = GEN_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+            return [ f"trimmed/{s.fq1}" ]
+        else:
+            u = GEN_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+            return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]
+
+
+    rule STAR_align:
+            input:
+                sample = get_GEN_FASTA_trimmed_fastqs,
+                dir = expand("FGS/{species}", species = GEN_FASTA_SPECIES),
+            output:
+               # see STAR manual for additional output files -
+                "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+#            log:
+#                "logs/star/{sample}_{treatment}.log"
+            threads: config["threads_star"]
+            params:
+                correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
+                rest = config["STAR"],
+            shell:
+                'STAR --runThreadN {threads} '
+                '--genomeDir FGS/{params.correct_genome} '
+                '--readFilesIn {input.sample} '
+                '--readFilesCommand zcat '
+                '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
+                '{params.rest}'
+
+
+    rule index_BAMs:
+        input:
+            "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam"
+        output:
+            "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam.csi"
+        params:
+###        threads = config["threads_index_sorted_bams_with_dups"],
+            index_type = "-c"
+        threads:
+            config["threads_index_sorted_bams_with_dups"],
+        shell:
+            "samtools index {params.index_type} -@ {threads} {input}"
+
+
+    def get_paired_info(wildcards):
+        """Get raw FASTQ files from unit sheet."""
+        if not is_single_end(wildcards.sample, wildcards.unit):
+            return [ f"-p" ]
+        else:
+            return [ f"" ]
+
+
+    rule featureCounts:
+        input:
+            bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+#         bams= get_bams,
+#         bams= expand("star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam", lambda wildcards: samples.species[samples.sample == wildcards.sample]),
+        output:
+            gene_level="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt",
+#            transcript_level="featureCounts/{species}/transcript_level/{sample}_{unit}_counts.txt",
+            gene_level_summary="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt.summary",
+#        dir=directory("featureCounts/{species}/gene_level/"),
+#        ok="{species}_{sample}_{unit}.ok",
+#        dir="featureCounts/",
+        params:
+#        gtf = expand("FGS/{annotation}.gtf", annotation=config["annotation"]),
+            #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
+            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[9:],
+#         gtf = "FGS/Hordeum_vulgare.IBSC_v2.46.gtf",
+            paired= get_paired_info,
+        log:
+            gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
+            transcript_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_transcript.log",
+        threads:
+            config["threads_featureCounts"]
+        shell:
+            "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {params.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
+#        "featureCounts -T {threads} {params.paired} -O -M -t exon -g transcript_id -a {params.gtf} -o {output.transcript_level} {input.bams} 2> {log.transcript_level} "
+#        "touch check.ok"
+
+
+    def getCountsForSpecies(wildcards):
+        counts = list()
+        # only the actual counts (ending with .txt) are considered in the diectory
+        # also the output is sorted - when sticking to control and treatment everything is as it should
+        # control 1-4, treatment 1-4
+        for c in sorted(os.listdir("featureCounts/"+wildcards.species+"/gene_level/")):
+            if c.endswith(".txt"):
+                counts.append(os.path.join("featureCounts/",wildcards.species,"gene_level/",c))
+        return counts
+
+
+    rule merge_counts:
+        input:
+#        dir=expand("featureCounts/{species}/gene_level/", species=samples.species, sample=samples.sample, unit=samples.unit),
+            expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt", sample=GEN_FASTA_SAMPLES.itertuples()),
+#        counts=getCountsForSpecies,
+        output:
+            "featureCounts/{species}/gene_level/counts_merged.txt",
+        params:
+            counts=getCountsForSpecies,
+        run:
+            # Merge count files.
+            frames = (pd.read_csv(fp, sep="\t", skiprows=1,
+                            index_col=list(range(6)))
+                for fp in params.counts)
+            merged = pd.concat(frames, axis=1)
+            merged.to_csv(output[0], sep="\t", index=True)
+
+
+    rule gen_fasta_deseq2:
+        input:
+            "featureCounts/{species}/gene_level/counts_merged.txt",
+        output:
+            "R/deseq2/{species}/dea_gen/dea_{species}"
+        params:
+            species = lambda wildcards: samples.species[samples.species == wildcards.species],
+        script:
+            "scripts/gen_fasta_deseq2.R"
+
+
+
+if len(CDNA_FASTA_SPECIES) != 0:
+##########
 #kallisto
-######
+##########
+    rule kallisto_index:
+        input:
+            fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
+#            fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
+        output:
+            "kallisto_indexes/{species}.idx"
+        log:
+            "logs/kallisto/indexes/{species}.log"
+        threads: 1
+        shell:
+            "kallisto index -i {output} {input.fasta}"
 
 
-rule kallisto_index:
-    input:
-        fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
-    output:
-        "kallisto_indexes/{species}.idx"
-    log:
-        "logs/kallisto/indexes/{species}.log"
-    threads: 1
-    shell:
-        "kallisto index -i {output} {input.fasta}"
+    def get_paired_info(wildcards):
+        """Get single/paired sample information from sample sheet."""
+        opt = ""
+        if not is_single_end(wildcards.sample, wildcards.unit):
+            return [ f"" ]
+        else:
+            opt += "--single "
+            opt += ("--fragment-length {sample.fragment_length_mean} "
+                    "--sd {sample.fragment_length_sd}").format(
+                           sample=CDNA_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit)])
+            return opt
 
 
-def get_paired_info(wildcards):
-    """Get single/paired sample information from sample sheet."""
-    opt = ""
-    if not is_single_end(wildcards.sample, wildcards.unit):
-        return [ f"" ]
-    else:
-        opt += "--single "
-        opt += ("--fragment-length {sample.fragment_length_mean} "
-                "--sd {sample.fragment_length_sd}").format(
-                       sample=samples.loc[(wildcards.sample, wildcards.unit)])
-        return opt
+    def get_CDNA_FASTA_trimmed_fastqs(wildcards):
+        """Get raw FASTQ files from unit sheet."""
+        if is_single_end(wildcards.sample, wildcards.unit):
+            s = CDNA_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
+            return [ f"trimmed/{s.fq1}" ]
+        else:
+                u = CDNA_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
+                return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]
 
 
-rule kallisto_quant:
-    input:
-        trim_check = "checks/trimmed/trim_cleanup.check",
-        index = "kallisto_indexes/{species}.idx",
-    output:
-        directory("kallisto_quant/{species}/{sample}_{unit}")
-    log:
-        "logs/kallisto/quant/{species}/{sample}_{unit}.quant.log"
-    params:
-        paired = get_paired_info,
-        input = get_trimmed_fastqs,
-        bootstrap = "0", # 100; if we wanted to work on transcript level and make use of the bootstraps
-    threads:
-        config["threads_kallisto_quant"]
-    shell:
-        "kallisto quant -i {input.index} -o {output} -b {params.bootstrap} -t {threads} "
-        "{params.paired} {params.input} 2> {log}"
+
+    rule kallisto_quant:
+        input:
+            trim_check = "checks/trimmed/trim_cleanup.check",
+            index = "kallisto_indexes/{species}.idx",
+        output:
+            directory("kallisto_quant/{species}/{sample}_{unit}")
+        log:
+            "logs/kallisto/quant/{species}/{sample}_{unit}.quant.log"
+        params:
+            paired = get_paired_info,
+            input = get_CDNA_FASTA_trimmed_fastqs,
+            bootstrap = "0", # 100; if we wanted to work on transcript level and make use of the bootstraps
+        threads:
+            config["threads_kallisto_quant"]
+        shell:
+            "kallisto quant -i {input.index} -o {output} -b {params.bootstrap} -t {threads} "
+            "{params.paired} {params.input} 2> {log}"
 
 
 ########
 #diff. exp
 ########
+    rule tximport_and_setup:
+        input:
+            expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
+        output:
+            "R/tximport/{species}/DESeqDataSet_{species}"
+        params:
+            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+            species = lambda wildcards: samples.species[samples.species == wildcards.species],
+        script:
+            "scripts/tximport.R"
+
+
+    rule deseq2:
+        input:
+            "R/tximport/{species}/DESeqDataSet_{species}"
+        output:
+            "R/deseq2/{species}/dea_cdna/dea_{species}"
+        script:
+            "scripts/deseq2.R"
 
 
 
-rule tximport_and_setup:
-    input:
-        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
-    output:
-        "R/tximport/{species}/DESeqDataSet_{species}"
-    params:
-        annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
-        species = lambda wildcards: samples.species[samples.species == wildcards.species],
-    script:
-        "scripts/tximport.R"
+if len(CDNA_FASTA_SPECIES) != 0:
+    if len(GEN_FASTA_SPECIES) != 0:
+        rule deseq2_complete:
+            input:
+                cdna = expand("R/deseq2/{species}/dea_cdna/dea_{species}", species=CDNA_FASTA_SPECIES),
+                gen = expand("R/deseq2/{species}/dea_gen/dea_{species}", species=GEN_FASTA_SPECIES),
+            output:
+#                directory("R/deseq2/dea_final/")
+                expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+            shell:
+                "cp R/deseq2/*/dea_cdna/* R/deseq2/dea_final/ && "
+                "cp R/deseq2/*/dea_gen/* R/deseq2/dea_final/"
 
 
-rule deseq2:
-    input:
-        "R/tximport/{species}/DESeqDataSet_{species}"
-    output:
-        "R/deseq2/{species}/dea/dea_{species}"
-    script:
-        "scripts/deseq2.R"
+if len(CDNA_FASTA_SPECIES) != 0:
+    if len(GEN_FASTA_SPECIES) == 0:
+        rule deseq2_complete:
+            input:
+                cdna = expand("R/deseq2/{species}/dea_cdna/dea_{species}", species=CDNA_FASTA_SPECIES),
+            output:
+#                directory("R/deseq2/dea_final/"),
+                expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+            shell:
+                "cp R/deseq2/*/dea_cdna/* R/deseq2/dea_final/"
+
+
+if len(CDNA_FASTA_SPECIES) == 0:
+    if len(GEN_FASTA_SPECIES) != 0:
+        rule deseq2_complete:
+            input:
+                gen = expand("R/deseq2/{species}/dea_gen/dea_{species}", species=GEN_FASTA_SPECIES),
+            output:
+#                directory("R/deseq2/dea_final/"),
+                expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+            shell:
+                "cp R/deseq2/*/dea_gen/* R/deseq2/dea_final/"
+
 
 
 
