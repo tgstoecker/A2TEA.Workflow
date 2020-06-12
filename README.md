@@ -53,5 +53,5 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 
 
 ### The workflow in its current form:
-![Alt text](./rulegraph_complete_31_05_20.svg)
+![Alt text](./latest_rulegraph.svg)
 
