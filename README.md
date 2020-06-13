@@ -7,12 +7,6 @@ We use Orthofinder2 to infer gene duplication events and correlate these with si
 ((Transcriptome assemblies -> AHRD annotation also possible...))
 
 
-# Current:
-Installation of necessary software currently not implemented.  
-Idea is to offer two solutions - the first as decribed in the next paragraph using a conda environment and a second in which all software will be installed at runtime.  
-Also some cleanup is necessary, namely removal of redundancy or deletion of aspects which are unused ideas, e.g. the layout of the species table still includes a genome fasta.  
-
-
 # Setup:
 Install the Python 3 version of Miniconda.
 you can get it here: https://docs.conda.io/en/latest/miniconda.html
@@ -62,7 +56,7 @@ Should you want to remove the conda environment, execute
 # Some additional important pointers on usage:
 1) Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
   However using cDNA fasta for one species and genome fasta for another is totally fine.  
-2)  If you are using genome fasta please also provide file and path to annotation .gtf.  
+2) If you are using genome fasta please also provide file and path to annotation .gtf.  
 If you are using cDNA fasta then also URL to the the annotation file suffices.  
 3) Peptide & genome FASTA as well as GTF files shouldn't be compressed; cDNA FASTA should be gzipped
 4) Fastq files should also be gzipped
