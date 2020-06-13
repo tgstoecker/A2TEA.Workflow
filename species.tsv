@@ -1,5 +1,5 @@
 species	pep_fasta	cDNA_fasta	gen_fasta	annotation
-Zea_mays	PS/Zea_mays.B73_RefGen_v4.pep.all.fa		FGS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa	FGS/Zea_mays.B73_RefGen_v4.46.gtf
+Zea_mays	FS/Zea_mays.B73_RefGen_v4.pep.all.fa		FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa	FS/Zea_mays.B73_RefGen_v4.46.gtf
 
-Hordeum_vulgare	PS/Hordeum_vulgare.IBSC_v2.pep.all.fa	FGS/Hordeum_vulgare.IBSC_v2.cdna.all.fa.gz		FGS/Hordeum_vulgare.IBSC_v2.46.gtf
+Hordeum_vulgare	FS/Hordeum_vulgare.IBSC_v2.pep.all.fa	FS/Hordeum_vulgare.IBSC_v2.cdna.all.fa.gz		FS/Hordeum_vulgare.IBSC_v2.46.gtf
 

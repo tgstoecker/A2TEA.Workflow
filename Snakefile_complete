@@ -119,40 +119,10 @@ GEN_FASTA_SAMPLES.to_csv(r'gen_fasta_samples.csv', sep='\t', index = False)
 
 
 
-
-
 rule all:
     input:
-##        expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
-##        expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
-##        "checks/trimmed/trim_cleanup.check",
-#        expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=samples.itertuples()),
-##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=SE_samples.itertuples()),
-##        expand("fastqc/raw/{sample.fq1}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
-##        expand("fastqc/raw/{sample.fq2}.fq.gz_fastqc.zip", sample=PE_samples.itertuples()),
         "multiqc/multiqc_report.html",
-#        expand("R/txdbs/{species}/tx2gene_{species}.tsv", species = species),
-#        expand("R/tximport/{species}/DESeqDataSet_{species}", species = species),
-#########        expand("R/deseq2/{species}/dea_cdna/dea_{species}", species = CDNA_FASTA_SPECIES),
-#########        expand("R/deseq2/{species}/dea_gen/dea_{species}", species = GEN_FASTA_SPECIES),
-#######        expand("R/deseq2/{species}/dea/dea_{species}", species = SPECIES),
-#######        "R/deseq2/dea_final/",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
-#        expand(ORTHOFINDER + "{species}.fa", species=SPECIES),
-#        ORTHOFINDER + "prepare.check",
-#        expand(ORTHOFINDER + "Species{species_number}.fa", species_number=[x for x in range(0, N_SPECIES)]),
-#        expand(ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd", database_number=[x for x in range(0, N_SPECIES)]),
-#        expand(ORTHOFINDER + "Species{species_number}.fa.fai", species_number=[x for x in range(0, N_SPECIES)]),
-#        expand(ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv", species_number=[x for x in range(0, N_SPECIES)], chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)]),
-#        expand(ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv",
-#            species_number=[x for x in range(0, N_SPECIES)],
-#                chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)],
-#                    database_number=[x for x in range(0, N_SPECIES)]),
-#        expand(ORTHOFINDER + "Blast{species_number}_{database_number}.txt", species_number=[x for x in range(0, N_SPECIES)], database_number=[x for x in range(0, N_SPECIES)]),
-#        ORTHOFINDER + "groups.check",
-#        ORTHOFINDER + "trees.check",
-#        ORTHOFINDER + "orthologues.check",
-#        ORTHOFINDER + "cleanup.check",
         ORTHOFINDER + "complete.check",
 
 
@@ -169,7 +139,7 @@ if not os.path.exists(FQC_TRIM_DIR):
 
 
 #rawreads fastqc
-rule fastqc_raw:
+rule FastQC_raw:
     input:
         "rawreads/{file}",
     output:
@@ -182,7 +152,7 @@ rule fastqc_raw:
 
 
 #trimmed reads fastqc
-rule fastqc_trimmed:
+rule FastQC_trimmed:
     input:
         trim_check = "checks/trimmed/trim_cleanup.check",
         raw = "checks/fastqc/raw/{file}.check",
@@ -282,10 +252,10 @@ if len(GEN_FASTA_SPECIES) == 0:
 
 
 ########
-#trimmomatic
+#Trimmomatic
 ########
 
-ruleorder: trimmomatic_PE > trimmomatic_SE
+ruleorder: Trimmomatic_PE > Trimmomatic_SE
 
 
 def get_trimmed_PE_output(wildcards):
@@ -307,7 +277,7 @@ if not os.path.exists(TRIM_DIR):
     os.makedirs(TRIM_DIR)
 
 
-rule trimmomatic_PE:
+rule Trimmomatic_PE:
     input:
         get_PE_fastqs,
     output:
@@ -324,7 +294,7 @@ rule trimmomatic_PE:
         "trimmomatic PE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
 
 
-rule trimmomatic_SE:
+rule Trimmomatic_SE:
     input:
         get_SE_fastqs,
     output:
@@ -341,7 +311,7 @@ rule trimmomatic_SE:
         "trimmomatic SE -threads {threads} {input} {params.out} {params.trimmer} 2> {log}"
 
 
-rule trim_cleanup:
+rule Trimmomatic_cleanup:
     input:
         expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
         expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
@@ -361,7 +331,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species],
             annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
         output:
-            directory("FGS/{species}")
+            directory("FS/STAR_indexes/{species}")
         message:
             "Creating STAR index"
         params:
@@ -373,7 +343,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             #possible to add params here, by referring to the table like this:
             #SampleSM = lambda wildcards: list(units_table.SampleSM[units_table.Unit == wildcards.unit]),
         log:
-            "logs/star_index/{species}.log"
+            "logs/star_index/{species}/Log.out"
         shell:
             'mkdir {output} && '
             'STAR --runThreadN {params.threads} '
@@ -383,7 +353,8 @@ if len(GEN_FASTA_SPECIES) != 0:
             '--genomeFastaFiles {input.fasta} '
             '--sjdbGTFfile {input.annotation} '
             '--sjdbOverhang {params.length} '
-            '--outTmpDir {params.temp_dir}'
+            '--outTmpDir {params.temp_dir} '
+            '--outStd {log}'
 
 
     def get_GEN_FASTA_trimmed_fastqs(wildcards):
@@ -399,14 +370,13 @@ if len(GEN_FASTA_SPECIES) != 0:
     rule STAR_align:
             input:
                 trim_check = "checks/trimmed/trim_cleanup.check",
-#                sample = get_GEN_FASTA_trimmed_fastqs,
-                dir = expand("FGS/{species}", species = GEN_FASTA_SPECIES),
+                dir = expand("FS/STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
             output:
                # see STAR manual for additional output files -
                 align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
-                log = "star/{species}/{sample}_{unit}_Log.final.out"
-#            log:
-#                "logs/star/{sample}_{treatment}.log"
+#                log = "star/{species}/{sample}_{unit}_Log.final.out"
+            log:
+                "star/{species}/{sample}_{unit}_Log.final.out"
             threads: config["threads_star"]
             params:
                 correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
@@ -414,7 +384,7 @@ if len(GEN_FASTA_SPECIES) != 0:
                 sample = get_GEN_FASTA_trimmed_fastqs,
             shell:
                 'STAR --runThreadN {threads} '
-                '--genomeDir FGS/{params.correct_genome} '
+                '--genomeDir FS/{params.correct_genome} '
                 '--readFilesIn {params.sample} '
                 '--readFilesCommand zcat '
                 '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
@@ -427,7 +397,7 @@ if len(GEN_FASTA_SPECIES) != 0:
         output:
             "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam.csi"
         params:
-###        threads = config["threads_index_sorted_bams_with_dups"],
+#        threads = config["threads_index_sorted_bams_with_dups"],
             index_type = "-c"
         threads:
             config["threads_index_sorted_bams_with_dups"],
@@ -446,20 +416,13 @@ if len(GEN_FASTA_SPECIES) != 0:
     rule featureCounts:
         input:
             bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
-#         bams= get_bams,
-#         bams= expand("star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam", lambda wildcards: samples.species[samples.sample == wildcards.sample]),
         output:
             gene_level="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt",
 #            transcript_level="featureCounts/{species}/transcript_level/{sample}_{unit}_counts.txt",
             gene_level_summary="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt.summary",
-#        dir=directory("featureCounts/{species}/gene_level/"),
-#        ok="{species}_{sample}_{unit}.ok",
-#        dir="featureCounts/",
         params:
-#        gtf = expand("FGS/{annotation}.gtf", annotation=config["annotation"]),
             #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
             gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[9:],
-#         gtf = "FGS/Hordeum_vulgare.IBSC_v2.46.gtf",
             paired= get_paired_info,
         log:
             gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
@@ -469,7 +432,6 @@ if len(GEN_FASTA_SPECIES) != 0:
         shell:
             "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {params.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
 #        "featureCounts -T {threads} {params.paired} -O -M -t exon -g transcript_id -a {params.gtf} -o {output.transcript_level} {input.bams} 2> {log.transcript_level} "
-#        "touch check.ok"
 
 
     def getCountsForSpecies(wildcards):
@@ -485,9 +447,7 @@ if len(GEN_FASTA_SPECIES) != 0:
 
     rule merge_counts:
         input:
-#        dir=expand("featureCounts/{species}/gene_level/", species=samples.species, sample=samples.sample, unit=samples.unit),
             expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt", sample=GEN_FASTA_SAMPLES.itertuples()),
-#        counts=getCountsForSpecies,
         output:
             "featureCounts/{species}/gene_level/counts_merged.txt",
         params:
@@ -501,7 +461,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             merged.to_csv(output[0], sep="\t", index=True)
 
 
-    rule gen_deseq2:
+    rule gen_DESeq2:
         input:
             "featureCounts/{species}/gene_level/counts_merged.txt",
         output:
@@ -520,7 +480,6 @@ if len(CDNA_FASTA_SPECIES) != 0:
     rule kallisto_index:
         input:
             fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
-#            fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
         output:
             "kallisto_indexes/{species}.idx"
         log:
@@ -588,7 +547,7 @@ if len(CDNA_FASTA_SPECIES) != 0:
             "scripts/tximport.R"
 
 
-    rule cdna_deseq2:
+    rule cdna_DESeq2:
         input:
             "R/tximport/{species}/DESeqDataSet_{species}"
         output:
@@ -605,7 +564,6 @@ if len(CDNA_FASTA_SPECIES) != 0:
                 cdna = expand("R/deseq2/{species}/dea_cdna/dea_{species}", species=CDNA_FASTA_SPECIES),
                 gen = expand("R/deseq2/{species}/dea_gen/dea_{species}", species=GEN_FASTA_SPECIES),
             output:
-#                directory("R/deseq2/dea_final/")
                 expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
             shell:
                 "cp R/deseq2/*/dea_cdna/* R/deseq2/dea_final/ && "
@@ -618,7 +576,6 @@ if len(CDNA_FASTA_SPECIES) != 0:
             input:
                 cdna = expand("R/deseq2/{species}/dea_cdna/dea_{species}", species=CDNA_FASTA_SPECIES),
             output:
-#                directory("R/deseq2/dea_final/"),
                 expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
             shell:
                 "cp R/deseq2/*/dea_cdna/* R/deseq2/dea_final/"
@@ -630,57 +587,46 @@ if len(CDNA_FASTA_SPECIES) == 0:
             input:
                 gen = expand("R/deseq2/{species}/dea_gen/dea_{species}", species=GEN_FASTA_SPECIES),
             output:
-#                directory("R/deseq2/dea_final/"),
                 expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
             shell:
                 "cp R/deseq2/*/dea_gen/* R/deseq2/dea_final/"
 
 
 
-
-#advantages kmer pseudoalignment, also easy isoform trimming etc. beforehand can reduce amount of work - generally I guess many advantages
-#trim options final
-#write fragment length and sd note
-#fastqc
-#multiqc
-#--use-conda and yaml files, to have tight version control
-#report? should check that out
-
-
 #####
-#Orthofinder part
+#Orthofinder
 #####
-
 
 def get_species_fasta(wildcards):
     return species_table.loc[wildcards.species]["pep_fasta"]
 
 
 def get_longest_isoforms(wildcards):
-    return os.path.join("PS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
+    return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
 
 
 rule filter_isoforms:
     output:
-        "PS/longest_isoforms/{species}.fa"
+        "FS/longest_isoforms/{species}.fa"
     params: 
-        fa= get_species_fasta,
-        iso= get_longest_isoforms,
+        fa = get_species_fasta,
+        iso = get_longest_isoforms,
     shell:
         "python scripts/longest_isoforms.py {params.fa} && "
         "mv {params.iso} {output}"
 
 
-rule orthofinder_link_all:
+rule Orthofinder_link_all:
     input:
-        "PS/longest_isoforms/{species}.fa",
-    output: ORTHOFINDER + "{species}.fa"
+        "FS/longest_isoforms/{species}.fa",
+    output:
+        ORTHOFINDER + "{species}.fa"
     params: get_longest_isoforms,
     shell: 
         "ln --symbolic $(readlink --canonicalize {input}) {output}"
 
 
-rule orthofinder_prepare:
+rule Orthofinder_prepare:
     "Split fasta files, rename species and sequences and prepare blast databases"
     input:
         fastas = expand(ORTHOFINDER + "{species}.fa", species=SPECIES)
@@ -708,7 +654,7 @@ rule orthofinder_prepare:
          "rm --recursive --force {params.temp_dir1}"
 
 
-rule index_pep_fastas:
+rule index_pep_FASTAs:
     input:
         ORTHOFINDER + "Species{species_number}.fa",
     output:
@@ -717,7 +663,7 @@ rule index_pep_fastas:
         "samtools faidx {input}"
 
 
-rule orthofinder_split:
+rule Orthofinder_split:
     "Split the headers of the input pep fastas into multiple files"
     input:
         fai = ancient(ORTHOFINDER + "Species{species_number}.fa.fai")
@@ -745,7 +691,7 @@ rule orthofinder_split:
         "2> {log}"
 
 
-rule orthofinder_blastp:
+rule Orthofinder_BLASTP:
     "Run blastp of each chunk"
     input:
         fasta = ORTHOFINDER + "Species{species_number}.fa",
@@ -773,7 +719,7 @@ rule orthofinder_blastp:
         "2> {log} 1>&2"
 
 
-rule orthofinder_blastp_merge:
+rule Orthofinder_BLASTP_merge:
     "Merge results from the different blastps"
     input:
         expand(ORTHOFINDER + "{{species_number}}/{{database_number}}/blastp_{chunk_id}.tsv", chunk_id = ['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
@@ -789,7 +735,7 @@ rule orthofinder_blastp_merge:
         "cat {input} > {output} 2> {log}"
 
 
-rule orthofinder_groups:
+rule Orthofinder_orthogroups:
     "Join blastp results, normalize bitscores and run mcl"
     input:
         tsv = expand(ORTHOFINDER + "Blast{database_number}_{species_number}.txt",
@@ -818,8 +764,9 @@ rule orthofinder_groups:
         "mv {params.temp_dir}/ {params.fasta_dir} "
 
 
-rule orthofinder_trees:
-    input: rules.orthofinder_groups.output
+rule Orthofinder_Trees:
+    input:
+        rules.Orthofinder_orthogroups.output
     output:
         touch(ORTHOFINDER + "trees.check")
     params:
@@ -846,13 +793,16 @@ rule orthofinder_trees:
         "2> {log} 1>&2"
 
 
-rule orthofinder_orthologues:
-    input: ORTHOFINDER + "trees.check"
-    output: touch(ORTHOFINDER + "orthologues.check")
+rule Orthofinder_orthologues:
+    input:
+        ORTHOFINDER + "trees.check"
+    output:
+        touch(ORTHOFINDER + "orthologues.check")
 #    conda: "orthofinder.yml"
     params:
         orthofinder_dir = ORTHOFINDER + "Results_*_1",
-    log: "logs/orthofinder/orthologues.log"
+    log:
+        "logs/orthofinder/orthologues.log"
     threads: 24
     shell:
         "orthofinder "
@@ -862,15 +812,18 @@ rule orthofinder_orthologues:
         "2> {log} 1>&2"
 
 
-rule orthofinder_cleanup:
-    input: ORTHOFINDER + "orthologues.check"
-    output: touch(ORTHOFINDER + "cleanup.check")
+rule Orthofinder_cleanup:
+    input:
+        ORTHOFINDER + "orthologues.check"
+    output:
+        touch(ORTHOFINDER + "cleanup.check")
     params:
         orthofinder_dir = ORTHOFINDER,
         n_species = N_SPECIES - 1,
         results_dir_1 = "Results_*_1",
         results_dir_2 = "Results_*_2",
-    log: "logs/orthofinder/clean.log"
+    log:
+        "logs/orthofinder/clean.log"
     shell:
         "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
         "mkdir search/ && "
@@ -892,7 +845,8 @@ rule orthofinder_cleanup:
         "rm -rf Results_* "
 
 
-rule orthofinder_complete:
-    input: ORTHOFINDER + "cleanup.check"
-    output: touch(ORTHOFINDER + "complete.check")
-
+rule Orthofinder_complete:
+    input:
+        ORTHOFINDER + "cleanup.check"
+    output:
+        touch(ORTHOFINDER + "complete.check")

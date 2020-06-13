@@ -1,25 +1,8 @@
-
-### enter genome and gtf file names without extension/ending
-genome: Hordeum_vulgare.IBSC_v2.dna.toplevel
-annotation: Hordeum_vulgare.IBSC_v2.46
-
-#### Single end or Paired end ####
-### choose either SE or PE in the following option ###
-
-#sequencing_type: "single_end"
-sequencing_type: "paired_end"
-
-### define format of the files by uncommenting the appropriate file  ###
-#sample_names: "rawreads/{sample}.fq.gz"
-sample_names: "rawreads/{sample}_1.fq.gz"
-
-
 #### define options of your individual rules here: #####
 ### number of maximum threads for each run of sample during a specfifc rule: ###
 ### for fastqc and trimmomatic the the thread usage is put to 2 and 4 respectively - IMO best in most cases ###
 
 threads_kallisto_quant: 6
-#threads_bbduk: 2
 threads_star_index: 8
 threads_trimmomatic: 6
 threads_star: 6
@@ -29,36 +12,8 @@ threads_index_sorted_bams_without_dups: 4
 threads_featureCounts: 2
 
 
-
-## genome size: choose big_genome if your contiqs exceed the 2^29 .bai index limit 
-## this option determines whether picard or samtools markdup is used for removal of duplicates
-## also, if big_genome is chosen mutlqic is run without the expectation of the picard output (samtools markdup is not yet supported by multiqc - however we save some stats in the logs directory)
-## this is the standard, if you switch to small_genome you have to uncomment the line corresponding to picard in the multiqc rule(s)
-genome_size: "big_genome"
-#genome_size: "small_genome"
-
-
-
-### this workflow creates csi indexes because I usually work with larger genomes  ###
-### if bai indexes are specifically needed then: ###
-## 1.) go into the Snakefile and change .csi entries to .bai under rule all  ###
-## 2.) do the same to the two index steps at the end of the file and also change samtools index flag -c into -b  ##
-
-#choose -b for bai index and -c for .csi index - .bai index will lead to errors if used with genomes whose contiqs exceed the 2^29 size limit (so barley, wheat, etc.!!) 
-index_type: -c
-
-
-
-
-### concerning the final report, be aware that the featureCounts info is based on the gene level counts without multimappers and dups!  ###
-
-
-### other options for the individual rules; in order of the Snakefile ###
-
-##BBduk
-kmer_length: 27
-
 ### Trimmomatic
+#not yet implemented
 trim.options: "SLIDINGWINDOW:4:20 MINLEN:40"
 
 ### STAR
