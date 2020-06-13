@@ -48,6 +48,7 @@ Should you want to remove the conda environment, execute
   FASTQ files -> rawreads  
 
 2) Modify species.tsv and samples.tsv files
+-> only when using cDNA FASTA and single-end reads for a species you NEED to add information to the fragment_length_mean column (single-end read length) as well as the standard deviation to the samples.tsv file  
 
 3) Using the activated environment perform a dry-run and check for problems with:    
 `snakemake --snakefile Snakemake_complete -np`  
@@ -72,6 +73,7 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 - combination analyses of diff. exp. and orthologous groups  
 -> R shiny overlay(?) integrating the data (+ GO analysis?)  
 - more cleanup:  
+-> add more options to the config.yaml files (e.g. trimmomatic options) so that all can be changed modified there  
 -> add snakemake internal report  
 -> restructering of A2TEA to modular layout  
 -> this incl. seperate yaml files for the softwares and tools   
