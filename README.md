@@ -38,9 +38,28 @@ Now you can use the installed tools and our workflow without any software depend
 For detailed options of snakemake see: https://snakemake.readthedocs.io/en/v5.5.1/executable.html
 
 Should you want to remove the conda environment, execute
-`conda env remove -n A2TEA`
+`conda env remove -n A2TEA`  
 
-# Some pointers on usage:
+
+# General usage
+## Recommended steps
+1) Add fasta, annotation and fastq files to the input directories:  
+  FASTAs and GTFs -> INPUT  
+  FASTQ files -> rawreads  
+
+2) Modify species.tsv and samples.tsv files
+
+3) Using the activated environment perform a dry-run and check for problems with:    
+`snakemake --snakefile Snakemake_complete -np`  
+
+4) Configure the config.yaml file to your needs  
+
+5) Run A2TEA with (exchange XX for the amount of cores you can offer):  
+`snakemake --snakefile Snakemake_complete --cores XX`  
+
+
+
+# Some additional pointers on usage:
 Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
 However using cDNA fasta for one species and genome fasta for another is totally fine.  
 If you are using genome fasta please also provida file and path to annotation .gtf.  
