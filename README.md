@@ -72,7 +72,7 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 -> add snakemake internal report  
 -> restructering of A2TEA to modular layout  
 -> this incl. seperate yaml files for the softwares and tools   
-
+-> move the STAR index log to the logs/ directory  
   
   
 ### The workflow in its current form:
