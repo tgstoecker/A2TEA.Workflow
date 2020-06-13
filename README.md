@@ -44,7 +44,7 @@ Should you want to remove the conda environment, execute
 # General usage
 ## Recommended steps
 1) Add fasta, annotation and fastq files to the input directories:  
-  FASTAs and GTFs -> INPUT  
+  FASTAs and GTFs -> FS  
   FASTQ files -> rawreads  
 
 2) Modify species.tsv and samples.tsv files
@@ -58,13 +58,13 @@ Should you want to remove the conda environment, execute
 `snakemake --snakefile Snakemake_complete --cores XX`  
 
 
-
-# Some additional pointers on usage:
-Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
-However using cDNA fasta for one species and genome fasta for another is totally fine.  
-If you are using genome fasta please also provida file and path to annotation .gtf.  
+# Some additional important pointers on usage:
+1) Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
+  However using cDNA fasta for one species and genome fasta for another is totally fine.  
+2)  If you are using genome fasta please also provide file and path to annotation .gtf.  
 If you are using cDNA fasta then also URL to the the annotation file suffices.  
-
+3) Peptide & genome FASTA as well as GTF files shouldn't be compressed; cDNA FASTA should be gzipped
+4) Fastq files should also be gzipped
 
 
 ### The workflow in its current form:
