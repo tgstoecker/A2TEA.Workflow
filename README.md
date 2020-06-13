@@ -67,6 +67,17 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 4) Fastq files should also be gzipped
 
 
+# To do:
+- option for installation of all software and dependencies during runtime  
+- combination analyses of diff. exp. and orthologous groups  
+-> R shiny overlay(?) integrating the data (+ GO analysis?)  
+- more cleanup:  
+-> add snakemake internal report  
+-> restructering of A2TEA to modular layout  
+-> this incl. seperate yaml files for the softwares and tools   
+
+  
+  
 ### The workflow in its current form:
 ![Alt text](./latest_rulegraph.svg)
 
