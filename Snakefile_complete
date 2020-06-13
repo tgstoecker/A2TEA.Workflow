@@ -398,21 +398,24 @@ if len(GEN_FASTA_SPECIES) != 0:
 
     rule STAR_align:
             input:
-                sample = get_GEN_FASTA_trimmed_fastqs,
+                trim_check = "checks/trimmed/trim_cleanup.check",
+#                sample = get_GEN_FASTA_trimmed_fastqs,
                 dir = expand("FGS/{species}", species = GEN_FASTA_SPECIES),
             output:
                # see STAR manual for additional output files -
-                "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+                align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+                log = "star/{species}/{sample}_{unit}_Log.final.out"
 #            log:
 #                "logs/star/{sample}_{treatment}.log"
             threads: config["threads_star"]
             params:
                 correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
                 rest = config["STAR"],
+                sample = get_GEN_FASTA_trimmed_fastqs,
             shell:
                 'STAR --runThreadN {threads} '
                 '--genomeDir FGS/{params.correct_genome} '
-                '--readFilesIn {input.sample} '
+                '--readFilesIn {params.sample} '
                 '--readFilesCommand zcat '
                 '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
                 '{params.rest}'
