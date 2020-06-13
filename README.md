@@ -17,21 +17,17 @@ Also some cleanup is necessary, namely removal of redundancy or deletion of aspe
 Install the Python 3 version of Miniconda.
 you can get it here: https://docs.conda.io/en/latest/miniconda.html
 
-Answer yes to the question whether conda shall be put into your PATH.
-For detailed options concerning conda/bioconda see:
+Answer yes to the question whether conda shall be initialized and put into your PATH.
 
-Then, you can install Snakemake with
+Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster replacement of conda in C++) with:
 
-`conda install -c bioconda -c conda-forge snakemake=5.9.1`
-
-Preparing a working directory
-First, create a new directory and change into that directory in your terminal.
+`conda install -c conda-forge mamba`
 
 Download/Clone the current release of the A2TEA workflow into the directory.
 
 The included environment.yaml file can be used to install all required software into an isolated Conda environment with a name of your choice - in the following we will call it "A2TEA":
 
-`conda env create --name A2TEA --file environment.yaml`
+`mamba env create --name A2TEA --file environment.yaml`
 
 Activating the environment
 To activate the snakemake-tutorial environment, execute
