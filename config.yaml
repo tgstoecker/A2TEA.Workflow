@@ -20,13 +20,13 @@ sample_names: "rawreads/{sample}_1.fq.gz"
 
 threads_kallisto_quant: 6
 #threads_bbduk: 2
-#threads_star_index: 8
+threads_star_index: 8
 threads_trimmomatic: 6
-#threads_star: 6
-#threads_samtools_markdup: 4
-#threads_index_sorted_bams_with_dups: 4
-#threads_index_sorted_bams_without_dups: 4
-#threads_featureCounts: 2
+threads_star: 6
+threads_samtools_markdup: 4
+threads_index_sorted_bams_with_dups: 4
+threads_index_sorted_bams_without_dups: 4
+threads_featureCounts: 2
 
 
 
