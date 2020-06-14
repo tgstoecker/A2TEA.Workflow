@@ -331,7 +331,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species],
             annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
         output:
-            directory("FS/STAR_indexes/{species}")
+            directory("STAR_indexes/{species}")
         message:
             "Creating STAR index"
         params:
@@ -353,8 +353,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             '--genomeFastaFiles {input.fasta} '
             '--sjdbGTFfile {input.annotation} '
             '--sjdbOverhang {params.length} '
-            '--outTmpDir {params.temp_dir} '
-            '--outStd {log}'
+            '--outTmpDir {params.temp_dir}'
 
 
     def get_GEN_FASTA_trimmed_fastqs(wildcards):
@@ -370,7 +369,7 @@ if len(GEN_FASTA_SPECIES) != 0:
     rule STAR_align:
             input:
                 trim_check = "checks/trimmed/trim_cleanup.check",
-                dir = expand("FS/STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
+                dir = expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
             output:
                # see STAR manual for additional output files -
                 align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
@@ -384,7 +383,7 @@ if len(GEN_FASTA_SPECIES) != 0:
                 sample = get_GEN_FASTA_trimmed_fastqs,
             shell:
                 'STAR --runThreadN {threads} '
-                '--genomeDir FS/{params.correct_genome} '
+                '--genomeDir STAR_indexes/{params.correct_genome} '
                 '--readFilesIn {params.sample} '
                 '--readFilesCommand zcat '
                 '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
