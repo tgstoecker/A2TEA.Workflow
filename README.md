@@ -38,8 +38,8 @@ Should you want to remove the conda environment, execute
 # General usage
 ## Recommended steps
 1) Add fasta, annotation and fastq files to the input directories:  
-  FASTAs and GTFs -> FS  
-  FASTQ files -> rawreads  
+  FASTAs and GTFs -> FS/  
+  FASTQ files -> rawreads/  
 
 2) Modify species.tsv and samples.tsv files
 -> only when using cDNA FASTA and single-end reads for a species you NEED to add information to the fragment_length_mean column (single-end read length) as well as the standard deviation to the samples.tsv file  
@@ -66,7 +66,7 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 # To do:
 - option for installation of all software and dependencies during runtime  
 - combination analyses of diff. exp. and orthologous groups  
--> R shiny overlay(?) integrating the data (+ GO analysis?)  
+-> R shiny overlay(?) integrating the data (+ GO analysis?) and making them explorable (trees, etc.)  
 - more cleanup:  
 -> add more options to the config.yaml files (e.g. trimmomatic options) so that all can be changed modified there  
 -> add snakemake internal report  
