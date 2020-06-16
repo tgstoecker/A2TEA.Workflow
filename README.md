@@ -4,7 +4,7 @@ Automated Assessment of Trait specific Evolutionary Adaptations
 This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses - most notably gene family expansion events.
 We use Orthofinder2 to infer gene duplication events and correlate these with significant physiological reaction patterns in the compared species.
 
-((Transcriptome assemblies -> AHRD annotation also possible...))
+At the moment for each species A2TEA requires as input RNA-Seq reads (both PE/SE possible) suitable for a differetnial expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta.  
 
 
 # Setup:
@@ -66,13 +66,16 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 # To do:
 - option for installation of all software and dependencies during runtime  
 - combination analyses of diff. exp. and orthologous groups  
--> R shiny overlay(?) integrating the data (+ GO analysis?) and making them explorable (trees, etc.)  
+-> R shiny overlay(?) integrating the data (+ GO analysis) and making them explorable (trees, etc.)  
+(-> provide link to AHRD for researchers not possessing GO-/Annotation for their species of interest  
+
 - more cleanup:  
 -> add more options to the config.yaml files (e.g. trimmomatic options) so that all can be changed modified there  
 -> add snakemake internal report  
 -> restructering of A2TEA to modular layout  
 -> this incl. seperate yaml files for the softwares and tools   
 -> move the STAR index log to the logs/ directory  
+
   
   
 ### The workflow in its current form:
