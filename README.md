@@ -77,6 +77,7 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 (-> provide link to AHRD for researchers not possessing GO-/Annotation for their species of interest  
 
 - more cleanup:  
+-> runable on cluster (change ortho chunks?)
 -> add more options to the config.yaml files (e.g. trimmomatic options) so that all can be changed modified there  
 -> add snakemake internal report  
 -> restructering of A2TEA to modular layout  
