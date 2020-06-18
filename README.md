@@ -52,7 +52,14 @@ Should you want to remove the conda environment, execute
 5) Run A2TEA with (exchange XX for the amount of cores you can offer):  
 `snakemake --snakefile Snakemake_complete --cores XX`  
 
-
+# Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
+cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
+However, since our approach focuses on gene loci, the transcript-level quantification of kallisto needs to be aggregated to gene level as part of the differential expression analysis.  
+This is done via the "makeTxDbFromGFF" function of the "GenomicFeatures" package in R (requires as input gff3 of gtf file).  
+It works really well for the annotation files I have tested so far but this is i.m.O. a source of potential errors if e.g. non-standard annotations are used.  
+In such cases, changes to the tximport.R script in scripts/ might be necessary - or one switches to the genomic FASTA/ STAR-based approach which directly quantifies at gene-level.  
+  
+  
 # Some additional important pointers on usage:
 1) Keep/add the "FS/" before the files in the species.tsv table 
 2) Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file!  
