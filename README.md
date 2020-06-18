@@ -68,6 +68,7 @@ In such cases, changes to the tximport.R script in scripts/ might be necessary -
 If you are using cDNA fasta then also URL to the the annotation file suffices.  
 4) Peptide & genome FASTA as well as GTF files shouldn't be compressed; cDNA FASTA should be gzipped
 5) Fastq files should also be gzipped
+6) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
 
 
 # To do:
