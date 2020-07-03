@@ -45,12 +45,12 @@ Should you want to remove the conda environment, execute
 -> only when using cDNA FASTA and single-end reads for a species you NEED to add information to the fragment_length_mean column (single-end read length) as well as the standard deviation to the samples.tsv file  
 
 3) Using the activated environment perform a dry-run and check for problems with:    
-`snakemake --snakefile Snakemake_complete -np`  
+`snakemake --snakefile Snakefile_complete -np`  
 
 4) Configure the config.yaml file to your needs  
 
 5) Run A2TEA with (exchange XX for the amount of cores you can offer):  
-`snakemake --snakefile Snakemake_complete --cores XX`  
+`snakemake --snakefile Snakefile_complete --cores XX`  
 
 # Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
 cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
