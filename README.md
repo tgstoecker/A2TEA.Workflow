@@ -58,6 +58,7 @@ However, since our approach focuses on gene loci, the transcript-level quantific
 This is done via the "makeTxDbFromGFF" function of the "GenomicFeatures" package in R (requires as input gff3 of gtf file).  
 It works really well for the annotation files I have tested so far but this is i.m.O. a source of potential errors if e.g. non-standard annotations are used.  
 In such cases, changes to the tximport.R script in scripts/ might be necessary - or one switches to the genomic FASTA/ STAR-based approach which directly quantifies at gene-level.  
+Also: Currently working with genomic FASTA requires the use of a GTF annotation, since automatic changes to STAR and featureCounts options necessary for GFF usage is not included at the moment (will come in an upcoming update).  If you only possess a .gff/3 file you can solve this by converting it to .gtf with e.g. [gffread] (https://github.com/gpertea/gffread).  
   
   
 # Some additional important pointers on usage:
