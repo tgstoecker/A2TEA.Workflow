@@ -80,7 +80,8 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 # To do:
 - muscle install and use instead of maaft; also mamba install -c anaconda gmp (The GNU multiprecision library)  
 - remove usage of chunks? with coreutils split - e.g. on the cluster this is/can not be installed  
-- add adapter removal support  
+- add adapter removal support 
+- ? picard/samtools for duplicate removal
 - option for installation of all software and dependencies during runtime  
 - combination analyses of diff. exp. and orthologous groups  
 -> R shiny overlay(?) integrating the data (+ GO analysis) and making them explorable (trees, etc.)  
