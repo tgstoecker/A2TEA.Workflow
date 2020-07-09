@@ -773,8 +773,8 @@ rule Orthofinder_Trees:
     params:
         orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
-        msa_program = "mafft",
-#        muscle as alternative? - what is the difference?
+        msa_program = "muscle",
+#        mafft as alternative
 #    conda:
 #        "orthofinder.yml"
     log:
