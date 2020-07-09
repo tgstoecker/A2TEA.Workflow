@@ -72,7 +72,15 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 6) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
 
 
+# Common resons for errors:
+- falsely formatted annotations; e.g. gene_id field is called different in some lines geneID  
+- format of fasta files -> same lengths of lines and shorter; otherwise samtools faidx etc. won't work  
+
+
 # To do:
+- muscle install and use instead of maaft; also mamba install -c anaconda gmp (The GNU multiprecision library)  
+- remove usage of chunks? with coreutils split - e.g. on the cluster this is/can not be installed  
+- add adapter removal support  
 - option for installation of all software and dependencies during runtime  
 - combination analyses of diff. exp. and orthologous groups  
 -> R shiny overlay(?) integrating the data (+ GO analysis) and making them explorable (trees, etc.)  
