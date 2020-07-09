@@ -14,7 +14,10 @@ threads_featureCounts: 2
 
 ### Trimmomatic
 #not yet implemented
-trim.options: "SLIDINGWINDOW:4:20 MINLEN:40"
+trim_illuminaclip: "ILLUMINACLIP:adapters.fa:2:30:10"
+#trim_illuminaclip: ""
+trim_options: "SLIDINGWINDOW:4:20 MINLEN:40"
+
 
 ### STAR
 ## default parameters change these to your specific needs

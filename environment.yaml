@@ -2,6 +2,7 @@ channels:
   - bioconda
   - conda-forge
   - r
+  - anaconda
 dependencies:
   - snakemake-minimal =5.7.0
   - fastqc =0.11.8
@@ -11,8 +12,10 @@ dependencies:
   - samtools =1.9
   - subread =1.6.4
   - orthofinder =2.3.11
+  - muscle
   - pandas =1.0.1
   - diamond
+  - gmp
   - kallisto
   - bioconductor-genomicfeatures
   - bioconductor-rhdf5 
