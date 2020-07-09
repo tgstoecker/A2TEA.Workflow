@@ -123,7 +123,7 @@ rule all:
     input:
         "multiqc/multiqc_report.html",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
-#        ORTHOFINDER + "complete.check",
+        ORTHOFINDER + "complete.check",
 
 
 
