@@ -73,6 +73,17 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 
 
 # Common resons for errors:
+- although "all" software is installed old gnu installs might have problems;  
+  the efficient usage of the split command as part of the gnu coreutils package (used during Orthofinder_split) requires a "newish" version,  
+  namely one with the `-n, --number=chunks` option flag; currently conda is not able to install a proper version (this could be circumvented by distributing the workflow as a docker or singularity image)  
+  -> if you can't install a newer version of coreutils split you can modify the Snakefile:
+      1) comment out Orthofinder_split;  
+      2) remove all references of "chunks" from files/file paths in Orthofinder_BLASTP and Orthofinder_BLASTP_merge  
+      3) change the startof the shell: invocation of Orthofinder_BLASTP to 
+          shell:  
+              "diamond blastp --query {input.fasta} "  
+              "--db {input.db} "  
+              ...  
 - falsely formatted annotations; e.g. gene_id field is called different in some lines geneID  
 - format of fasta files -> same lengths of lines and shorter; otherwise samtools faidx etc. won't work  
 
