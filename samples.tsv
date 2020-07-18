@@ -15,3 +15,10 @@ Zea_mays	B73	treatment_1	treatment	B73_drought_1.fq.gz		100	15
 Zea_mays	B73	treatment_2	treatment	B73_drought_2.fq.gz		100	15
 Zea_mays	B73	treatment_3	treatment	B73_drought_3.fq.gz		100	15
 Zea_mays	B73	treatment_4	treatment	B73_drought_4.fq.gz		100	15
+Arabidopsis_thaliana	Col-0	control_1	control	ERR754084_1.fastq.gz	ERR754084_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	control_2	control	ERR754066_1.fastq.gz	ERR754066_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	control_3	control	ERR754077_1.fastq.gz	ERR754077_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	treatment_1	treatment	ERR754069_1.fastq.gz	ERR754069_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	treatment_2	treatment	ERR754087_1.fastq.gz	ERR754087_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	treatment_3	treatment	ERR754064_1.fastq.gz	ERR754064_2.fastq.gz	100	15
+Arabidopsis_thaliana	Col-0	treatment_4	treatment	ERR754059_1.fastq.gz	ERR754059_2.fastq.gz	100	15

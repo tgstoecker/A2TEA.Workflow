@@ -344,8 +344,8 @@ if len(GEN_FASTA_SPECIES) != 0:
             temp_dir = "STAR_tmp_{species}",
             #possible to add params here, by referring to the table like this:
             #SampleSM = lambda wildcards: list(units_table.SampleSM[units_table.Unit == wildcards.unit]),
-        log:
-            "logs/star_index/{species}/Log.out"
+#        log:
+#            "logs/star_index/{species}/Log.out"
         shell:
             'mkdir {output} && '
             'STAR --runThreadN {params.threads} '
