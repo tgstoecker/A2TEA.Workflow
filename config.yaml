@@ -1,12 +1,12 @@
 #### define options of your individual rules here: #####
 ### number of maximum threads for each run of sample during a specfifc rule: ###
-### for fastqc and trimmomatic the the thread usage is put to 2 and 4 respectively - IMO best in most cases ###
+### for fastqc the thread usage is set to 4 - IMO best in most cases ###
 
 threads_kallisto_quant: 6
 threads_star_index: 8
 threads_trimmomatic: 6
 threads_star: 6
-threads_samtools_markdup: 4
+#threads_samtools_markdup: 4
 threads_index_sorted_bams_with_dups: 4
 threads_index_sorted_bams_without_dups: 4
 threads_featureCounts: 2
@@ -26,7 +26,6 @@ trim_options: "SLIDINGWINDOW:4:20 MINLEN:40"
 ##e.g.: 2x100b paired-end reads, the ideal value is 100-1=99; varying length? then, do this with the max length
 limitGenomeGenerateRAM: 60000000000
 read_length_star_index: 99
-
 
 
 ## parameters when running usual pipeline ##
