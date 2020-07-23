@@ -118,12 +118,23 @@ GEN_FASTA_SAMPLES = samples[samples['species'].isin(GEN_FASTA_SPECIES)]
 GEN_FASTA_SAMPLES.to_csv(r'gen_fasta_samples.csv', sep='\t', index = False)
 
 
+#for the expansion analysis
+hypotheses = pd.read_csv("hypotheses.tsv", dtype=str, sep="\t").set_index(["hypothesis"], drop=False)
+
+HYPOTHESES = hypotheses.index.tolist()
+N_HYPOTHESES = len(HYPOTHESES)
+N_HYPOTHESES
+
+
+
 
 rule all:
     input:
         "multiqc/multiqc_report.html",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
+        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
+
 
 
 
@@ -851,3 +862,41 @@ rule Orthofinder_complete:
         ORTHOFINDER + "cleanup.check"
     output:
         touch(ORTHOFINDER + "complete.check")
+
+
+##################################################################
+##################################################################
+#Expansion Analysis
+
+
+def get_hypo_name(hypothesis_index):
+    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
+    name = hypotheses.loc[ (hypothesis_index), 'name']
+    return name
+
+def get_exp_species(hypothesis_index):
+    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
+    exps = hypotheses.loc[ (hypothesis_index), 'expanded_in']
+    return exps
+
+def get_com_species(hypothesis_index):
+    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
+    ct = str.split(hypotheses.loc[ '1', 'compared_to'], ";")
+    return ct
+
+
+
+rule expansion:
+    input:
+    #have to expand because everything has to be finished at this point (at least for now)
+        orthology = ORTHOFINDER + "complete.check",
+        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+    params:
+        name = get_hypo_name(HYPOTHESES),
+        expansion = get_exp_species(HYPOTHESES),
+        comparison = get_com_species(HYPOTHESES),
+    output:
+        "{params}.ok",
+#    shell:
+#        "{params.expansion}"
+

@@ -1,3 +1,3 @@
-hypotheses	expanded_in	compared_to
-1	Arabidopsis_thaliana	Zea_mays;Hordeum_vulgare
-2	Hordeum_vulgare	Zea_mays
+hypothesis	name	expanded_in	compared_to
+1	"Expanded in Arabidopsis compared to Monocots"	Arabidopsis_thaliana	Zea_mays;Hordeum_vulgare
+2	"Expanded in barley compared to maize"	Hordeum_vulgare	Zea_mays
