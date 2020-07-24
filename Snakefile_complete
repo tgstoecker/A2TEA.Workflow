@@ -133,7 +133,8 @@ rule all:
         "multiqc/multiqc_report.html",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
-        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
+#        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
+        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES)
 
 
 
@@ -868,35 +869,48 @@ rule Orthofinder_complete:
 ##################################################################
 #Expansion Analysis
 
-
-def get_hypo_name(hypothesis_index):
+def get_hypo_num(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    name = hypotheses.loc[ (hypothesis_index), 'name']
+    num = hypotheses.loc[ (wildcards.hypothesis), 'hypothesis']
+    return num
+
+def get_hypo_name(wildcards):
+    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
+    name = hypotheses.loc[ (wildcards.hypothesis), 'name']
     return name
 
-def get_exp_species(hypothesis_index):
+def get_exp_species(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    exps = hypotheses.loc[ (hypothesis_index), 'expanded_in']
+    exps = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
     return exps
 
-def get_com_species(hypothesis_index):
+#if more than one species is compared to than we have to split the string based on ";"
+def get_com_species(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    ct = str.split(hypotheses.loc[ '1', 'compared_to'], ";")
-    return ct
+    ct_1 = hypotheses.loc[ (wildcards.hypothesis), 'compared_to']
+    if ct_1.count(";") > 0:
+        ct_2 = str.split(ct_1, ";")
+        return ct_2
+    else:
+        return ct_1
+    return
 
 
 
 rule expansion:
     input:
-    #have to expand because everything has to be finished at this point (at least for now)
+#have to expand because everything has to be finished at this point (at least for now)
         orthology = ORTHOFINDER + "complete.check",
-        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+#not actually necessary to be done here with the expression analysis; so can be deleted
+#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
     params:
-        name = get_hypo_name(HYPOTHESES),
-        expansion = get_exp_species(HYPOTHESES),
-        comparison = get_com_species(HYPOTHESES),
+        num = get_hypo_num,
+        name = get_hypo_name,
+        expansion = get_exp_species,
+        comparison = get_com_species,
     output:
-        "{params}.ok",
-#    shell:
-#        "{params.expansion}"
+# can I touch create an output directory here?
+        touch("checks/tea/{hypothesis}/exp_OGs_proteinnames.check")
+    script:
+        "expansion.R"
 
