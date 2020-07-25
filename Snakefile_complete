@@ -134,7 +134,8 @@ rule all:
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
 #        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
-        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES)
+        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
+        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
 
 
 
@@ -910,7 +911,7 @@ rule expansion:
         comparison = get_com_species,
     output:
 # can I touch create an output directory here?
-        touch("checks/tea/{hypothesis}/exp_OGs_proteinnames.check")
+        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
+        directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
     script:
         "expansion.R"
-
