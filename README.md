@@ -89,11 +89,14 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 
 
 # To do:
+- option for installation of all software and dependencies during runtime  - moved up in priorities because has become important to use multiple yaml files  
+- related to prior point: stringr doesn't install in my environment
+- checkpoints a new feature that is also going to be without alternative starting with snakemake v6 is the solution for using all the generated fasta records in a parallel manner in the subsequent steps; roughly works but still some late game error messages  
+- once that runs I saw that the new version of snakemake doesn't like the way I implemented the linking of the isoform filtering (currently commented out)..  
+  
 - muscle install and use instead of maaft; also mamba install -c anaconda gmp (The GNU multiprecision library)  
 - remove usage of chunks? with coreutils split - e.g. on the cluster this is/can not be installed  
-- add adapter removal support 
 - ? picard/samtools for duplicate removal
-- option for installation of all software and dependencies during runtime  
 - combination analyses of diff. exp. and orthologous groups  
 -> R shiny overlay(?) integrating the data (+ GO analysis) and making them explorable (trees, etc.)  
 (-> provide link to AHRD for researchers not possessing GO-/Annotation for their species of interest  
