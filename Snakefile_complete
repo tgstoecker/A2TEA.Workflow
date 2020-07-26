@@ -127,15 +127,18 @@ N_HYPOTHESES
 
 
 
-
 rule all:
     input:
         "multiqc/multiqc_report.html",
         expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
-#        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
-        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
-        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
+###        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
+#        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
+#        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
+#        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
+        expand("{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+        expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
+##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
 
 
 
@@ -619,25 +622,25 @@ def get_longest_isoforms(wildcards):
     return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
 
 
-rule filter_isoforms:
-    output:
-        "FS/longest_isoforms/{species}.fa"
-    params: 
-        fa = get_species_fasta,
-        iso = get_longest_isoforms,
-    shell:
-        "python scripts/longest_isoforms.py {params.fa} && "
-        "mv {params.iso} {output}"
+#rule filter_isoforms:
+#    output:
+#        "FS/longest_isoforms/{species}.fa"
+#    params:
+#        fa = get_species_fasta,
+#        iso = get_longest_isoforms,
+#    shell:
+#        "python scripts/longest_isoforms.py {params.fa} && "
+#        "mv {params.iso} {output}"
 
 
-rule Orthofinder_link_all:
-    input:
-        "FS/longest_isoforms/{species}.fa",
-    output:
-        ORTHOFINDER + "{species}.fa"
-    params: get_longest_isoforms,
-    shell: 
-        "ln --symbolic $(readlink --canonicalize {input}) {output}"
+#rule Orthofinder_link_all:
+#    input:
+#        "FS/longest_isoforms/{species}.fa",
+#    output:
+#        ORTHOFINDER + "{species}.fa"
+#    params: get_longest_isoforms,
+#    shell: 
+#        "ln --symbolic $(readlink --canonicalize {input}) {output}"
 
 
 rule Orthofinder_prepare:
@@ -869,6 +872,7 @@ rule Orthofinder_complete:
 ##################################################################
 ##################################################################
 #Expansion Analysis
+#could add additional parsing of expansion calculation... (toDO)
 
 def get_hypo_num(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
@@ -897,8 +901,15 @@ def get_com_species(wildcards):
     return
 
 
+##CHECKPOINTS ARE SO AWESOME!
+#def solve_expansion(wildcards):
+#    wildcards.hypothesis = HYPOTHESES
+#    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
+#    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
+#    return file_names
 
-rule expansion:
+
+checkpoint expansion:
     input:
 #have to expand because everything has to be finished at this point (at least for now)
         orthology = ORTHOFINDER + "complete.check",
@@ -911,7 +922,103 @@ rule expansion:
         comparison = get_com_species,
     output:
 # can I touch create an output directory here?
-        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
+#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
+#        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
+#    params:
+#        solve_expansion,
     script:
-        "expansion.R"
+        "scripts/expansion.R"
+#    shell:
+#        "{params}"
+
+
+##CHECKPOINTS ARE SO AWESOME!
+def solve_expansion(wildcards):
+#    wildcards.hypothesis = HYPOTHESES
+    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
+    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
+    return file_names
+
+#    return expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
+#    return file_names
+
+
+
+
+#####################################################
+
+#if more than one species is compared to than we have to split the string based on ";"
+#the goal in any scenarios to return a list (!) with just the species used in the hypothesis
+#we also need to add the path to the longest isoform peptide fasta files and add the .fa suffix
+#another trick is that we can simply use the species base name in any case,
+#since the longest isoform output is always named after it!
+#+the filtering for longest isoform also only retains the base name of the gene/protein
+
+def get_all_hypothesis_species(wildcards):
+    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
+    path_prefix = 'FS/longest_isoforms/'
+    suffix = '.fa'
+    exp = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
+    ct = hypotheses.loc[ (wildcards.hypothesis), 'compared_to']
+    if ct.count(";") > 0:
+        ct = str.split(ct, ";")
+        ct.append(exp)
+        ct = [path_prefix + x + suffix for x in ct]
+        return ct
+    else:
+        output = []
+        output.append(exp)
+        output.append(ct)
+        output = [path_prefix + x + suffix for x in output]
+        return output
+    return
+
+
+rule create_hypothesis_fasta:
+    input:
+        orthology = ORTHOFINDER + "complete.check",
+    params:
+        all_hyp_species = get_all_hypothesis_species,
+    output:
+        "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa"
+    params:
+        solve_expansion,
+    shell:
+#        "{params}"
+        "cat {params.all_hyp_species} > {output}"
+
+
+
+
+rule fasta_extraction:
+    input:
+#        protein_lists = "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
+        protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
+        hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
+#    params:
+#        OGs = os.listdir("tea/1/exp_OGs_proteinnames/"),
+    output:
+        "tea/{hypothesis}/fa_records/{OG}.fa"
+#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check"
+    shell:
+        "faSomeRecords {input.hypothesis_fasta} {input.protein.lists} {output}"
+
+
+##CHECKPOINTS ARE SO AWESOME!
+#def solve_expansion(wildcards):
+##    wildcards.hypothesis = HYPOTHESES
+#    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
+#    file_names = list(expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG))
+#    return file_names
+
+
+rule finished:
+    input:
+        solve_expansion,
+#        "tea/{hypothesis}/fa_records/{OG}.fa",
+    output:
+        "{hypothesis}_finished.txt",
+    shell:
+#        "{input}"
+        "touch {output}"
