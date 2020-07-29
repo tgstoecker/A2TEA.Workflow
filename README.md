@@ -89,9 +89,10 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 
 
 # To do:
+- expansion analysis in R; currently only expansion in ONE species compared to ONE OR MANY is implemented  
 - option for installation of all software and dependencies during runtime  - moved up in priorities because has become important to use multiple yaml files  
 - related to prior point: stringr doesn't install in my environment
-- checkpoints a new feature that is also going to be without alternative starting with snakemake v6 is the solution for using all the generated fasta records in a parallel manner in the subsequent steps; roughly works but still some late game error messages  
+- checkpoints a new feature that is also going to be without alternative starting with snakemake v6 is the solution for using all the generated fasta records in a parallel manner in the subsequent steps; works now ;D    
 - once that runs I saw that the new version of snakemake doesn't like the way I implemented the linking of the isoform filtering (currently commented out)..  
   
 - muscle install and use instead of maaft; also mamba install -c anaconda gmp (The GNU multiprecision library)  
