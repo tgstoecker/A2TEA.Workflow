@@ -901,53 +901,6 @@ def get_com_species(wildcards):
     return
 
 
-##CHECKPOINTS ARE SO AWESOME!
-#def solve_expansion(wildcards):
-#    wildcards.hypothesis = HYPOTHESES
-#    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
-#    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-#    return file_names
-
-
-checkpoint expansion:
-    input:
-#have to expand because everything has to be finished at this point (at least for now)
-        orthology = ORTHOFINDER + "complete.check",
-#not actually necessary to be done here with the expression analysis; so can be deleted
-#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
-    params:
-        num = get_hypo_num,
-        name = get_hypo_name,
-        expansion = get_exp_species,
-        comparison = get_com_species,
-    output:
-# can I touch create an output directory here?
-#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
-        directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
-#        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
-#    params:
-#        solve_expansion,
-    script:
-        "scripts/expansion.R"
-#    shell:
-#        "{params}"
-
-
-##CHECKPOINTS ARE SO AWESOME!
-def solve_expansion(wildcards):
-#    wildcards.hypothesis = HYPOTHESES
-    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
-    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-    return file_names
-
-#    return expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-#    return file_names
-
-
-
-
-#####################################################
-
 #if more than one species is compared to than we have to split the string based on ";"
 #the goal in any scenarios to return a list (!) with just the species used in the hypothesis
 #we also need to add the path to the longest isoform peptide fasta files and add the .fa suffix
@@ -982,13 +935,34 @@ rule create_hypothesis_fasta:
         all_hyp_species = get_all_hypothesis_species,
     output:
         "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa"
-    params:
-        solve_expansion,
+#    params:
+#        solve_expansion,
     shell:
 #        "{params}"
         "cat {params.all_hyp_species} > {output}"
 
 
+checkpoint expansion:
+    input:
+#have to expand because everything has to be finished at this point (at least for now)
+        orthology = ORTHOFINDER + "complete.check",
+#not actually necessary to be done here with the expression analysis; so can be deleted
+#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+    params:
+        num = get_hypo_num,
+        name = get_hypo_name,
+        expansion = get_exp_species,
+        comparison = get_com_species,
+    output:
+# can I touch create an output directory here?
+#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
+        directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
+#        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
+#    params:
+#        solve_expansion,
+    threads: 1
+    script:
+        "scripts/expansion.R"
 
 
 rule fasta_extraction:
@@ -1001,24 +975,60 @@ rule fasta_extraction:
     output:
         "tea/{hypothesis}/fa_records/{OG}.fa"
 #        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check"
+    threads: 1
     shell:
-        "faSomeRecords {input.hypothesis_fasta} {input.protein.lists} {output}"
+        "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
 
 
-##CHECKPOINTS ARE SO AWESOME!
+rule muscle_MSA:
+    input:
+        "tea/{hypothesis}/fa_records/{OG}.fa"
+    output:
+        "tea/{hypothesis}/muscle/{OG}.afa"
+    threads: 1
+    shell:
+        "muscle -in {input} -out {output}"
+
+
+#rule gblocks_MSA:
+#    input:
+#        "tea/{hypothesis}/muscle/{OG}.fa"
+#    output:
+#        "tea/{hypothesis}/gblocks/{OG}.fa"
+#    threads: 1
+#    shell:
+#        "Gblocks {input} {output}"
+
+
+rule FastTree:
+    input:
+        "tea/{hypothesis}/muscle/{OG}.afa"
+    output:
+        "tea/{hypothesis}/trees/{OG}.tree"
+    threads: 1
+    shell:
+        "FastTree {input} > {output}"
+
+
+
+
+#CHECKPOINTS ARE SO AWESOME!
 #def solve_expansion(wildcards):
-##    wildcards.hypothesis = HYPOTHESES
-#    checkpoint_output = checkpoints.expansion.get(hypothesis=wildcards.hypothesis).output[0],
-#    file_names = list(expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG))
+#    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
+#    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
 #    return file_names
+
+def solve_expansion(wildcards):
+    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
+    file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
+    return file_names
+
 
 
 rule finished:
     input:
         solve_expansion,
-#        "tea/{hypothesis}/fa_records/{OG}.fa",
     output:
         "{hypothesis}_finished.txt",
     shell:
-#        "{input}"
         "touch {output}"
