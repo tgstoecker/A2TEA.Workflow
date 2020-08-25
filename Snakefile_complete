@@ -125,6 +125,8 @@ HYPOTHESES = hypotheses.index.tolist()
 N_HYPOTHESES = len(HYPOTHESES)
 N_HYPOTHESES
 
+#pandas actually truncates too long names.. if you don't stop it ;D
+pd.set_option("display.max_colwidth", 10000)
 
 
 rule all:
