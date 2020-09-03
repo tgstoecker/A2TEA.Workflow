@@ -90,6 +90,7 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 
 # To do:
 - expansion analysis in R; currently only expansion in ONE species compared to ONE OR MANY is implemented  
+- new release of Orthofinder (2.4.0), some changes to orthogroups output; should use this to overhaul the orthofinder parts and remove the unncessary bits  
 - option for installation of all software and dependencies during runtime  - moved up in priorities because has become important to use multiple yaml files  
 - related to prior point: stringr doesn't install in my environment
 - checkpoints a new feature that is also going to be without alternative starting with snakemake v6 is the solution for using all the generated fasta records in a parallel manner in the subsequent steps; works now ;D    
