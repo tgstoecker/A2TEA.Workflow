@@ -4,14 +4,14 @@ channels:
   - r
   - anaconda
 dependencies:
-  - snakemake=5.20.1
+  - snakemake=5.26.1
   - fastqc =0.11.8
   - multiqc =1.7
   - trimmomatic =0.38
   - star =2.7.3a
   - samtools =1.9
   - subread =1.6.4
-  - orthofinder =2.3.11
+  - orthofinder =2.4.0
   - muscle
   - pandas =1.0.1
   - diamond
@@ -25,3 +25,7 @@ dependencies:
   - r-dplyr
   - r-stringr
   - ucsc-fasomerecords
+  - fasttree=2.1.10
+  - r-base>=3.6.0
+  - r-tidyverse
+  - r-ggplot2
