@@ -1,27 +1,20 @@
 #to reduce installation time; we could reduce down to readr, plyr, dplyr, stringr
-library(readr)
-library(dplyr)
-library(stringr)
-
+library(tidyverse)
 
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
+
+# using snakemake propagation + python strsplit() is really cool since the input is just a vector
+## even if we have multiple species in expanded, compared or both ;D
 expanded_in = snakemake@params[["expansion"]]
 compared_to = snakemake@params[["comparison"]]
+c_t_species <- compared_to
+all_species <- c(expanded_in, compared_to)
 
 #read-in Orthogroup-GeneCounts-table
 message("Reading in Orthogroup-GeneCounts-table:")
 OG.GC <- readr::read_tsv("orthofinder/final-results/Orthogroups/Orthogroups.GeneCount.tsv")
-
-
-#here, we apply the expansion rule/s - could be also be parsed from config? (toDO!)
-#get() function solves my problems of using the character functions inside dplyr
-message("Applying expansion rule/s per hypothesis:")
-expanded_OGs <- OG.GC
-for (i in compared_to) {
-    expanded_OGs <- expanded_OGs %>% dplyr::filter(get(expanded_in) > 3*(get(i)))
-    }
 
 
 #concatenate all BLAST seaches to one file and create parseable tibble with read_delim
@@ -92,33 +85,87 @@ all_BLAST_reformatted <- dplyr::rename(all_BLAST_reformatted,  qseqid_name = nam
 all_BLAST_reformatted <- dplyr::rename(all_BLAST_reformatted, sseqid_name = name.y)
 
 
-#read-in Orthogroups.txt
-message("Reading in Orthogroups.txt:")
-orthogroups <- readr::read_delim(file = "orthofinder/final-results/Orthogroups/Orthogroups.txt",
-                          delim = ":",
-                          col_names = c("OG", "genes"),
-                          col_types = c(
-                              OG = col_character(),
-                              genes = col_character())
-                         )
+
+message("Data read-in and reformat:")
+
+ph_orthogroups <- readr::read_delim(file = "orthofinder/final-results/Phylogenetic_Hierarchical_Orthogroups/N0.tsv",
+                          delim = "\t")
+
+#create dataframe with numbers of genes per PHOG
+#we combine expanded_in and compared_to vectors to easily compute for everything we need
+
+HOG_df <- setNames(base::data.frame(matrix(ncol = 1 + length(all_species), nrow = 0)),
+                  c("HOG", all_species))
+
+for (i in 1:nrow(ph_orthogroups)) {
+    
+    row = 0
+    
+    #print(ph_orthogroups[i,]$HOG)
+    row <- c(ph_orthogroups[i,]$HOG)
+    
+        for (j in c(all_species)) {
+            if (is.na(ph_orthogroups[i,][[j]]))
+            {
+                test = 0
+                row <- c(row, test)
+            }
+            else 
+            {
+                test = length(unlist(strsplit(ph_orthogroups[i,][[j]], ",")))
+                row <- c(row, test)
+            }
+}
+    HOG_df[i,] <- row
+} 
+
+HOG_tibble <- as_tibble(HOG_df)
+
+for (k in 1:length(all_species)) {
+    o = all_species[k]
+    HOG_tibble[[o]] <- as.numeric(HOG_tibble[[o]])
+}
 
 
-#for each gene/protein name in an interesting OG do:
+
+#here, we apply the expansion rule/s - could be also be parsed from config? (toDO!)
+#get() function solves my problems of using the character functions inside dplyr
+message("Applying expansion rule/s per hypothesis:")
+
+# function has to reduce input dataset; this way each iteration (compared species) is included
+# for all compared species first check for each HOG if expanded species is >= 3* 
+# then keep rows in which expanded species has at least 3
+# since 3*1 = 3, we can simply choose to keep all rows with at least 3 in expanded_in since this 
+## is performed after the other filtering ;D
+# this we should talk about... how to deal with 0 cases
+# in any case having this as user input shoud be the goal
+
+for (t in expanded_in) {
+for (i in c_t_species) {
+        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3*(get(i)))
+        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3)
+        expanded_HOGs <- HOG_tibble
+    }
+    }
+
+
+# create genes column in ph_orthogroups file
+# row merge? - no unite function, really handy ;D
+ref_ph_orthogroups <- ph_orthogroups %>% unite("genes", all_of(all_species), sep =", ", na.rm = TRUE, remove = TRUE)
+
+
+message("Creating .txt files for all expanded OGs with reciprocal best BLAST hits of species in respective hypothesis:")
+
+#for each gene/protein name in an interesting OG do (is there a file just with names per OG?):
 #check "all_BLAST_reformatted" for all entries including these names and create new dataframe/tibble
 # then, perform filtering and retain certain set of genes/proteins per OG analysis
 #  then, create .txt file per OG with these gene names
 ## come-up with filter criteria to have better trees?
 ## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
-####> we create the actual output files here; incl. a genereal ".check" - the sub-/directories in the path are created in the Snakefile
+####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
 
-#additional quotation mark as first element is introduced for some reason
-#(delim space after : isn't handled properly)
-#workaround, we get rid with trailing [-1]
-
-message("Creating .txt files for all expanded OGs with reciprocal best BLAST hits of species in respective hypothesis:")
-
-for (i in expanded_OGs$Orthogroup) {
-    exp_og_genes <- unlist(strsplit(orthogroups[orthogroups$OG == i,]$genes, split = " "))[-1]
+for (i in expanded_HOGs$HOG) {
+    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = " "))
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
                                              qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
@@ -130,6 +177,6 @@ for (i in expanded_OGs$Orthogroup) {
 }
 
 #lastly create .check to know it's done
-#message("Expansion successfully computed - creating .check:")
-#exp_OGs_proteinnames.check <- "check"
-#write_file(exp_OGs_proteinnames.check, paste("checks/tea/", num, "/exp_OGs_proteinnames.check", sep = ""))
+message("Creating .check - Expansions successfully computed for hypothesis ", num)
+exp_OGs_proteinnames.check <- "check"
+write_file(exp_OGs_proteinnames.check, paste("checks/tea/", num, "/exp_OGs_proteinnames.check", sep = ""))

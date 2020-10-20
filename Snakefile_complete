@@ -874,7 +874,9 @@ rule Orthofinder_complete:
 ##################################################################
 ##################################################################
 #Expansion Analysis
-#could add additional parsing of expansion calculation... (toDO)
+# can handle both multi expansion and multi comparison species, now ;D
+# the strplit command works really well in this context
+## this way, multiple species are propagated into R as a simple vector  
 
 def get_hypo_num(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
@@ -886,10 +888,19 @@ def get_hypo_name(wildcards):
     name = hypotheses.loc[ (wildcards.hypothesis), 'name']
     return name
 
+# for both the species we want to check for expansion as well as those being compared to:
+# if more than one species is compared to than we have to split the string based on ";" 
+
 def get_exp_species(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    exps = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
-    return exps
+    exps_1 = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
+    if exps_1.count(";") > 0:
+        exps_2 = str.split(exps_1, ";")
+        return exps_2
+    else:
+        return exps_1
+    return
+
 
 #if more than one species is compared to than we have to split the string based on ";"
 def get_com_species(wildcards):
@@ -958,7 +969,9 @@ checkpoint expansion:
     output:
 # can I touch create an output directory here?
 #        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
+#        directory("checks/tea/{hypothesis}/"),
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
+        directory("checks/tea/{hypothesis}/"),
 #        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
 #    params:
 #        solve_expansion,
@@ -1030,6 +1043,7 @@ def solve_expansion(wildcards):
 rule finished:
     input:
         solve_expansion,
+#        "tea/{hypothesis}/trees/{OG}.tree"
     output:
         "{hypothesis}_finished.txt",
     shell:
