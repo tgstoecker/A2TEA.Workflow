@@ -173,7 +173,8 @@ for (i in expanded_HOGs$HOG) {
     list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
     list_merged <- unique(c(list_qseqid, list_sseqid))
     write_lines(list_merged,
-           paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))
+#           paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))
+            paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = ""))
 }
 
 #lastly create .check to know it's done
