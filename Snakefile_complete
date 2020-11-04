@@ -139,6 +139,7 @@ rule all:
 #        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
 #        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
         expand("{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+#        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
         expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
 
@@ -970,8 +971,12 @@ checkpoint expansion:
 # can I touch create an output directory here?
 #        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
 #        directory("checks/tea/{hypothesis}/"),
+# fun little observation - output necessary for expansion needs to be first
+# otherwise workflow stops early...
+# am I missing sth.? or is this a quirk of this snakemake release (v5.26.1)?
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
         directory("checks/tea/{hypothesis}/"),
+        directory("tea/{hypothesis}/expansion_tibble/"),
 #        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
 #    params:
 #        solve_expansion,
@@ -984,6 +989,7 @@ rule fasta_extraction:
     input:
 #        protein_lists = "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
         protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
+#        expansion_tibbles = "tea/{hypothesis}/expansion_tibble/expansion_tibble.rds",
         hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
 #    params:
 #        OGs = os.listdir("tea/1/exp_OGs_proteinnames/"),

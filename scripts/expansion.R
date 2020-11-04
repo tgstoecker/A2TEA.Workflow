@@ -126,6 +126,8 @@ for (k in 1:length(all_species)) {
     HOG_tibble[[o]] <- as.numeric(HOG_tibble[[o]])
 }
 
+#create "copy" as HOG_tibble is currently modified in the upcoming step
+HOG_tibble_complete <- HOG_tibble
 
 
 #here, we apply the expansion rule/s - could be also be parsed from config? (toDO!)
@@ -144,9 +146,27 @@ for (t in expanded_in) {
 for (i in c_t_species) {
         HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3*(get(i)))
         HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3)
+    # this line will remove all HOGs with 0 cases in BOTH compared species
+    # this means, that for now, a multispecies comparison demands that
+    # for all compared_to species at least 1 gene has to be in the HOG!
+        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(i) > 0)
         expanded_HOGs <- HOG_tibble
     }
     }
+
+
+# based on filtering criteria create per hypothesis table with:
+# all HOGs and gene counts + additional column expansion (yes/no)
+# this is later used in the creation of final tea outputs to create a HOG level table per hypothesis
+
+#create expansion vector with length of expandsion HOGs
+expansion <- replicate(nrow(expanded_HOGs), "yes")
+expansion_tibble <- full_join(HOG_tibble_complete, add_column(expanded_HOGs, expansion, .after = "HOG"), 
+                       by = c("HOG"), suffix = c("", ".remove")) %>% 
+                           replace_na(list(expansion = "no")) %>%
+                               select(-c(ends_with(".remove"))) 
+
+saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
 
 
 # create genes column in ph_orthogroups file
