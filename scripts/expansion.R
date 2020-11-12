@@ -185,7 +185,7 @@ message("Creating .txt files for all expanded OGs with reciprocal best BLAST hit
 ####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
 
 for (i in expanded_HOGs$HOG) {
-    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = " "))
+    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
                                              qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
