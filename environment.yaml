@@ -22,7 +22,7 @@ dependencies:
   - r-readr
   - bioconductor-tximport
   - bioconductor-deseq2
-  - r-dplyr
+  - r-dplyr >=1.0
   - r-stringr
   - ucsc-fasomerecords
   - fasttree=2.1.10
