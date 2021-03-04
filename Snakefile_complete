@@ -131,15 +131,15 @@ pd.set_option("display.max_colwidth", 10000)
 
 rule all:
     input:
-        "multiqc/multiqc_report.html",
-        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+#        "multiqc/multiqc_report.html",
+#        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
 ###        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
-#        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
-#        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
-#        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
+##        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
+##        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
+##        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
         expand("{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
-#        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
+##        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
         expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
 
@@ -683,76 +683,125 @@ rule index_pep_FASTAs:
         "samtools faidx {input}"
 
 
-rule Orthofinder_split:
-    "Split the headers of the input pep fastas into multiple files"
-    input:
-        fai = ancient(ORTHOFINDER + "Species{species_number}.fa.fai")
-    output:
-        expand(ORTHOFINDER + "{{species_number}}/chunks/ids_{chunk_id}.tsv", chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
-    params:
-        folder = ORTHOFINDER,
-        number_of_chunks = CHUNKS_ORTHO,
-        species = "{species_number}"
-    log:
-#send the log here as an exception; also controls the actual output 
-         "orthofinder/{species_number}/split.log"
-    benchmark:
-        "benchmarks/orthofinder/{species_number}/split.json"
-#    conda:
-#        "orthofinder.yml"
-    shell:
-        "split "
-        "--number l/{params.number_of_chunks} "
-        "--numeric-suffixes "
-        "--suffix-length 5 "
-        "--additional-suffix .tsv "
-        "{input.fai} "
-        "{params.folder}/{params.species}/chunks/ids_ "
-        "2> {log}"
+
+# added choice of chunk usage or not ;D
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f)
+
+if config["chunk_usage"] == "ON":
+    rule Orthofinder_split:
+        "Split the headers of the input pep fastas into multiple files"
+        input:
+            fai = ancient(ORTHOFINDER + "Species{species_number}.fa.fai")
+        output:
+            expand(ORTHOFINDER + "{{species_number}}/chunks/ids_{chunk_id}.tsv", chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
+        params:
+            folder = ORTHOFINDER,
+            number_of_chunks = CHUNKS_ORTHO,
+            species = "{species_number}"
+        log:
+        #send the log here as an exception; also controls the actual output 
+            "orthofinder/{species_number}/split.log"
+        benchmark:
+            "benchmarks/orthofinder/{species_number}/split.json"
+    #    conda:
+    #        "orthofinder.yml"
+        shell:
+            "split "
+            "--number l/{params.number_of_chunks} "
+            "--numeric-suffixes "
+            "--suffix-length 5 "
+            "--additional-suffix .tsv "
+            "{input.fai} "
+            "{params.folder}/{params.species}/chunks/ids_ "
+            "2> {log}"
 
 
-rule Orthofinder_BLASTP:
-    "Run blastp of each chunk"
-    input:
-        fasta = ORTHOFINDER + "Species{species_number}.fa",
-        fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
-        chunk = ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv",
-        db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
-    output:
-        tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv"
-    log:
-        "logs/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.log"
-    benchmark:
-        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
-    threads: 6
-#    conda:
-#        "orthofinder.yml"
-    shell:
-        "cut -f 1 {input.chunk} "
-        "| xargs samtools faidx {input.fasta}"
-        "| diamond blastp "
-        "--db {input.db} "
-        "--outfmt 6 "
-        "--evalue 0.001 "
-        "--out {output.tsv} "
-        "--threads {threads} "
-        "2> {log} 1>&2"
+    rule Orthofinder_BLASTP:
+        "Run blastp of each chunk"
+        input:
+            fasta = ORTHOFINDER + "Species{species_number}.fa",
+            fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
+            chunk = ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv",
+            db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
+        output:
+            tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp_{chunk_id}.tsv"
+        log:
+            "logs/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.log"
+        benchmark:
+            "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
+        threads: 6
+    #    conda:
+    #        "orthofinder.yml"
+        shell:
+            "cut -f 1 {input.chunk} "
+            "| xargs samtools faidx {input.fasta}"
+            "| diamond blastp "
+            "--db {input.db} "
+            "--outfmt 6 "
+            "--evalue 0.001 "
+            "--out {output.tsv} "
+            "--threads {threads} "
+            "2> {log} 1>&2"
 
 
-rule Orthofinder_BLASTP_merge:
-    "Merge results from the different blastps"
-    input:
-        expand(ORTHOFINDER + "{{species_number}}/{{database_number}}/blastp_{chunk_id}.tsv", chunk_id = ['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
-    output:
-        tsv = ORTHOFINDER + "Blast{species_number}_{database_number}.txt"
-    log:
-        "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
-    benchmark:
-        "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
-#    conda:
-#        "orthofinder.yml"
-    shell:
-        "cat {input} > {output} 2> {log}"
+    rule Orthofinder_BLASTP_merge:
+        "Merge results from the different blastps"
+        input:
+            expand(ORTHOFINDER + "{{species_number}}/{{database_number}}/blastp_{chunk_id}.tsv", chunk_id = ['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
+        output:
+            tsv = ORTHOFINDER + "Blast{species_number}_{database_number}.txt"
+        log:
+            "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
+        benchmark:
+            "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
+    #    conda:
+    #        "orthofinder.yml"
+        shell:
+            "cat {input} > {output} 2> {log}"
+
+
+## if chunks are not desired or feasible (anything other than "ON" under chunk_usage in the config.yaml)
+else:
+    rule Orthofinder_BLASTP:
+        "Run blastp of each chunk"
+        input:
+            fasta = ORTHOFINDER + "Species{species_number}.fa",
+            fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
+            db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
+        output:
+            tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp.tsv"
+        log:
+            "logs/orthofinder/{species_number}/{database_number}/blastp.log"
+        benchmark:
+            "benchmarks/orthofinder/{species_number}/{database_number}/blastp.json"
+        threads: 6
+    #    conda:
+    #        "orthofinder.yml"
+        shell:
+            "diamond blastp --query {input.fasta} "
+            "--db {input.db} "
+            "--outfmt 6 "
+            "--evalue 0.001 "
+            "--out {output.tsv} "
+            "--threads {threads} "
+            "2> {log} 1>&2"  
+
+
+    rule Orthofinder_BLASTP_merge:
+        "Merge results from the different blastps"
+        input:
+            expand(ORTHOFINDER + "{{species_number}}/{{database_number}}/blastp.tsv")
+        output:
+            tsv = ORTHOFINDER + "Blast{species_number}_{database_number}.txt"
+        log:
+            "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
+        benchmark:
+            "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
+    #    conda:
+    #        "orthofinder.yml"
+        shell:
+            "cat {input} > {output} 2> {log}"
 
 
 rule Orthofinder_orthogroups:
@@ -945,14 +994,16 @@ def get_all_hypothesis_species(wildcards):
 rule create_hypothesis_fasta:
     input:
         orthology = ORTHOFINDER + "complete.check",
+    output:
+        "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
     params:
         all_hyp_species = get_all_hypothesis_species,
-    output:
-        "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa"
-#    params:
-#        solve_expansion,
+## also create the output directories for the expansion checkpoint (next step) here
+#        a = "tea/{hypothesis}/exp_OGs_proteinnames/",
+#        b = "checks/tea/{hypothesis}/",
+#        c = "tea/{hypothesis}/expansion_tibble/"
     shell:
-#        "{params}"
+#        "mkdir -p {params.a} {params.b} {params.c} &&"
         "cat {params.all_hyp_species} > {output}"
 
 
@@ -960,6 +1011,8 @@ checkpoint expansion:
     input:
 #have to expand because everything has to be finished at this point (at least for now)
         orthology = ORTHOFINDER + "complete.check",
+# added the hypothesis fasta to be sure that it is finished here...
+        hypo_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa"
 #not actually necessary to be done here with the expression analysis; so can be deleted
 #        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
     params:
@@ -983,6 +1036,7 @@ checkpoint expansion:
     threads: 1
     script:
         "scripts/expansion.R"
+	
 
 
 rule fasta_extraction:

@@ -55,3 +55,9 @@ STAR: >
     --chimScoreSeparation 10
     --chimJunctionOverhangMin 20
     --outFilterMultimapScoreRange 0
+
+
+## use chunks for blasting?
+## coreutils split - is sometimes not easy to install
+## defaulit is ON and allows faster runtime - if problems occur set to OFF
+chunk_usage: "ON"

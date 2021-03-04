@@ -166,6 +166,7 @@ expansion_tibble <- full_join(HOG_tibble_complete, add_column(expanded_HOGs, exp
                            replace_na(list(expansion = "no")) %>%
                                select(-c(ends_with(".remove"))) 
 
+dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
 saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
 
 
@@ -183,6 +184,7 @@ message("Creating .txt files for all expanded OGs with reciprocal best BLAST hit
 ## come-up with filter criteria to have better trees?
 ## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
 ####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
+dir.create(paste("tea/", num, "/exp_OGs_proteinnames/", sep = ""))
 
 for (i in expanded_HOGs$HOG) {
     exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
@@ -200,4 +202,5 @@ for (i in expanded_HOGs$HOG) {
 #lastly create .check to know it's done
 message("Creating .check - Expansions successfully computed for hypothesis ", num)
 exp_OGs_proteinnames.check <- "check"
+dir.create(paste("checks/tea/", num, "/", sep=""))
 write_file(exp_OGs_proteinnames.check, paste("checks/tea/", num, "/exp_OGs_proteinnames.check", sep = ""))
