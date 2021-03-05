@@ -1,0 +1,83 @@
+STAR version=2.7.3a
+STAR compilation time,server,dir=Tue Oct 8 14:26:19 EDT 2019 vega:/home/dobin/data/STAR/STARcode/STAR.master/source
+##### Command Line:
+STAR --runThreadN 8 --runMode genomeGenerate --genomeDir STAR_indexes/Zea_mays --limitGenomeGenerateRAM 60000000000 --genomeFastaFiles FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa --sjdbGTFfile FS/Zea_mays.B73_RefGen_v4.47.gtf --sjdbOverhang 99 --outTmpDir STAR_tmp_Zea_mays
+##### Initial USER parameters from Command Line:
+outTmpDir                         STAR_tmp_Zea_mays
+###### All USER parameters from Command Line:
+runThreadN                    8     ~RE-DEFINED
+runMode                       genomeGenerate     ~RE-DEFINED
+genomeDir                     STAR_indexes/Zea_mays     ~RE-DEFINED
+limitGenomeGenerateRAM        60000000000     ~RE-DEFINED
+genomeFastaFiles              FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa        ~RE-DEFINED
+sjdbGTFfile                   FS/Zea_mays.B73_RefGen_v4.47.gtf     ~RE-DEFINED
+sjdbOverhang                  99     ~RE-DEFINED
+outTmpDir                     STAR_tmp_Zea_mays     ~RE-DEFINED
+##### Finished reading parameters from all sources
+
+##### Final user re-defined parameters-----------------:
+runMode                           genomeGenerate
+runThreadN                        8
+genomeDir                         STAR_indexes/Zea_mays
+genomeFastaFiles                  FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa   
+limitGenomeGenerateRAM            60000000000
+outTmpDir                         STAR_tmp_Zea_mays
+sjdbGTFfile                       FS/Zea_mays.B73_RefGen_v4.47.gtf
+sjdbOverhang                      99
+
+-------------------------------
+##### Final effective command line:
+STAR   --runMode genomeGenerate   --runThreadN 8   --genomeDir STAR_indexes/Zea_mays   --genomeFastaFiles FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa      --limitGenomeGenerateRAM 60000000000   --outTmpDir STAR_tmp_Zea_mays   --sjdbGTFfile FS/Zea_mays.B73_RefGen_v4.47.gtf   --sjdbOverhang 99
+----------------------------------------
+
+Finished loading and checking parameters
+Mar 05 17:31:11 ... starting to generate Genome files
+FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa : chr # 0  "1" chrStart: 0
+WARNING: --genomeSAindexNbases 14 is too large for the genome size=307232768, which may cause seg-fault at the mapping step. Re-run genome generation with recommended --genomeSAindexNbases 13 : Mar 05 17:31:16
+Estimated genome size=506232768   307232768   199000000
+GstrandBit=32
+Number of SA indices: 606710248
+Mar 05 17:31:18 ... starting to sort Suffix Array. This may take a long time...
+Number of chunks: 8;   chunks size limit: 693383136 bytes
+Mar 05 17:31:19 ... sorting Suffix Array chunks and saving them to disk...
+Writing 71900640 bytes into STAR_indexes/Zea_mays/SA_7 ; empty space on disk = 877877800960 bytes ... done
+Writing 677549800 bytes into STAR_indexes/Zea_mays/SA_0 ; empty space on disk = 875887366144 bytes ... done
+Writing 669262584 bytes into STAR_indexes/Zea_mays/SA_6 ; empty space on disk = 875168481280 bytes ... done
+Writing 692344080 bytes into STAR_indexes/Zea_mays/SA_1 ; empty space on disk = 874382004224 bytes ... done
+Writing 690897752 bytes into STAR_indexes/Zea_mays/SA_2 ; empty space on disk = 873673531392 bytes ... done
+Writing 679975368 bytes into STAR_indexes/Zea_mays/SA_4 ; empty space on disk = 872963182592 bytes ... done
+Writing 692166792 bytes into STAR_indexes/Zea_mays/SA_5 ; empty space on disk = 872270983168 bytes ...Writing 679584968 bytes into STAR_indexes/Zea_mays/SA_3 ; empty space on disk = 871746281472 bytes ... done
+ done
+Mar 05 17:32:31 ... loading chunks from disk, packing SA...
+Mar 05 17:32:37 ... finished generating suffix array
+Mar 05 17:32:37 ... generating Suffix Array index
+Mar 05 17:33:39 ... completed Suffix Array index
+Mar 05 17:33:39 ..... processing annotations GTF
+Processing pGe.sjdbGTFfile=FS/Zea_mays.B73_RefGen_v4.47.gtf, found:
+		20420 transcripts
+		178288 exons (non-collapsed)
+		37135 collapsed junctions
+Mar 05 17:33:41 ..... finished GTF processing
+Mar 05 17:33:41   Loaded database junctions from the GTF file: FS/Zea_mays.B73_RefGen_v4.47.gtf: 37135 total junctions
+
+WARNING: long repeat for junction # 17392 : 1 167500717 167515215; left shift = 255; right shift = 179
+Mar 05 17:33:41   Finished preparing junctions
+Mar 05 17:33:41 ..... inserting junctions into the genome indices
+Mar 05 17:33:46   Finished SA search: number of new junctions=37088, old junctions=0
+Mar 05 17:33:49   Finished sorting SA indicesL nInd=14686668
+Genome size with junctions=314613280  307232768   7380512
+GstrandBit1=32   GstrandBit=32
+Mar 05 17:33:57   Finished inserting junction indices
+Mar 05 17:34:05   Finished SAi
+Mar 05 17:34:05 ..... finished inserting junctions into genome
+Mar 05 17:34:05 ... writing Genome to disk ...
+Writing 314613280 bytes into STAR_indexes/Zea_mays/Genome ; empty space on disk = 872592994304 bytes ... done
+SA size in bytes: 2563262282
+Mar 05 17:34:05 ... writing Suffix Array to disk ...
+Writing 2563262282 bytes into STAR_indexes/Zea_mays/SA ; empty space on disk = 872272437248 bytes ... done
+Mar 05 17:34:06 ... writing SAindex to disk
+Writing 8 bytes into STAR_indexes/Zea_mays/SAindex ; empty space on disk = 869667078144 bytes ... done
+Writing 120 bytes into STAR_indexes/Zea_mays/SAindex ; empty space on disk = 869667078144 bytes ... done
+Writing 1565873491 bytes into STAR_indexes/Zea_mays/SAindex ; empty space on disk = 869667078144 bytes ... done
+Mar 05 17:34:07 ..... finished successfully
+DONE: Genome generation, EXITING

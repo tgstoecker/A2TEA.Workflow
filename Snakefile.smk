@@ -131,14 +131,14 @@ pd.set_option("display.max_colwidth", 10000)
 
 rule all:
     input:
-#        "multiqc/multiqc_report.html",
-#        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+        "multiqc/multiqc_report.html",
+        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
         ORTHOFINDER + "complete.check",
 ###        expand("{hypo.expanded_in}.ok", hypo=hypotheses.itertuples()),
 ##        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
 ##        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
-        expand("{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
         expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
@@ -737,6 +737,7 @@ if config["chunk_usage"] == "ON":
             "cut -f 1 {input.chunk} "
             "| xargs samtools faidx {input.fasta}"
             "| diamond blastp "
+            "--ultra-sensitive "
             "--db {input.db} "
             "--outfmt 6 "
             "--evalue 0.001 "
@@ -780,6 +781,7 @@ else:
     #        "orthofinder.yml"
         shell:
             "diamond blastp --query {input.fasta} "
+            "--ultra-sensitive "
             "--db {input.db} "
             "--outfmt 6 "
             "--evalue 0.001 "
@@ -876,7 +878,7 @@ rule Orthofinder_orthologues:
     shell:
         "orthofinder "
         "--from-trees {params.orthofinder_dir} "
-        "--algthreads {threads} "
+        "-a {threads} "
         "--threads {threads} "
         "2> {log} 1>&2"
 
@@ -998,12 +1000,7 @@ rule create_hypothesis_fasta:
         "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
     params:
         all_hyp_species = get_all_hypothesis_species,
-## also create the output directories for the expansion checkpoint (next step) here
-#        a = "tea/{hypothesis}/exp_OGs_proteinnames/",
-#        b = "checks/tea/{hypothesis}/",
-#        c = "tea/{hypothesis}/expansion_tibble/"
     shell:
-#        "mkdir -p {params.a} {params.b} {params.c} &&"
         "cat {params.all_hyp_species} > {output}"
 
 
@@ -1013,43 +1010,26 @@ checkpoint expansion:
         orthology = ORTHOFINDER + "complete.check",
 # added the hypothesis fasta to be sure that it is finished here...
         hypo_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa"
-#not actually necessary to be done here with the expression analysis; so can be deleted
-#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
     params:
         num = get_hypo_num,
         name = get_hypo_name,
         expansion = get_exp_species,
         comparison = get_com_species,
     output:
-# can I touch create an output directory here?
-#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
-#        directory("checks/tea/{hypothesis}/"),
-# fun little observation - output necessary for expansion needs to be first
-# otherwise workflow stops early...
-# am I missing sth.? or is this a quirk of this snakemake release (v5.26.1)?
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
         directory("checks/tea/{hypothesis}/"),
         directory("tea/{hypothesis}/expansion_tibble/"),
-#        "tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"
-#    params:
-#        solve_expansion,
     threads: 1
     script:
         "scripts/expansion.R"
-	
 
 
 rule fasta_extraction:
     input:
-#        protein_lists = "checks/tea/{hypothesis}/exp_OGs_proteinnames.check",
         protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
-#        expansion_tibbles = "tea/{hypothesis}/expansion_tibble/expansion_tibble.rds",
         hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
-#    params:
-#        OGs = os.listdir("tea/1/exp_OGs_proteinnames/"),
     output:
         "tea/{hypothesis}/fa_records/{OG}.fa"
-#        "checks/tea/{hypothesis}/exp_OGs_proteinnames.check"
     threads: 1
     shell:
         "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
@@ -1065,19 +1045,19 @@ rule muscle_MSA:
         "muscle -in {input} -out {output}"
 
 
-#rule gblocks_MSA:
-#    input:
-#        "tea/{hypothesis}/muscle/{OG}.fa"
-#    output:
-#        "tea/{hypothesis}/gblocks/{OG}.fa"
-#    threads: 1
-#    shell:
-#        "Gblocks {input} {output}"
+rule trimAl:
+    input:
+        "tea/{hypothesis}/muscle/{OG}.afa"
+    output:
+        "tea/{hypothesis}/trimAl/{OG}.afa"
+    threads: 1
+    shell:
+        "trimal -automated1 -in {input} -out {output}"
 
 
 rule FastTree:
     input:
-        "tea/{hypothesis}/muscle/{OG}.afa"
+        "tea/{hypothesis}/trimAl/{OG}.afa"
     output:
         "tea/{hypothesis}/trees/{OG}.tree"
     threads: 1
@@ -1085,26 +1065,20 @@ rule FastTree:
         "FastTree {input} > {output}"
 
 
-
-
 #CHECKPOINTS ARE SO AWESOME!
-#def solve_expansion(wildcards):
-#    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
-#    file_names = expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-#    return file_names
-
 def solve_expansion(wildcards):
     checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
     file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
     return file_names
 
 
-
-rule finished:
+rule expansion_checkpoint_finish:
     input:
-        solve_expansion,
-#        "tea/{hypothesis}/trees/{OG}.tree"
+        solve_expansion
     output:
-        "{hypothesis}_finished.txt",
+        "checks/expansion/{hypothesis}_finished.txt",
     shell:
         "touch {output}"
+
+# necessary to be done here with the expression analysis;
+#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
