@@ -11,10 +11,11 @@ dependencies:
   - star =2.7.3a
   - samtools =1.9
   - subread =1.6.4
-  - orthofinder =2.4.0
+  - orthofinder =2.5.2
   - muscle
+  - trimal =>1.4
   - pandas =1.0.1
-  - diamond
+  - diamond >=2.0.0
   - gmp
   - kallisto
   - bioconductor-genomicfeatures
