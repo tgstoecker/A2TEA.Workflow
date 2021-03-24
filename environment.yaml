@@ -34,3 +34,5 @@ dependencies:
   - bioconductor-biostrings
   - r-seqinr
   - bioconductor-biocgenerics
+  - jupyter
+  - r-irkernel

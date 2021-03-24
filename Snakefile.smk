@@ -138,7 +138,8 @@ rule all:
 ##        expand("checks/tea/{hypothesis}/exp_OGs_proteinnames.check", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/exp_OGs_proteinnames/", hypothesis=HYPOTHESES),
 ##        dynamic("tea/{hypothesis}/exp_OGs_proteinnames/proteinnames_{OG}.txt"),
-        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+#        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+        "tea/A2TEA_finished.RData",
 ##        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
         expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
@@ -1082,3 +1083,12 @@ rule expansion_checkpoint_finish:
 
 # necessary to be done here with the expression analysis;
 #        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+
+
+rule final_tea_output:
+    input:
+        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+    output:
+        "tea/A2TEA_finished.RData"
+    script:
+        "scripts/final_tea_computation.R"
