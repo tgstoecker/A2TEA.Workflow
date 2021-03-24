@@ -262,8 +262,18 @@ sig_genes_per_species_and_HOG <- HOG_DE.a2tea %>%
             # rename species columns containing now the counts of sig. DE genes
                                                     rename_at(vars(-HOG), ~ paste0(., '_sigDE'))
     # and also add a column summing the rowwise sig. DE counts for all species
-    sig_genes_per_species_and_HOG %>% select(-HOG) %>% rowSums(na.rm=TRUE) -> total_sigDE
+    total_sigDE <- sig_genes_per_species_and_HOG %>% select(-HOG) %>% rowSums(na.rm = TRUE) 
     sig_genes_per_species_and_HOG <- add_column(sig_genes_per_species_and_HOG, total_sigDE)
+    sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%
+                                         group_by(HOG) %>%
+                                         # mutate all NAs to 0s
+                                         mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
+                                         # merge rows per HOG - results in one line per HOG
+                                         summarise_all(funs(sum))
+# change the zeros back to NAs
+# necessary for current implemntation of tea value computation
+    sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%
+                                         na_if(0)
 
 for (i in 1:length(HOG_level_list)) {
     HOG_level_list[[i]] <- HOG_level_list[[i]] %>% rename_at(vars(-HOG, -expansion), ~ paste0(., '_total'))

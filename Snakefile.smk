@@ -941,6 +941,7 @@ def get_hypo_name(wildcards):
     name = hypotheses.loc[ (wildcards.hypothesis), 'name']
     return name
 
+
 # for both the species we want to check for expansion as well as those being compared to:
 # if more than one species is compared to than we have to split the string based on ";" 
 
@@ -1016,6 +1017,7 @@ checkpoint expansion:
         name = get_hypo_name,
         expansion = get_exp_species,
         comparison = get_com_species,
+        add_blast_hits = config["add_blast_hits"]
     output:
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
         directory("checks/tea/{hypothesis}/"),

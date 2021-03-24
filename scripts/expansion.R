@@ -4,6 +4,8 @@ library(tidyverse)
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
+# define the number of additional best blast hits to include in the follow-up analyses
+add_blast_hits = snakemake@params[["add_blast_hits"]]
 
 # using snakemake propagation + python strsplit() is really cool since the input is just a vector
 ## even if we have multiple species in expanded, compared or both ;D
@@ -191,8 +193,29 @@ for (i in expanded_HOGs$HOG) {
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
                                              qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
-    list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
-    list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
+    # add number of chosen additional best blast hits to size of HOG 
+    HOG_set_extended <- length(exp_og_genes) + add_blast_hits
+    ## first qseqid
+    # if we have more than "additional genes" further blast hits; limit the set to HOG + "additional genes" param
+    # unique inside the assignment leads to no redundancies!
+    if (length(unique(sorted_BLAST_hits_exp_og_genes$qseqid_name)) >= HOG_set_extended) {
+        list_qseqid <- as.character(unique(sorted_BLAST_hits_exp_og_genes$qseqid_name)[1:HOG_set_extended])
+    }
+    # if we have less than "additional genes" further blast hits; just take the complete set
+    else {
+        list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
+    }
+    ## now for sseqid
+    # if we have more than "additional genes" further blast hits; limit the set to HOG + "additional genes" param
+    if (length(unique(sorted_BLAST_hits_exp_og_genes$sseqid_name)) >= HOG_set_extended) {
+        list_sseqid <- as.character(unique(sorted_BLAST_hits_exp_og_genes$sseqid_name)[1:HOG_set_extended])
+    }
+    # if we have less than "additional genes" further blast hits; just take the complete set
+    else {
+        list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
+    }
+    #list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
+    #list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
     list_merged <- unique(c(list_qseqid, list_sseqid))
     write_lines(list_merged,
 #           paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))

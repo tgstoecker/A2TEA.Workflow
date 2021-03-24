@@ -61,3 +61,8 @@ STAR: >
 ## coreutils split - is sometimes not easy to install
 ## defaulit is ON and allows faster runtime - if problems occur set to OFF
 chunk_usage: "ON"
+
+
+## options for expansion analyses
+# define the number of additional best blast hits to include in the follow-up analyses
+add_blast_hits: 20
