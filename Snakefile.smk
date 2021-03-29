@@ -626,25 +626,37 @@ def get_longest_isoforms(wildcards):
     return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
 
 
-rule filter_isoforms:
-    output:
-        "FS/longest_isoforms/{species}.fa"
-    params:
-        fa = get_species_fasta,
-        iso = get_longest_isoforms,
-    shell:
-        "python scripts/longest_isoforms.py {params.fa} && "
-        "mv {params.iso} {output}"
+if config["auto_isoform_filtering"] == "YES":
+    rule filter_isoforms:
+        output:
+            "FS/longest_isoforms/{species}.fa"
+        params:
+            fa = get_species_fasta,
+            iso = get_longest_isoforms,
+        shell:
+            "python scripts/longest_isoforms.py {params.fa} && "
+            "mv {params.iso} {output}"
 
 
-rule Orthofinder_link_all:
-    input:
-        "FS/longest_isoforms/{species}.fa",
-    output:
-        ORTHOFINDER + "{species}.fa"
-    params: get_longest_isoforms,
-    shell: 
-        "ln --symbolic $(readlink --canonicalize {input}) {output}"
+    rule Orthofinder_link_all:
+        input:
+            "FS/longest_isoforms/{species}.fa",
+        output:
+            ORTHOFINDER + "{species}.fa"
+        params: get_longest_isoforms,
+        shell: 
+            "ln --symbolic $(readlink --canonicalize {input}) {output}"
+
+
+else:
+    rule Orthofinder_link_all:
+        output:
+            ORTHOFINDER + "{species}.fa"
+        params:
+            fa = get_species_fasta,
+        shell:
+            "ln --symbolic $(readlink --canonicalize {params.fa}) {output}"
+
 
 
 rule Orthofinder_prepare:

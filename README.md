@@ -70,20 +70,14 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 4) Peptide & genome FASTA as well as GTF files shouldn't be compressed; cDNA FASTA should be gzipped
 5) Fastq files should also be gzipped
 6) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
-
-
-# Common resons for errors:
-- although "all" software is installed old gnu installs might have problems;  
+7) With "auto_isoform_filtering" you can choose whether to try an automated approach for filtering the peptide fastas for their longest isoform or doing this yourself before starting the workflow. If the option is not set to "YES" the filtering is skipped.
+8) Although "all" software is installed old gnu installs might have problems;  
   the efficient usage of the split command as part of the gnu coreutils package (used during Orthofinder_split) requires a "newish" version,  
   namely one with the `-n, --number=chunks` option flag; currently conda is not able to install a proper version (this could be circumvented by distributing the workflow as a docker or singularity image)  
-  -> if you can't install a newer version of coreutils split you can modify the Snakefile:
-      1) comment out Orthofinder_split;  
-      2) remove all references of "chunks" from files/file paths in Orthofinder_BLASTP and Orthofinder_BLASTP_merge  
-      3) change the startof the shell: invocation of Orthofinder_BLASTP to 
-          shell:  
-              "diamond blastp --query {input.fasta} "  
-              "--db {input.db} "  
-              ...  
+  -> if you can't install a newer version of coreutils split you can change the option "chunk_usage" to not "ON" and this (to be fair minor optimization) is not used.  
+9) With "add_blast_hits" you can define the max number of additional best blast hits to include in the follow-up analyses. Tree visualizations often are more informative if we use more than an individual (H)OG.  
+
+# Common resons for errors: 
 - falsely formatted annotations; e.g. gene_id field is called different in some lines geneID  
 - format of fasta files -> same lengths of lines and shorter; otherwise samtools faidx etc. won't work  
 
@@ -104,7 +98,6 @@ If you are using cDNA fasta then also URL to the the annotation file suffices.
 (-> provide link to AHRD for researchers not possessing GO-/Annotation for their species of interest  
 
 - more cleanup:  
--> runable on cluster (change ortho chunks?)
 -> add more options to the config.yaml files (e.g. trimmomatic options) so that all can be changed modified there  
 -> add snakemake internal report  
 -> restructering of A2TEA to modular layout  
