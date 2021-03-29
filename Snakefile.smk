@@ -1022,6 +1022,7 @@ checkpoint expansion:
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
         directory("checks/tea/{hypothesis}/"),
         directory("tea/{hypothesis}/expansion_tibble/"),
+        "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
     threads: 1
     script:
         "scripts/expansion.R"

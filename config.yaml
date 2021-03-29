@@ -65,4 +65,4 @@ chunk_usage: "ON"
 
 ## options for expansion analyses
 # define the number of additional best blast hits to include in the follow-up analyses
-add_blast_hits: 20
+add_blast_hits: 50

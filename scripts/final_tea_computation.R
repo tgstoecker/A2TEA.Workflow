@@ -1,15 +1,34 @@
 ## Install packages
+# if they are not installed (check via the following neat lapply approach)
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("ggtree")
-BiocManager::install("ggtreeExtra")
-BiocManager::install("Biostrings")
+# list of bioconductor packages
+bioc_packages = c("ggtree", "ggtreeExtra", "Biostrings")
 
-install.packages("VennDiagram", repos = "http://cran.us.r-project.org")
-install.packages("UpSetR", repos = "http://cran.us.r-project.org")
-install.packages("cowplot", repos = "http://cran.us.r-project.org")
-install.packages("ggplotify", repos = "http://cran.us.r-project.org")
+# load or install&load all
+package.check <- lapply(
+  bioc_packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+    BiocManager::install(x)
+    library(x, character.only = TRUE)
+    }
+  }
+)
+
+# list of cran packages
+cran_packages = c("VennDiagram", "VennDiagram", "cowplot", "ggplotify")
+# load or install&load all
+package.check <- lapply(
+  cran_packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
+      library(x, character.only = TRUE)
+    }
+  }
+)
 
 
 ## Load all necessary packages
@@ -128,12 +147,18 @@ hypotheses <- read_delim("hypotheses.tsv", delim = "\t")
 hypotheses$hypothesis
 
 
-# define two classes
+# define three classes
 # class for the expanded_OG - containing all different types of data we have on it
-setClass("expanded_OG", slots=list(genes="spec_tbl_df", 
-                                  fasta_files="list", 
-                                  msa="AAMultipleAlignment", 
-                                  tree="phylo"))
+setClass("expanded_OG", slots=list(genes="spec_tbl_df",
+                                   blast_table="tbl_df",
+                                   nrow_table="numeric",
+                                   num_genes_HOG="numeric",
+                                   num_genes_extend="numeric",
+                                   num_genes_complete="numeric",
+                                   genes_HOG="tbl_df", 
+                                   fasta_files="list", 
+                                   msa="AAMultipleAlignment", 
+                                   tree="phylo"))
 
 
 # class for the hypotheses
@@ -153,9 +178,22 @@ setClass("hypothesis",
                                   species_tree="phylo"))
 #                                  ortho_intersect_plot="gg"))
 
+# class for extended BLAST hits info
+setClass("extended_BLAST_hits", 
+         slots=list(blast_table="tbl_df",
+                    nrow_table="numeric",
+                    num_genes_HOG="numeric",
+                    num_genes_extend="numeric",
+                    num_genes_complete="numeric",
+                    genes_HOG="tbl_df")
+         )
+
 
 #remove protein_names in the snakemake pipeline - directories clean enough
 for (hypothesis in hypotheses$hypothesis) {  
+    # read-in extended_BLAST_hits.RDS object of hypothesis
+    extended_BLAST_hits <- readRDS(paste0("tea/", hypothesis, "/extended_BLAST_hits/extended_BLAST_hits.RDS"))
+
     # create empty list object for hypothesis
     assign(paste0("hypothesis_", hypothesis), list())
     # assign list of names
@@ -172,7 +210,12 @@ for (hypothesis in hypotheses$hypothesis) {
 
     for (exp_OG in expanded_OGs_short) {
         test <- new("expanded_OG", 
-             genes=read_table(paste0("tea/", hypothesis, "/exp_OGs_proteinnames/", exp_OG, ".txt")), 
+             genes=read_table(paste0("tea/", hypothesis, "/exp_OGs_proteinnames/", exp_OG, ".txt"), col_names = FALSE),
+             blast_table=extended_BLAST_hits[[exp_OG]]@blast_table,
+             num_genes_HOG=extended_BLAST_hits[[exp_OG]]@num_genes_HOG,
+             num_genes_extend=extended_BLAST_hits[[exp_OG]]@num_genes_extend,
+             num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
+             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG, 
              fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
              msa=readAAMultipleAlignment(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
              tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")))
@@ -269,7 +312,8 @@ sig_genes_per_species_and_HOG <- HOG_DE.a2tea %>%
                                          # mutate all NAs to 0s
                                          mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
                                          # merge rows per HOG - results in one line per HOG
-                                         summarise_all(funs(sum))
+                                         #summarise_all(funs(sum))
+                                         summarise_all(list(sum))
 # change the zeros back to NAs
 # necessary for current implemntation of tea value computation
     sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%

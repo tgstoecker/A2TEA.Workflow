@@ -187,6 +187,22 @@ message("Creating .txt files for all expanded OGs with reciprocal best BLAST hit
 ## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
 ####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
 dir.create(paste("tea/", num, "/exp_OGs_proteinnames/", sep = ""))
+#dir.create(paste("tea/", num, "/extended_BLAST_hits/", sep = ""))
+
+## define custom class for extended blast hits
+# need a list object to hold all data of this class
+extended_BLAST_hits <- list()
+
+# class for extended BLAST hits info
+setClass("extended_BLAST_hits", 
+         slots=list(blast_table="tbl_df",
+                    nrow_table="numeric",
+                    num_genes_HOG="numeric",
+                    num_genes_extend="numeric",
+                    num_genes_complete="numeric",
+                    genes_HOG="tbl_df")
+         )
+
 
 for (i in expanded_HOGs$HOG) {
     exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
@@ -217,10 +233,67 @@ for (i in expanded_HOGs$HOG) {
     #list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
     #list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
     list_merged <- unique(c(list_qseqid, list_sseqid))
+
     write_lines(list_merged,
-#           paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))
-            paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = ""))
+#     paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))
+      paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = ""))
+
+    # also: create list of S4 object containing the blast hits and respective information
+    # use tail() to access last element in vector
+    tail(list_merged, n=1)
+
+    # get row number of last appearance of last element in ssequid column
+    # in some instances not as straightforward and last hit is actually on the query side
+    # then use last entry rownumber there as subset cutoff
+    last <- sorted_BLAST_hits_exp_og_genes %>%
+      rowid_to_column() %>%
+      filter(
+        case_when(
+          sseqid_name != tail(list_merged, n=1) ~ qseqid_name == tail(list_merged, n=1),
+          T ~ sseqid_name == tail(list_merged, n=1)
+        )
+      ) %>%
+      tail(n=1)
+    
+    # create a subset of the "sorted_BLAST_hits_exp_og_genes" dataframe based on the final extended gene list
+    # take last gene of extended set, search sseqid until last appearance and cut dataframe there
+    # just keep all vs all information - additonal filtering as part of the WebApp
+    subset_sorted_BLAST_hits_exp_og_genes <- sorted_BLAST_hits_exp_og_genes[1:last$rowid,]
+    
+    # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
+    ext_B_hits <- new("extended_BLAST_hits",
+      blast_table=subset_sorted_BLAST_hits_exp_og_genes,
+      nrow_table=nrow(subset_sorted_BLAST_hits_exp_og_genes),
+      num_genes_HOG=length(exp_og_genes),
+      num_genes_extend = length(
+                  unique(
+                    c(
+                      unique(subset_sorted_BLAST_hits_exp_og_genes$qseqid_name), 
+                      unique(subset_sorted_BLAST_hits_exp_og_genes$sseqid_name)
+                      )
+                  )
+                ) - length(exp_og_genes),
+      num_genes_complete=length(
+                  unique(
+                    c(
+                      unique(subset_sorted_BLAST_hits_exp_og_genes$qseqid_name), 
+                      unique(subset_sorted_BLAST_hits_exp_og_genes$sseqid_name)
+                      )
+                  )
+                ),
+      genes_HOG=as_tibble(exp_og_genes)
+            )
+    # assign name based on name of the underlying expanded HOG
+    ext_B_hits <- list(ext_B_hits)
+    names(ext_B_hits) <- paste0(i)
+    
+    # append to list object
+    extended_BLAST_hits <- c(extended_BLAST_hits, ext_B_hits)
 }
+
+# save extended BLAST hits to hypothesis specific ("num") RDS file 
+#-> to be read and used in final_tea_computation.R script
+saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
 #lastly create .check to know it's done
 message("Creating .check - Expansions successfully computed for hypothesis ", num)
