@@ -60,7 +60,7 @@ STAR: >
 ## try automatic filtering for longest isoform of fastas?
 ## -> relatively stable for standard fasta files from e.g. Ensembl
 ## when not set to "YES", we assume you performed appropiate filtering yourself or specifically want all isoforms
-auto_isoform_filtering: "NO"
+auto_isoform_filtering: "YES"
 
 ## use chunks for blasting?
 ## coreutils split - is sometimes not easy to install

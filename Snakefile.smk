@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import re
 import yaml
 from snakemake.utils import validate, min_version
 
@@ -143,8 +144,10 @@ rule all:
 ##        expand("tea/{hypothesis}/expansion_tibble/expansion_tibble.rds", hypothesis=HYPOTHESES),
         expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),
 ##        expand("tea/{hypothesis}/fa_records/{OG}.fa", hypothesis=HYPOTHESES),
+#        rules.cafe5_complete_set.output,
 
 
+include: "workflow/cafe_analysis.smk"
 
 
 #this will create (if needed) the directories for the trimmomatic rules
@@ -699,7 +702,7 @@ rule index_pep_FASTAs:
 
 # added choice of chunk usage or not ;D
 with open('config.yaml', 'r') as f:
-    config = yaml.load(f)
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 if config["chunk_usage"] == "ON":
     rule Orthofinder_split:
@@ -1103,6 +1106,7 @@ rule expansion_checkpoint_finish:
 rule final_tea_output:
     input:
         expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+        rules.cafe5_complete_set.output,
     output:
         "tea/A2TEA_finished.RData"
     script:
