@@ -652,14 +652,15 @@ if config["auto_isoform_filtering"] == "YES":
 
 
 else:
-    rule Orthofinder_link_all:
+    rule Orthofinder_link_all_and_isoform_loc_copy:
         output:
-            ORTHOFINDER + "{species}.fa"
+            link = ORTHOFINDER + "{species}.fa",
+            iso_link = "FS/longest_isoforms/{species}.fa"
         params:
             fa = get_species_fasta,
         shell:
-            "ln --symbolic $(readlink --canonicalize {params.fa}) {output}"
-
+            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.link} && "
+            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.iso_link}"
 
 
 rule Orthofinder_prepare:
@@ -932,11 +933,22 @@ rule Orthofinder_cleanup:
         "rm -rf Results_* "
 
 
-rule Orthofinder_complete:
+rule hypothesis_species_trees:
     input:
         ORTHOFINDER + "cleanup.check"
     output:
+        "orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt",
+    script:
+        "scripts/create_hypothesis_species_trees.R"
+
+
+rule Orthofinder_complete:
+    input:
+        expand("orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt", hypothesis=HYPOTHESES)
+#        ORTHOFINDER + "cleanup.check"
+    output:
         touch(ORTHOFINDER + "complete.check")
+    
 
 
 ##################################################################
@@ -988,6 +1000,7 @@ def get_com_species(wildcards):
 #we also need to add the path to the longest isoform peptide fasta files and add the .fa suffix
 #another trick is that we can simply use the species base name in any case,
 #since the longest isoform output is always named after it!
+# this also applies if the user did the isoform filtering on their own since the renamed pep fastas are linked to isoform directory in that case ;D
 #+the filtering for longest isoform also only retains the base name of the gene/protein
 
 def get_all_hypothesis_species(wildcards):
@@ -1106,7 +1119,8 @@ rule expansion_checkpoint_finish:
 rule final_tea_output:
     input:
         expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
-        rules.cafe5_complete_set.output,
+        expand(rules.cafe5_complete_set.output, hypothesis=HYPOTHESES),
+#        expand("{hypothesis}_cafe_check", hypothesis=HYPOTHESES),
     output:
         "tea/A2TEA_finished.RData"
     script:

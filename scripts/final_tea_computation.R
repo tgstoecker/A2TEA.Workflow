@@ -472,6 +472,22 @@ for (i in 1:length(HOG_level_list)) {
 }
 
 
+## adding the computed CAFE p-values to the HOG_level_list(s)
+for (hypothesis_num in 1:length(HOG_level_list)) {
+
+  cafe_tibble <- read_tsv(paste0("cafe/", hypothesis_num, "/cafe_complete_results/Gamma_family_results.txt"))[1:2]
+
+  HOG_level_list[[hypothesis_num]] <- HOG_level_list[[hypothesis_num]] %>%
+                                        left_join(., 
+                                                  cafe_tibble, 
+                                                  by = c("HOG" = "#FamilyID")
+                                                 ) %>%
+                                        rename(cafe_pvalue = pvalue) %>%
+                                        relocate(cafe_pvalue, .after = tea_value) %>%
+                                        arrange(tea_value)
+}
+
+
 ## Last step: saving everything to one file which is input for the A2TEA WebApp
 save(hypotheses, 
      HYPOTHESES.a2tea, 

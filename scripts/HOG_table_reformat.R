@@ -1,9 +1,14 @@
-#to reduce installation time; we could reduce down to readr, plyr, dplyr, stringr
+#to reduce loading time; we could reduce down to readr, plyr, dplyr, stringr
 library(tidyverse)
 
 # using snakemake propagation + python strsplit() is really cool since the input is just a vector
 ## even if we have multiple species in expanded, compared or both ;D
 all_species <- snakemake@params[["all_species"]]
+hypothesis_num <- snakemake@params[["hypothesis_num"]]
+
+message("Started work on hypothesis:")
+print(hypothesis_num)
+message("With species:")
 print(all_species)
 
 message("Data read-in and reformat:")
@@ -60,7 +65,7 @@ for (species in all_species) {
 
 
 message("Writing filtered set (<100 genes per species per HOG) to file - HOG_table_reformatted_filtered.tsv")
-write_tsv(HOG_tibble_filtered, "cafe/HOG_table_reformatted_filtered.tsv")
+write_tsv(HOG_tibble_filtered, paste0("cafe/", hypothesis_num, "/HOG_table_reformatted_filtered.tsv"))
 
 message("Writing complete set to file - HOG_table_reformatted_complete.tsv")
-write_tsv(HOG_tibble, "cafe/HOG_table_reformatted_complete.tsv")
+write_tsv(HOG_tibble, paste0("cafe/", hypothesis_num, "/HOG_table_reformatted_complete.tsv"))
