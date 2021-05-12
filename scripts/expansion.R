@@ -196,11 +196,11 @@ extended_BLAST_hits <- list()
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
          slots=list(blast_table="tbl_df",
-                    nrow_table="numeric",
                     num_genes_HOG="numeric",
                     num_genes_extend="numeric",
                     num_genes_complete="numeric",
-                    genes_HOG="tbl_df")
+                    genes_HOG="tbl_df",
+                    genes_extend_hits="tbl_df")
          )
 
 
@@ -211,77 +211,47 @@ for (i in expanded_HOGs$HOG) {
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
     # add number of chosen additional best blast hits to size of HOG 
     HOG_set_extended <- length(exp_og_genes) + add_blast_hits
-    ## first qseqid
-    # if we have more than "additional genes" further blast hits; limit the set to HOG + "additional genes" param
-    # unique inside the assignment leads to no redundancies!
-    if (length(unique(sorted_BLAST_hits_exp_og_genes$qseqid_name)) >= HOG_set_extended) {
-        list_qseqid <- as.character(unique(sorted_BLAST_hits_exp_og_genes$qseqid_name)[1:HOG_set_extended])
-    }
-    # if we have less than "additional genes" further blast hits; just take the complete set
-    else {
-        list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
-    }
-    ## now for sseqid
-    # if we have more than "additional genes" further blast hits; limit the set to HOG + "additional genes" param
-    if (length(unique(sorted_BLAST_hits_exp_og_genes$sseqid_name)) >= HOG_set_extended) {
-        list_sseqid <- as.character(unique(sorted_BLAST_hits_exp_og_genes$sseqid_name)[1:HOG_set_extended])
-    }
-    # if we have less than "additional genes" further blast hits; just take the complete set
-    else {
-        list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
-    }
-    #list_qseqid <- as.character(sorted_BLAST_hits_exp_og_genes$qseqid_name)
-    #list_sseqid <- as.character(sorted_BLAST_hits_exp_og_genes$sseqid_name)
-    list_merged <- unique(c(list_qseqid, list_sseqid))
-
-    write_lines(list_merged,
-#     paste("tea/", num, "/exp_OGs_proteinnames/proteinnames_", i, ".txt", sep = ""))
-      paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = ""))
-
-    # also: create list of S4 object containing the blast hits and respective information
-    # use tail() to access last element in vector
-    tail(list_merged, n=1)
-
-    # get row number of last appearance of last element in ssequid column
-    # in some instances not as straightforward and last hit is actually on the query side
-    # then use last entry rownumber there as subset cutoff
-    last <- sorted_BLAST_hits_exp_og_genes %>%
-      rowid_to_column() %>%
-      filter(
-        case_when(
-          sseqid_name != tail(list_merged, n=1) ~ qseqid_name == tail(list_merged, n=1),
-          T ~ sseqid_name == tail(list_merged, n=1)
-        )
-      ) %>%
-      tail(n=1)
     
-    # create a subset of the "sorted_BLAST_hits_exp_og_genes" dataframe based on the final extended gene list
-    # take last gene of extended set, search sseqid until last appearance and cut dataframe there
-    # just keep all vs all information - additonal filtering as part of the WebApp
-    subset_sorted_BLAST_hits_exp_og_genes <- sorted_BLAST_hits_exp_og_genes[1:last$rowid,]
+        # get gene name of last gene to be added based on number of add_blast_hits
+    all_blast_genes <- na.omit(
+       unique(
+         c(
+           rbind(
+             sorted_BLAST_hits_exp_og_genes$qseqid_name, 
+             sorted_BLAST_hits_exp_og_genes$sseqid_name
+           )
+         )
+       )
+     ) 
     
+    # set of all extended blast hits (based on threshold) - vector of gene names (ordered!)
+    # also nice: don't need a conditional since `%>% head(n = add_blast_hits)` will work,
+    # even if add_blast_hits param is > setdiff(all_blast_genes, exp_og_genes) 
+    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_blast_hits)
+    # length(extended_blast_hits_genes)
+  
+    # non redundant set of gene names of HOG + n additional blast hits as defined in the user threshold
+    HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
+
+    #create subset of sorted_BLAST_hits_exp_og_genes table in which only:
+    # exp_og_genes & extended_blast_hits_genes are allowed to appear
+    # this way we have cutoff for the nth best blast hit/gene but also keep all secondary hits
+    HOG_and_ext_blast_hits_table <- sorted_BLAST_hits_exp_og_genes %>%
+                                      filter(qseqid_name %in% HOG_and_ext_blast_hits_genes) %>%
+                                      filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
+
+    write_lines(HOG_and_ext_blast_hits_genes,
+                paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = "")
+    )
+ 
     # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
     ext_B_hits <- new("extended_BLAST_hits",
-      blast_table=subset_sorted_BLAST_hits_exp_og_genes,
-      nrow_table=nrow(subset_sorted_BLAST_hits_exp_og_genes),
+      blast_table=HOG_and_ext_blast_hits_table,
       num_genes_HOG=length(exp_og_genes),
-      num_genes_extend = length(
-                  unique(
-                    c(
-                      unique(subset_sorted_BLAST_hits_exp_og_genes$qseqid_name), 
-                      unique(subset_sorted_BLAST_hits_exp_og_genes$sseqid_name)
-                      )
-                  )
-                ) - length(exp_og_genes),
-      num_genes_complete=length(
-                  unique(
-                    c(
-                      unique(subset_sorted_BLAST_hits_exp_og_genes$qseqid_name), 
-                      unique(subset_sorted_BLAST_hits_exp_og_genes$sseqid_name)
-                      )
-                  )
-                ),
-      genes_HOG=as_tibble(exp_og_genes)
+      num_genes_extend = length(extended_blast_hits_genes),
+      num_genes_complete=length(HOG_and_ext_blast_hits_genes),
+      genes_HOG=as_tibble(exp_og_genes),
+      genes_extend_hits=as_tibble(extended_blast_hits_genes)
             )
     # assign name based on name of the underlying expanded HOG
     ext_B_hits <- list(ext_B_hits)

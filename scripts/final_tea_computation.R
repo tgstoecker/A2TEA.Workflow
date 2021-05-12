@@ -155,7 +155,8 @@ setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    num_genes_HOG="numeric",
                                    num_genes_extend="numeric",
                                    num_genes_complete="numeric",
-                                   genes_HOG="tbl_df", 
+                                   genes_HOG="tbl_df",
+                                   genes_extend_hits="tbl_df",
                                    fasta_files="list", 
                                    msa="AAMultipleAlignment", 
                                    tree="phylo"))
@@ -181,13 +182,12 @@ setClass("hypothesis",
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
          slots=list(blast_table="tbl_df",
-                    nrow_table="numeric",
                     num_genes_HOG="numeric",
                     num_genes_extend="numeric",
                     num_genes_complete="numeric",
-                    genes_HOG="tbl_df")
+                    genes_HOG="tbl_df",
+                    genes_extend_hits="tbl_df")
          )
-
 
 #remove protein_names in the snakemake pipeline - directories clean enough
 for (hypothesis in hypotheses$hypothesis) {  
@@ -215,7 +215,8 @@ for (hypothesis in hypotheses$hypothesis) {
              num_genes_HOG=extended_BLAST_hits[[exp_OG]]@num_genes_HOG,
              num_genes_extend=extended_BLAST_hits[[exp_OG]]@num_genes_extend,
              num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
-             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG, 
+             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
+             genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
              fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
              msa=readAAMultipleAlignment(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
              tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")))
