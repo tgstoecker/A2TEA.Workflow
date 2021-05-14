@@ -158,7 +158,7 @@ setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    genes_HOG="tbl_df",
                                    genes_extend_hits="tbl_df",
                                    fasta_files="list", 
-                                   msa="AAMultipleAlignment", 
+                                   msa="AAStringSet", 
                                    tree="phylo"))
 
 
@@ -218,7 +218,7 @@ for (hypothesis in hypotheses$hypothesis) {
              genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
              genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
              fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
-             msa=readAAMultipleAlignment(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
+             msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
              tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")))
         x <- list(test)
         names(x) <- paste0(exp_OG)
