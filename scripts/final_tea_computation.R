@@ -18,7 +18,7 @@ package.check <- lapply(
 )
 
 # list of cran packages
-cran_packages = c("VennDiagram", "VennDiagram", "cowplot", "ggplotify")
+cran_packages = c("VennDiagram", "VennDiagram", "UpSetR", "cowplot", "ggplotify")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
