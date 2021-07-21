@@ -135,7 +135,7 @@ HOG_DE.a2tea <- add_column(HOG_DE.a2tea, significant, .after = "padj")
 ## Load in the rest of the data - hypotheses, trees, fasta and msa for the start 
 ### VennDiagrammes included
 ### + toDo general stats, especially once Orthofinder calculates for HOG)
-hypotheses <- read_delim("hypotheses.tsv", delim = "\t")
+hypotheses <- read_delim("config/hypotheses.tsv", delim = "\t")
 
 # create hypotheses object
 # each object has list of exp. OGs

@@ -11,7 +11,7 @@ library(rhdf5)
 library(readr)
 
 
-samples <- read.delim("samples.tsv")
+samples <- read.delim("config/samples.tsv")
 samples_snakemake.wildcards <- samples[samples$species == snakemake@params[["species"]], ]
 sample_snakemake.wildcards_names <- paste0(samples_snakemake.wildcards$sample, "_", samples_snakemake.wildcards$unit)
 

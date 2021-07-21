@@ -4,7 +4,7 @@ library(ape)
 
 
 # read-in hypothesis object
-hypotheses <- read_delim("hypotheses.tsv", delim = "\t")
+hypotheses <- read_delim("config/hypotheses.tsv", delim = "\t")
 
 # loop through hypotheses
 for (hypothesis in hypotheses$hypothesis) {
