@@ -14,7 +14,7 @@ if config["auto_isoform_filtering"] == "YES":
             fa = get_species_fasta,
             iso = get_longest_isoforms,
         shell:
-            "python scripts/longest_isoforms.py {params.fa} && "
+            "python workflow/scripts/longest_isoforms.py {params.fa} && "
             "mv {params.iso} {output}"
 
 
