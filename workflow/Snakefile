@@ -1,0 +1,72 @@
+from snakemake.utils import min_version
+
+min_version("6.6.0")
+
+import pandas as pd
+import os
+import re
+import yaml
+
+
+#pandas actually truncates too long names.. if you don't stop it ;D
+pd.set_option("display.max_colwidth", 10000)
+
+### read-in config ###
+configfile: "config/config.yaml"
+
+### read-in species information ###
+species_table = pd.read_table("species.tsv").set_index("species")
+#species = list(species_table.species.unique())
+SPECIES = species_table.index.tolist()
+N_SPECIES = len(SPECIES)
+
+
+### orthofinder option - SHOULD BE MOVED!
+ORTHOFINDER = "orthofinder/"
+CHUNKS_ORTHO = 2
+
+### read-in samples information ###
+samples = pd.read_csv("samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
+samples.index = samples.index.set_levels( [i.astype(str) for i in samples.index.levels])  # enforce str in index
+#create SE and PE subset (makes trimmomatic much easier)
+SE_samples = samples[samples["fq2"].isna()].set_index(["sample", "unit"], drop=False)
+SE_samples.index = SE_samples.index.set_levels( [i.astype(str) for i in SE_samples.index.levels])  # enforce str in index
+PE_samples = samples[samples["fq2"].notna()]
+
+
+### read-in hypotheses information ###
+hypotheses = pd.read_csv("hypotheses.tsv", dtype=str, sep="\t").set_index(["hypothesis"], drop=False)
+
+HYPOTHESES = hypotheses.index.tolist()
+N_HYPOTHESES = len(HYPOTHESES)
+#N_HYPOTHESES
+
+
+### defining wildcard constraints ###
+wildcard_constraints:
+    unit="|".join(samples["unit"]),
+
+
+
+# assign directory containing sequencing reads as specified in config.yaml
+#reads_dir = config["reads_dir"]
+
+### all snakemake files to be included in the workflow ###
+include: "rules/common_utils.smk"
+include: "rules/quality_control.smk"
+include: "rules/trimming.smk"
+include: "rules/mapping.smk"
+include: "rules/diff_exp.smk"
+include: "rules/orthofinder.smk"
+include: "rules/expansion_analysis.smk"
+include: "rules/cafe_analysis.smk"
+include: "rules/final_tea.smk"
+
+
+rule all:
+    input:
+        "multiqc/multiqc_report.html",
+        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+        ORTHOFINDER + "complete.check",
+        "tea/A2TEA_finished.RData",
+        expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),

@@ -11,7 +11,7 @@ rule ultrametric_species_tree:
         species_tree = "orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt",
         ultrametric_tree = "orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt.ultrametric.tre"
     shell:
-        "python scripts/make_ultrametric.py {params.species_tree} && mv {params.ultrametric_tree} cafe/{wildcards.hypothesis}/"
+        "python workflow/scripts/make_ultrametric.py {params.species_tree} && mv {params.ultrametric_tree} cafe/{wildcards.hypothesis}/"
    
 
 #if more than one species is compared to than we have to split the string based on ";"
