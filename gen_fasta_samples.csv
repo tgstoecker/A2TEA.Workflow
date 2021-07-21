@@ -1,7 +1,0 @@
-species	sample	unit	condition	fq1	fq2	fragment_length_mean	fragment_length_sd
-Zea_mays	B73	control_1	control	B73_con_1.fq.gz		100	15
-Zea_mays	B73	control_2	control	B73_con_2.fq.gz		100	15
-Zea_mays	B73	control_3	control	B73_con_3.fq.gz		100	15
-Zea_mays	B73	treatment_1	treatment	B73_drought_1.fq.gz		100	15
-Zea_mays	B73	treatment_2	treatment	B73_drought_2.fq.gz		100	15
-Zea_mays	B73	treatment_3	treatment	B73_drought_3.fq.gz		100	15
