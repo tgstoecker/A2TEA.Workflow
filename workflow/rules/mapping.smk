@@ -1,3 +1,4 @@
+# if there is at least 1 species for which a genomic fasta was supplied -> classic alignment with STAR
 if len(GEN_FASTA_SPECIES) != 0:
 #######
 #STAR
@@ -18,6 +19,8 @@ if len(GEN_FASTA_SPECIES) != 0:
             temp_dir = "STAR_tmp_{species}",
             #possible to add params here, by referring to the table like this:
             #SampleSM = lambda wildcards: list(units_table.SampleSM[units_table.Unit == wildcards.unit]),
+        conda:
+            "../envs/star.yaml"
 #        log:
 #            "logs/star_index/{species}/Log.out"
         shell:
@@ -57,6 +60,8 @@ if len(GEN_FASTA_SPECIES) != 0:
                 correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
                 rest = config["STAR"],
                 sample = get_GEN_FASTA_trimmed_fastqs,
+            conda:
+                "../envs/star.yaml"
             shell:
                 'STAR --runThreadN {threads} '
                 '--genomeDir STAR_indexes/{params.correct_genome} '
@@ -146,6 +151,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             "../scripts/gen_fasta_deseq2.R"
 
 
+# if there is at least 1 species for which a cDNA fasta was supplied -> pseudoalignment with kallisto
 if len(CDNA_FASTA_SPECIES) != 0:
 ##########
 #kallisto

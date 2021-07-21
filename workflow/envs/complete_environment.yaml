@@ -4,7 +4,7 @@ channels:
   - r
   - anaconda
 dependencies:
-  - snakemake=6.0
+  - snakemake=6.6.0
   - fastqc =0.11.8
   - multiqc =1.7
   - trimmomatic =0.38
