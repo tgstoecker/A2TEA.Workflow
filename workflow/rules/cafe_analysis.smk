@@ -1,10 +1,30 @@
 # CAFE5 analysis
 # requires orthofinder to be finished
 
+# install & compile CAFE5
+# by far the "unsafest" step in the workflow - if no conda integration in the future; should either be optional or perhaps s part of container..
+rule cafe5_setup:
+    input:
+        ORTHOFINDER + "complete.check"
+    output:
+        "CAFE5/bin/cafe5"
+    conda:
+        "../envs/cafe5_compile.yaml"
+    shell:
+        """
+        git clone https://github.com/tgstoecker/CAFE5 CAFE5_cloned/ &&
+        mv CAFE5_cloned/* CAFE5/ &&
+        rm -rf CAFE5_cloned/ &&
+        cd CAFE5/ &&
+        autoconf &&
+        ./configure &&
+        make
+        """
+
 # generate an ultrametric species tree from orthofinder output
 rule ultrametric_species_tree:
     input:
-        ORTHOFINDER + "complete.check"
+        "CAFE5/bin/cafe5"
     output:
         "cafe/{hypothesis}/SpeciesTree_rooted_node_labels.txt.ultrametric.tre",
     params:
