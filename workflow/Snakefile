@@ -15,7 +15,7 @@ pd.set_option("display.max_colwidth", 10000)
 configfile: "config/config.yaml"
 
 ### read-in species information ###
-species_table = pd.read_table("species.tsv").set_index("species")
+species_table = pd.read_table("config/species.tsv").set_index("species")
 #species = list(species_table.species.unique())
 SPECIES = species_table.index.tolist()
 N_SPECIES = len(SPECIES)
@@ -26,7 +26,7 @@ ORTHOFINDER = "orthofinder/"
 CHUNKS_ORTHO = 2
 
 ### read-in samples information ###
-samples = pd.read_csv("samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
+samples = pd.read_csv("config/samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
 samples.index = samples.index.set_levels( [i.astype(str) for i in samples.index.levels])  # enforce str in index
 #create SE and PE subset (makes trimmomatic much easier)
 SE_samples = samples[samples["fq2"].isna()].set_index(["sample", "unit"], drop=False)
@@ -35,7 +35,7 @@ PE_samples = samples[samples["fq2"].notna()]
 
 
 ### read-in hypotheses information ###
-hypotheses = pd.read_csv("hypotheses.tsv", dtype=str, sep="\t").set_index(["hypothesis"], drop=False)
+hypotheses = pd.read_csv("config/hypotheses.tsv", dtype=str, sep="\t").set_index(["hypothesis"], drop=False)
 
 HYPOTHESES = hypotheses.index.tolist()
 N_HYPOTHESES = len(HYPOTHESES)
