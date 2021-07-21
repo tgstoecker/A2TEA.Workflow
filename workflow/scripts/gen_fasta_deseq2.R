@@ -1,6 +1,6 @@
 library(DESeq2)
 
-gen_fasta_samples <- read.delim("gen_fasta_samples.csv")
+gen_fasta_samples <- read.delim("R/gen_fasta_samples.csv")
 
 gfs_snakemake.wildcards <- gen_fasta_samples[gen_fasta_samples$species == snakemake@params[["species"]], ]
 gfs_snakemake.wildcards_names <- paste0(gfs_snakemake.wildcards$sample, "_", gfs_snakemake.wildcards$unit)

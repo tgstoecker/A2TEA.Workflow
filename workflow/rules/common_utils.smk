@@ -83,4 +83,9 @@ CDNA_FASTA_SAMPLES = samples[samples['species'].isin(CDNA_FASTA_SPECIES)]
 GEN_FASTA_SAMPLES = samples[samples['species'].isin(GEN_FASTA_SPECIES)]
 
 #write GEN_FASTA_SAMPLES to file for easy use in R later on
-GEN_FASTA_SAMPLES.to_csv(r'gen_fasta_samples.csv', sep='\t', index = False)
+#R directory will be created here alredy if it doesn't already exist
+#the workflow will also create this directory in the later DESeq2/tximport steps 
+R_DIR = "R/"
+if not os.path.exists(R_DIR):
+    os.makedirs(R_DIR)
+GEN_FASTA_SAMPLES.to_csv(r'R/gen_fasta_samples.csv', sep='\t', index = False)
