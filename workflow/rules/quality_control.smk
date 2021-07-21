@@ -15,7 +15,10 @@ rule FastQC_raw:
         "rawreads/{file}",
     output:
         touch("checks/fastqc/raw/{file}.check"),
-    threads: 4
+    threads: 
+        config["threads_fastqc"]
+    conda:
+        "../envs/fastqc.yaml"
     log:
         "logs/fastqc/raw/{file}.log"
     shell:
@@ -31,12 +34,14 @@ rule FastQC_trimmed:
         touch("checks/fastqc/trimmed/{file}.check"),
     params:
         file = "trimmed/{file}"
-    threads: 4
+    threads: 
+        config["threads_fastqc"]
+    conda:
+        "../envs/fastqc.yaml"
     log:
         "logs/fastqc/trimmed/{file}.log"
     shell:
         "fastqc -t {threads} -o fastqc/trimmed/ {params.file}"
-
 
 
 # multiqc

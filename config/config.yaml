@@ -2,6 +2,7 @@
 ### number of maximum threads for each run of sample during a specfifc rule: ###
 ### for fastqc the thread usage is set to 4 - IMO best in most cases ###
 
+threads_fastqc: 4
 threads_kallisto_quant: 6
 threads_star_index: 8
 threads_trimmomatic: 6
