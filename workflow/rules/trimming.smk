@@ -1,24 +1,3 @@
-ruleorder: Trimmomatic_PE > Trimmomatic_SE
-
-
-def get_trimmed_PE_output(wildcards):
-    if not is_single_end(wildcards.sample, wildcards.unit):
-        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
-        return [ f"trimmed/{s.fq1}", f"trimmed/unpaired/unpaired_{s.fq1}", f"trimmed/{s.fq2}", f"trimmed/unpaired/unpaired_{s.fq2}"  ]
-
-
-def get_trimmed_SE_output(wildcards):
-    if is_single_end(wildcards.sample, wildcards.unit):
-        s = samples.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
-        return [ f"trimmed/{s.fq1}"  ]
-
-
-
-#this will create the directories needed for the trimmomatic rules
-TRIM_DIR = "trimmed/unpaired/"
-if not os.path.exists(TRIM_DIR):
-    os.makedirs(TRIM_DIR)
-
 rule Trimmomatic_PE:
     input:
         get_PE_fastqs,
@@ -31,6 +10,8 @@ rule Trimmomatic_PE:
         trimmer=config["trim_options"],
         compression_level="-9",
         out = get_trimmed_PE_output,
+    conda:
+        "../envs/trimmomatic.yaml"
     threads:
         config["threads_trimmomatic"]
     shell:
@@ -48,7 +29,9 @@ rule Trimmomatic_SE:
         illuminaclip=config["trim_illuminaclip"],
         trimmer=config["trim_options"],
         compression_level="-9",
-        out = get_trimmed_SE_output,
+        out = get_trimmed_SE_output
+    conda:
+        "../envs/trimmomatic.yaml"
     threads:
         config["threads_trimmomatic"]
     shell:

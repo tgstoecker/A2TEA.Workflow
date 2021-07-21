@@ -52,8 +52,11 @@ wildcard_constraints:
 #reads_dir = config["reads_dir"]
 
 ### all snakemake files to be included in the workflow ###
+## (!) keep _utils.smk before the coressponding base rules; utils always contain python functions and should be handled first ##
 include: "rules/common_utils.smk"
+include: "rules/quality_control_utils.smk"
 include: "rules/quality_control.smk"
+include: "rules/trimming_utils.smk"
 include: "rules/trimming.smk"
 include: "rules/mapping.smk"
 include: "rules/diff_exp.smk"

@@ -15,7 +15,7 @@ threads_featureCounts: 2
 
 ### Trimmomatic
 #not yet implemented
-trim_illuminaclip: "ILLUMINACLIP:adapters.fa:2:30:10"
+trim_illuminaclip: "ILLUMINACLIP:config/primer_adapter/adapters.fa:2:30:10"
 #trim_illuminaclip: ""
 trim_options: "SLIDINGWINDOW:4:20 MINLEN:40"
 
