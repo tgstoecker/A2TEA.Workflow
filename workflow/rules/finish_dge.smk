@@ -1,3 +1,6 @@
+# depending on if either or both alignment & pseudoalignment was performed,
+# copy final DESeq2 results inside RDS objects to final location in R/ directory 
+
 if len(CDNA_FASTA_SPECIES) != 0:
     if len(GEN_FASTA_SPECIES) != 0:
         rule deseq2_complete:
