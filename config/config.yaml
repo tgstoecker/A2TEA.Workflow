@@ -66,8 +66,8 @@ auto_isoform_filtering: "YES"
 ## use chunks for blasting?
 ## coreutils split - is sometimes not easy to install
 ## defaulit is ON and allows faster runtime - if problems occur set to OFF
-chunk_usage: "ON"
-
+chunks_usage: "ON"
+chunks_number: 2
 
 ## options for expansion analyses
 # define the max number of additional best blast hits to include in the follow-up analyses

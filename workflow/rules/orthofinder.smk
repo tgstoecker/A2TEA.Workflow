@@ -1,11 +1,3 @@
-def get_species_fasta(wildcards):
-    return species_table.loc[wildcards.species]["pep_fasta"]
-
-
-def get_longest_isoforms(wildcards):
-    return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
-
-
 if config["auto_isoform_filtering"] == "YES":
     rule filter_isoforms:
         output:
@@ -13,6 +5,8 @@ if config["auto_isoform_filtering"] == "YES":
         params:
             fa = get_species_fasta,
             iso = get_longest_isoforms,
+        conda:
+            "../envs/longest_isoforms.yaml"
         shell:
             "python workflow/scripts/longest_isoforms.py {params.fa} && "
             "mv {params.iso} {output}"
@@ -24,6 +18,8 @@ if config["auto_isoform_filtering"] == "YES":
         output:
             ORTHOFINDER + "{species}.fa"
         params: get_longest_isoforms,
+        conda:
+            "../envs/coreutils.yaml"
         shell:
             "ln --symbolic $(readlink --canonicalize {input}) {output}"
 
@@ -35,6 +31,8 @@ else:
             iso_link = "FS/longest_isoforms/{species}.fa"
         params:
             fa = get_species_fasta,
+        conda:
+            "../envs/coreutils.yaml"
         shell:
             "ln --symbolic $(readlink --canonicalize {params.fa}) {output.link} && "
             "ln --symbolic $(readlink --canonicalize {params.fa}) {output.iso_link}"
@@ -56,8 +54,8 @@ rule Orthofinder_prepare:
         "logs/orthofinder/prepare.log"
     benchmark:
         "benchmarks/orthofinder/prepare.json"
-#    conda:
-#        "orthofinder.yml"
+    conda:
+        "../envs/orthofinder.yaml"
     shell:
         "orthofinder -t 16 "
          "--fasta {params.fasta_dir} "
@@ -73,15 +71,13 @@ rule index_pep_FASTAs:
         ORTHOFINDER + "Species{species_number}.fa",
     output:
         ORTHOFINDER + "Species{species_number}.fa.fai",
+    conda:
+        "../envs/samtools.yaml"
     shell:
         "samtools faidx {input}"
 
 
-# added choice of chunk usage or not ;D
-with open('config/config.yaml', 'r') as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
-
-if config["chunk_usage"] == "ON":
+if config["chunks_usage"] == "ON":
     rule Orthofinder_split:
         "Split the headers of the input pep fastas into multiple files"
         input:
@@ -97,8 +93,8 @@ if config["chunk_usage"] == "ON":
             "orthofinder/{species_number}/split.log"
         benchmark:
             "benchmarks/orthofinder/{species_number}/split.json"
-    #    conda:
-    #        "orthofinder.yml"
+        conda:
+            "../envs/coreutils.yaml"
         shell:
             "split "
             "--number l/{params.number_of_chunks} "
@@ -124,8 +120,8 @@ if config["chunk_usage"] == "ON":
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
         threads: 6
-    #    conda:
-    #        "orthofinder.yml"
+        conda:
+            "../envs/diamond.yaml"
         shell:
             "cut -f 1 {input.chunk} "
             "| xargs samtools faidx {input.fasta}"
@@ -150,8 +146,8 @@ if config["chunk_usage"] == "ON":
             "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
-    #    conda:
-    #        "orthofinder.yml"
+        conda:
+            "../envs/coreutils.yaml"
         shell:
             "cat {input} > {output} 2> {log}"
 
@@ -171,8 +167,8 @@ else:
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp.json"
         threads: 6
-    #    conda:
-    #        "orthofinder.yml"
+        conda:
+            "../envs/diamond.yaml"
         shell:
             "diamond blastp --query {input.fasta} "
             "--ultra-sensitive "
@@ -194,8 +190,8 @@ else:
             "logs/orthofinder/{species_number}/{database_number}/blastp_merge.log"
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp_merge.json"
-    #    conda:
-    #        "orthofinder.yml"
+        conda:
+            "../envs/coreutils.yaml"
         shell:
             "cat {input} > {output} 2> {log}"
 
@@ -217,8 +213,8 @@ rule Orthofinder_orthogroups:
         "logs/orthofinder/groups.log"
     benchmark:
         "benchmarks/orthofinder/groups.json"
-#    conda:
-#        "orthofinder.yml"
+    conda:
+        "../envs/orthofinder.yaml"
     shell:
         "orthofinder "
         "--algthreads {threads} "
@@ -239,14 +235,14 @@ rule Orthofinder_Trees:
         orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
         msa_program = "muscle",
-#        mafft as alternative
-#    conda:
-#        "orthofinder.yml"
+#        mafft as alternative?
     log:
         "logs/orthofinder/trees.log"
     benchmark:
         "benchmarks/orthofinder/trees.bmk"
     threads: 24
+    conda:
+        "../envs/orthofinder.yaml"
     shell:
         "orthofinder "
         "--from-groups {params.orthofinder_dir} "
@@ -265,12 +261,13 @@ rule Orthofinder_orthologues:
         ORTHOFINDER + "trees.check"
     output:
         touch(ORTHOFINDER + "orthologues.check")
-#    conda: "orthofinder.yml"
     params:
         orthofinder_dir = ORTHOFINDER + "Results_*_1",
     log:
         "logs/orthofinder/orthologues.log"
     threads: 24
+    conda:
+        "../envs/orthofinder.yaml"
     shell:
         "orthofinder "
         "--from-trees {params.orthofinder_dir} "
@@ -292,6 +289,8 @@ rule Orthofinder_cleanup:
         results_dir_2 = "Results_*_2",
     log:
         "logs/orthofinder/clean.log"
+    conda:
+        "../envs/coreutils.yaml"
     shell:
         "pushd {params.orthofinder_dir} 2> {log} 1>&2 && "
         "mkdir search/ && "
@@ -318,6 +317,8 @@ rule hypothesis_species_trees:
         ORTHOFINDER + "cleanup.check"
     output:
         "orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt",
+    conda:
+        "../envs/hypothesis_species_tree.yaml"
     script:
         "../scripts/create_hypothesis_species_trees.R"
 
@@ -325,6 +326,5 @@ rule hypothesis_species_trees:
 rule Orthofinder_complete:
     input:
         expand("orthofinder/final-results/Species_Tree/hypothesis_specific/{hypothesis}/SpeciesTree_rooted_node_labels.txt", hypothesis=HYPOTHESES)
-#        ORTHOFINDER + "cleanup.check"
     output:
         touch(ORTHOFINDER + "complete.check")

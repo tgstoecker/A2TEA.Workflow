@@ -21,10 +21,6 @@ SPECIES = species_table.index.tolist()
 N_SPECIES = len(SPECIES)
 
 
-### orthofinder option - SHOULD BE MOVED!
-ORTHOFINDER = "orthofinder/"
-CHUNKS_ORTHO = 2
-
 ### read-in samples information ###
 samples = pd.read_csv("config/samples.tsv", dtype=str, sep="\t").set_index(["sample", "unit"], drop=False)
 samples.index = samples.index.set_levels( [i.astype(str) for i in samples.index.levels])  # enforce str in index
@@ -66,6 +62,7 @@ include: "rules/pseudoalignment.smk"
 include: "rules/count_matrixes_dge_utils.smk"
 include: "rules/count_matrixes_dge.smk"
 include: "rules/finish_dge.smk"
+include: "rules/orthofinder_utils.smk"
 include: "rules/orthofinder.smk"
 include: "rules/expansion_analysis.smk"
 include: "rules/cafe_analysis.smk"
