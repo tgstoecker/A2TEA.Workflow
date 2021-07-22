@@ -11,7 +11,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             gene_level_summary="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt.summary",
         params:
             #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[9:],
+            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
             paired= get_paired_info,
         log:
             gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
@@ -79,6 +79,6 @@ if len(CDNA_FASTA_SPECIES) != 0:
         output:
             "R/deseq2/{species}/dea_cdna/dea_{species}"
         conda:
-            "deseq2_tximport.yaml"
+            "../envs/deseq2_tximport.yaml"
         script:
             "../scripts/cdna_deseq2.R"
