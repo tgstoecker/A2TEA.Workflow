@@ -1,5 +1,11 @@
 #to reduce installation time; we could reduce down to readr, plyr, dplyr, stringr
-library(tidyverse)
+#library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(tibble)
 
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
@@ -163,9 +169,9 @@ for (i in c_t_species) {
 
 #create expansion vector with length of expandsion HOGs
 expansion <- replicate(nrow(expanded_HOGs), "yes")
-expansion_tibble <- full_join(HOG_tibble_complete, add_column(expanded_HOGs, expansion, .after = "HOG"), 
+expansion_tibble <- full_join(HOG_tibble_complete, tibble::add_column(expanded_HOGs, expansion, .after = "HOG"), 
                        by = c("HOG"), suffix = c("", ".remove")) %>% 
-                           replace_na(list(expansion = "no")) %>%
+                           tidyr::replace_na(list(expansion = "no")) %>%
                                select(-c(ends_with(".remove"))) 
 
 dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
@@ -174,7 +180,7 @@ saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble
 
 # create genes column in ph_orthogroups file
 # row merge? - no unite function, really handy ;D
-ref_ph_orthogroups <- ph_orthogroups %>% unite("genes", all_of(all_species), sep =", ", na.rm = TRUE, remove = TRUE)
+ref_ph_orthogroups <- ph_orthogroups %>% tidyr::unite("genes", all_of(all_species), sep =", ", na.rm = TRUE, remove = TRUE)
 
 
 message("Creating .txt files for all expanded OGs with reciprocal best BLAST hits of species in respective hypothesis:")
