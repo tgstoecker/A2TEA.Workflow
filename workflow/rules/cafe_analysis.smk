@@ -70,6 +70,8 @@ rule reformat_HOG_table:
     params:
         all_species = get_all_hypothesis_species_no_path,
         hypothesis_num = get_hypo_num,
+    conda:
+        "../envs/hypothesis_species_tree.yaml"
     script:
         "../scripts/HOG_table_reformat.R"
 

@@ -4,7 +4,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 
 # list of bioconductor packages
-bioc_packages = c("ggtree", "ggtreeExtra", "Biostrings")
+bioc_packages = c("ggtree", "ggtreeExtra", "Biostrings", "DESeq2")
 
 # load or install&load all
 package.check <- lapply(
@@ -18,7 +18,7 @@ package.check <- lapply(
 )
 
 # list of cran packages
-cran_packages = c("VennDiagram", "VennDiagram", "UpSetR", "cowplot", "ggplotify")
+cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "tidyverse", "ape")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
@@ -39,7 +39,7 @@ library(tidyverse)
 library(ggtree)
 library(Biostrings)
 library(seqinr)
-library(VennDiagram)
+#library(VennDiagram)
 library(UpSetR)
 library(cowplot)
 library(ggplotify)

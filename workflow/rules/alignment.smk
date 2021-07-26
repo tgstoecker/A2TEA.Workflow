@@ -21,8 +21,8 @@ if len(GEN_FASTA_SPECIES) != 0:
             #SampleSM = lambda wildcards: list(units_table.SampleSM[units_table.Unit == wildcards.unit]),
         conda:
             "../envs/star.yaml"
-#        log:
-#            "logs/star_index/{species}/Log.out"
+        log:
+            "logs/star_index/{species}/Log.out"
         shell:
             'mkdir {output} && '
             'STAR --runThreadN {params.threads} '

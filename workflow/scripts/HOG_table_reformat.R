@@ -1,5 +1,9 @@
 #to reduce loading time; we could reduce down to readr, plyr, dplyr, stringr
-library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(stringr)
+library(tibble)
 
 # using snakemake propagation + python strsplit() is really cool since the input is just a vector
 ## even if we have multiple species in expanded, compared or both ;D
@@ -52,7 +56,7 @@ for (k in 1:length(all_species)) {
     HOG_tibble[[o]] <- as.numeric(HOG_tibble[[o]])
 }
 
-HOG_tibble <- add_column(HOG_tibble, Desc = "(null)" , .before = "HOG")
+HOG_tibble <- tibble::add_column(HOG_tibble, Desc = "(null)" , .before = "HOG")
 
 # create "copy" for the filtered set
 # also here a much better tidyverse solution likely - problem for later
