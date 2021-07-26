@@ -1,6 +1,6 @@
 from snakemake.utils import min_version
 
-min_version("6.6.0")
+min_version("6.4.1")
 
 import pandas as pd
 import os
@@ -54,7 +54,6 @@ include: "rules/quality_control_utils.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming_utils.smk"
 include: "rules/trimming.smk"
-#include: "rules/mapping.smk"
 include: "rules/alignment_utils.smk"
 include: "rules/alignment.smk"
 include: "rules/pseudoalignment_utils.smk"
@@ -64,6 +63,7 @@ include: "rules/count_matrixes_dge.smk"
 include: "rules/finish_dge.smk"
 include: "rules/orthofinder_utils.smk"
 include: "rules/orthofinder.smk"
+include: "rules/expansion_analysis_utils.smk"
 include: "rules/expansion_analysis.smk"
 include: "rules/cafe_analysis.smk"
 include: "rules/final_tea.smk"
@@ -72,7 +72,4 @@ include: "rules/final_tea.smk"
 rule all:
     input:
         "multiqc/multiqc_report.html",
-        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
-        ORTHOFINDER + "complete.check",
         "tea/A2TEA_finished.RData",
-        expand("tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa", hypothesis=HYPOTHESES),

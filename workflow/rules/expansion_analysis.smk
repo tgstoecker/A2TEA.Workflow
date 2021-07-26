@@ -1,80 +1,15 @@
 #Expansion Analysis
 # can handle both multi expansion and multi comparison species, now ;D
-# the strplit command works really well in this context
-## this way, multiple species are propagated into R as a simple vector  
-
-def get_hypo_num(wildcards):
-    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    num = hypotheses.loc[ (wildcards.hypothesis), 'hypothesis']
-    return num
-
-def get_hypo_name(wildcards):
-    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    name = hypotheses.loc[ (wildcards.hypothesis), 'name']
-    return name
-
-
-# for both the species we want to check for expansion as well as those being compared to:
-# if more than one species is compared to than we have to split the string based on ";" 
-
-def get_exp_species(wildcards):
-    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    exps_1 = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
-    if exps_1.count(";") > 0:
-        exps_2 = str.split(exps_1, ";")
-        return exps_2
-    else:
-        return exps_1
-    return
-
-
-
-#if more than one species is compared to than we have to split the string based on ";"
-def get_com_species(wildcards):
-    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    ct_1 = hypotheses.loc[ (wildcards.hypothesis), 'compared_to']
-    if ct_1.count(";") > 0:
-        ct_2 = str.split(ct_1, ";")
-        return ct_2
-    else:
-        return ct_1
-    return
-
-
-#if more than one species is compared to than we have to split the string based on ";"
-#the goal in any scenarios to return a list (!) with just the species used in the hypothesis
-#we also need to add the path to the longest isoform peptide fasta files and add the .fa suffix
-#another trick is that we can simply use the species base name in any case,
-#since the longest isoform output is always named after it!
-# this also applies if the user did the isoform filtering on their own since the renamed pep fastas are linked to isoform directory in that case ;D
-#+the filtering for longest isoform also only retains the base name of the gene/protein
-def get_all_hypothesis_species(wildcards):
-    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    path_prefix = 'FS/longest_isoforms/'
-    suffix = '.fa'
-    exp = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
-    ct = hypotheses.loc[ (wildcards.hypothesis), 'compared_to']
-    if ct.count(";") > 0:
-        ct = str.split(ct, ";")
-        ct.append(exp)
-        ct = [path_prefix + x + suffix for x in ct]
-        return ct
-    else:
-        output = []
-        output.append(exp)
-        output.append(ct)
-        output = [path_prefix + x + suffix for x in output]
-        return output
-    return
-
 
 rule create_hypothesis_fasta:
     input:
-        orthology = ORTHOFINDER + "complete.check",
+        ORTHOFINDER + "complete.check",
     output:
         "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
     params:
         all_hyp_species = get_all_hypothesis_species,
+    conda:
+        "../envs/expansion.yaml"
     shell:
         "cat {params.all_hyp_species} > {output}"
 
@@ -97,6 +32,8 @@ checkpoint expansion:
         directory("tea/{hypothesis}/expansion_tibble/"),
         "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
     threads: 1
+    conda:
+        "../envs/expansion.yaml"
     script:
         "../scripts/expansion.R"
 
@@ -108,6 +45,8 @@ rule fasta_extraction:
     output:
         "tea/{hypothesis}/fa_records/{OG}.fa"
     threads: 1
+    conda:
+        "../envs/expansion.yaml"
     shell:
         "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
 
@@ -118,9 +57,10 @@ rule muscle_MSA:
     output:
         "tea/{hypothesis}/muscle/{OG}.afa"
     threads: 1
+    conda:
+        "../envs/expansion.yaml"
     shell:
         "muscle -in {input} -out {output}"
-
 
 
 rule trimAl:
@@ -129,6 +69,8 @@ rule trimAl:
     output:
         "tea/{hypothesis}/trimAl/{OG}.afa"
     threads: 1
+    conda:
+        "../envs/expansion.yaml"
     shell:
         "trimal -automated1 -in {input} -out {output}"
 
@@ -139,15 +81,10 @@ rule FastTree:
     output:
         "tea/{hypothesis}/trees/{OG}.tree"
     threads: 1
+    conda:
+        "../envs/expansion.yaml"
     shell:
         "FastTree {input} > {output}"
-
-
-#CHECKPOINTS ARE SO AWESOME!
-def solve_expansion(wildcards):
-    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
-    file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-    return file_names
 
 
 rule expansion_checkpoint_finish:
@@ -158,5 +95,3 @@ rule expansion_checkpoint_finish:
     shell:
         "touch {output}"
 
-# necessary to be done here with the expression analysis;
-#        expression = expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
