@@ -13,6 +13,9 @@ name = snakemake@params[["name"]]
 # define the number of additional best blast hits to include in the follow-up analyses
 add_blast_hits = snakemake@params[["add_blast_hits"]]
 
+# define the required expansion factor (chosen by user inside config.yaml)
+expansion_factor = snakemake@params[["expansion_factor"]]
+
 # using snakemake propagation + python strsplit() is really cool since the input is just a vector
 ## even if we have multiple species in expanded, compared or both ;D
 expanded_in = snakemake@params[["expansion"]]
@@ -143,17 +146,16 @@ HOG_tibble_complete <- HOG_tibble
 message("Applying expansion rule/s per hypothesis:")
 
 # function has to reduce input dataset; this way each iteration (compared species) is included
-# for all compared species first check for each HOG if expanded species is >= 3* 
-# then keep rows in which expanded species has at least 3
-# since 3*1 = 3, we can simply choose to keep all rows with at least 3 in expanded_in since this 
+# for all compared species first check for each HOG if expanded species is >= #* 
+# then keep rows in which expanded species has at least # (default: 2)
+# since #*1 = #, we can simply choose to keep all rows with at least 3 in expanded_in since this 
 ## is performed after the other filtering ;D
-# this we should talk about... how to deal with 0 cases
-# in any case having this as user input shoud be the goal
+
 
 for (t in expanded_in) {
 for (i in c_t_species) {
-        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3*(get(i)))
-        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3)
+        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= expansion_factor*(get(i)))
+        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= expansion_factor)
     # this line will remove all HOGs with 0 cases in BOTH compared species
     # this means, that for now, a multispecies comparison demands that
     # for all compared_to species at least 1 gene has to be in the HOG!
