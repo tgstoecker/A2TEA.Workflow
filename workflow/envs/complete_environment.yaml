@@ -1,0 +1,84 @@
+channels:
+  - bioconda
+  - conda-forge
+  - r
+  - anaconda
+dependencies:
+  - snakemake =6.6.0
+  - fastqc =0.11.9
+  - multiqc =1.7
+  - r-plyr
+  - r-tidyr
+  - r-tibble
+  - bioconductor-ggtree 
+#==3.0.1
+  - bioconductor-biostrings 
+#==2.60.0
+  - r-seqinr 
+#==3.4_5
+  - r-upsetr 
+#==1.4.0
+  - r-cowplot 
+#==1.1.1
+  - r-ggplotify 
+#==0.0.7
+  - trimmomatic =0.38
+  - star =2.7.3a
+  - samtools ==1.10
+  - subread =2.0
+  - orthofinder =2.5.2
+  - muscle ==3.8.1551
+  - trimal =>1.4
+  - pandas =1.0.1
+  - diamond >=2.0.11
+  - gmp
+  - kallisto ==0.45.0
+  - bioconductor-genomicfeatures
+  - bioconductor-rhdf5 
+  - r-readr
+  - bioconductor-tximport 
+#==1.14.0
+  - bioconductor-deseq2
+  - r-dplyr >=1.0
+  - r-stringr
+  - ucsc-fasomerecords ==377
+  - fasttree ==2.1.10
+  - r-base>=3.6.0
+  - r-tidyverse
+  - r-ggplot2
+  - bioconductor-biostrings
+  - r-seqinr
+  - bioconductor-biocgenerics
+  - jupyter
+  - r-irkernel
+  - r-ape 
+#==5.5
+#coreutils
+  - coreutils ==8.31
+#cafe5 compile
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - binutils=2.36.1=hdd6e379_1
+  - binutils_impl_linux-64=2.36.1=h193b22a_1
+  - binutils_linux-64=2.36=hf3e587d_32
+  - c-compiler=1.2.0=h7f98852_0
+  - compilers=1.2.0=ha770c72_0
+  - cxx-compiler=1.2.0=h4bd325d_0
+  - fortran-compiler=1.2.0=h1990efc_0
+  - gcc_impl_linux-64=9.3.0=h70c0ae5_19
+  - gcc_linux-64=9.3.0=hf25ea35_32
+  - gfortran_impl_linux-64=9.3.0=hc4a2995_19
+  - gfortran_linux-64=9.3.0=hdc58fab_32
+  - gxx_impl_linux-64=9.3.0=hd87eabc_19
+  - gxx_linux-64=9.3.0=h3fbe746_32
+  - kernel-headers_linux-64=2.6.32=he073ed8_14
+  - ld_impl_linux-64=2.36.1=hea4e1c9_1
+  - libgcc-devel_linux-64=9.3.0=h7864c58_19
+  - libgcc-ng=9.3.0=h2828fa1_19
+  - libgfortran-ng=9.3.0=hff62375_19
+  - libgfortran5=9.3.0=hff62375_19
+  - libgomp=9.3.0=h2828fa1_19
+  - libstdcxx-devel_linux-64=9.3.0=hb016644_19
+  - libstdcxx-ng=9.3.0=h6de172a_19
+  - sysroot_linux-64=2.12=he073ed8_14
+  - make

@@ -1,4 +1,0 @@
-species	pep_fasta	cDNA_fasta	gen_fasta	annotation
-Zea_mays	FS/Zea_mays.B73_RefGen_v4.pep.all.fa		FS/Zea_mays.B73_RefGen_v4.dna.toplevel.fa	FS/Zea_mays.B73_RefGen_v4.50.gtf
-Hordeum_vulgare	FS/Hordeum_vulgare.IBSC_v2.pep.all.fa	FS/Hordeum_vulgare.IBSC_v2.cdna.all.fa.gz		FS/Hordeum_vulgare.IBSC_v2.50.gtf
-Arabidopsis_thaliana	FS/Arabidopsis_thaliana.TAIR10.pep.all.fa	FS/Arabidopsis_thaliana.TAIR10.cdna.all.fa.gz		FS/Arabidopsis_thaliana.TAIR10.50.gtf

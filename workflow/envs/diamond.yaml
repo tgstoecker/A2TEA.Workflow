@@ -1,0 +1,7 @@
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - diamond ==2.0.11
+  - samtools ==1.10
+  - coreutils ==8.31
