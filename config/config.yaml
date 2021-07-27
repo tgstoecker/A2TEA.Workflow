@@ -72,7 +72,7 @@ chunks_number: 2
 ## options for expansion analyses
 
 # define the expansion factor, e.g. 2 -> expanded species has to have 2-times the genes for the HOG to be considered "expanded"
-expansion_factor: 2
+# <- use this explanation somewhere more appropiate
 
 # define the max number of additional best blast hits to include in the follow-up analyses
 # tree visualizations often are more informative if we use more than an individual (H)OG

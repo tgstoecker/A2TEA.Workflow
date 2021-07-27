@@ -66,6 +66,29 @@ def get_all_hypothesis_species(wildcards):
     return
 
 
+# get user defined expansion_factor for each hypothesis by parsing hypotheses.tsv
+def get_expansion_factor(wildcards):
+    return hypotheses.loc[wildcards.hypothesis]["min_expansion_factor"]
+
+
+# get user defined Nmin_expanded_in & Nmin_compared_to for each hypothesis by parsing hypotheses.tsv
+# explained: at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
+def get_Nmin_expanded_in(wildcards):
+    return hypotheses.loc[wildcards.hypothesis]["Nmin_expanded_in"]
+
+def get_Nmin_compared_to(wildcards):
+    return hypotheses.loc[wildcards.hypothesis]["Nmin_compared_to"]
+
+
+# get user defined expanded_in_all_found & compared_to_all_found for each hypothesis by parsing hypotheses.tsv
+# explained: at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
+def get_expanded_in_all_found(wildcards):
+    return hypotheses.loc[wildcards.hypothesis]["expanded_in_all_found"]
+
+def get_compared_to_all_found(wildcards):
+    return hypotheses.loc[wildcards.hypothesis]["compared_to_all_found"]
+
+
 #SOLVING expansion checkpoint HERE!
 #after rule FastTree in expansion_analysis.smk
 def solve_expansion(wildcards):
