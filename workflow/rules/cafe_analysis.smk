@@ -39,23 +39,29 @@ rule ultrametric_species_tree:
 
 def get_all_hypothesis_species_no_path(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    exp = hypotheses.loc[ (wildcards.hypothesis), 'expanded_in']
-    ct = hypotheses.loc[ (wildcards.hypothesis), 'compared_to']
+    exp = hypotheses.loc[ 'expanded_in', (wildcards.hypothesis) ]
+    ct = hypotheses.loc[ 'compared_to', (wildcards.hypothesis) ]
+    # split by ";", if no ";" then transform string to single-element list (so concatenation works)
+    if exp.count(";") > 0:
+        exp = str.split(exp, ";")
+    else:
+        exp = [exp]
     if ct.count(";") > 0:
         ct = str.split(ct, ";")
-        ct.append(exp)       
-        return ct
     else:
-        output = []
-        output.append(exp)
-        output.append(ct)
-        return output
-    return
+        ct = [ct]
+    # concatenate both lists
+    output = exp + ct
+    # removing dups - (complex hypotheses?)
+    output = list( dict.fromkeys(output) )
+    # add .fa suffix
+    return output
+
 
 # also return number of hypothesis
 def get_hypo_num(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    num = hypotheses.loc[ (wildcards.hypothesis), 'hypothesis']
+    num = str(wildcards.hypothesis)
     return num
 
 # includes creation of a genes per HOG per species table
@@ -126,11 +132,4 @@ rule cafe5_complete_set:
         lambda_value = get_lambda_value,
     shell:
         "CAFE5/bin/cafe5 --cores 64 -i {input.table} -t {input.tree} -o {output} -k 3 -l {params.lambda_value} -P 0.05"
-
-
-#rule cafe_check:
-#    input:
-#        directory("cafe/{hypothesis}/cafe_complete_results"),
-#    output:
-#        touch("{hypothesis}_cafe_check")
     

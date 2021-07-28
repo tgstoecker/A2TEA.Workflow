@@ -25,7 +25,7 @@ species_table <- read.delim("config/species.tsv", header = TRUE, sep = "\t", row
 expanded_in = snakemake@params[["expansion"]]
 compared_to = snakemake@params[["comparison"]]
 c_t_species <- compared_to
-all_species <- c(expanded_in, compared_to)
+all_species <- unique(c(expanded_in, compared_to))
 
 # defining:
 # at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
