@@ -35,30 +35,40 @@ if len(GEN_FASTA_SPECIES) != 0:
             '--outTmpDir {params.temp_dir}'
 
 
+    rule STAR_index_log:
+        input:
+            expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
+        output:
+            "logs/star_index/Log.out"
+        shell:
+            "mv Log.out {output}"
+
+
     rule STAR_align:
-            input:
-                trim_check = "checks/trimmed/trim_cleanup.check",
-                dir = expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
-            output:
-               # see STAR manual for additional output files -
-                align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
-#                log = "star/{species}/{sample}_{unit}_Log.final.out"
-            log:
-                "star/{species}/{sample}_{unit}_Log.final.out"
-            threads: config["threads_star"]
-            params:
-                correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
-                rest = config["STAR"],
-                sample = get_GEN_FASTA_trimmed_fastqs,
-            conda:
-                "../envs/star.yaml"
-            shell:
-                'STAR --runThreadN {threads} '
-                '--genomeDir STAR_indexes/{params.correct_genome} '
-                '--readFilesIn {params.sample} '
-                '--readFilesCommand zcat '
-                '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
-                '{params.rest}'
+        input:
+            trim_check = "checks/trimmed/trim_cleanup.check",
+            dir = expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
+            index_log = "logs/star_index/Log.out",
+        output:
+            # see STAR manual for additional output files -
+            align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+#            log = "star/{species}/{sample}_{unit}_Log.final.out"
+        log:
+            "star/{species}/{sample}_{unit}_Log.final.out"
+        threads: config["threads_star"]
+        params:
+            correct_genome = lambda wildcards: GEN_FASTA_SAMPLES.loc[(wildcards.sample, wildcards.unit) , 'species'],
+            rest = config["STAR"],
+            sample = get_GEN_FASTA_trimmed_fastqs,
+        conda:
+            "../envs/star.yaml"
+        shell:
+            'STAR --runThreadN {threads} '
+            '--genomeDir STAR_indexes/{params.correct_genome} '
+            '--readFilesIn {params.sample} '
+            '--readFilesCommand zcat '
+            '--outFileNamePrefix star/{params.correct_genome}/{wildcards.sample}_{wildcards.unit}_ '
+            '{params.rest}'
 
 
     rule index_BAMs:
