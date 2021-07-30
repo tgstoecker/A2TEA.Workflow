@@ -175,7 +175,7 @@ for (e in expanded_in) {
                                 # although cases in which the ct species has no genes are ignored via 
                                 # the multiplication in the 2nd step, this underlines that we do so
                                 get(c) > 0 &
-                                get(e)*species_table[e, "ploidy"] >= expansion_factor*(get(c))*species_table[c, "ploidy"] ~ get(exp_species_name) + 1,
+                                get(e)/species_table[e, "ploidy"] >= expansion_factor*(get(c))/species_table[c, "ploidy"] ~ get(exp_species_name) + 1,
                                 TRUE ~ 0,
                               )
                         ) 
