@@ -156,9 +156,9 @@ hypotheses <- hypotheses[-1,]
 row.names(hypotheses) <- NULL
 #correct types
 hypotheses$hypothesis <- as.numeric(hypotheses$hypothesis)
-hypotheses$Nmin_expanded_in <- as.numeric(hypotheses$hypothesis)
-hypotheses$Nmin_compared_to <- as.numeric(hypotheses$hypothesis)
-hypotheses$min_expansion_factor <- as.numeric(hypotheses$hypothesis)
+hypotheses$Nmin_expanded_in <- as.numeric(hypotheses$Nmin_expanded_in)
+hypotheses$Nmin_compared_to <- as.numeric(hypotheses$Nmin_compared_to)
+hypotheses$min_expansion_factor <- as.numeric(hypotheses$min_expansion_factor)
 
 # create hypotheses object
 # each object has list of exp. OGs
