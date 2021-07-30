@@ -4,7 +4,27 @@ library(ape)
 
 
 # read-in hypothesis object
-hypotheses <- read_delim("config/hypotheses.tsv", delim = "\t")
+# we transpose the table since the following code was written for the old layout of hypotheses.tsv
+hypotheses <- as.data.frame( 
+                t(
+                  read.table("config/hypotheses.tsv", 
+                             header = FALSE,
+                             sep = "\t", 
+                             row.names = NULL)
+                )              
+              )
+# first line as header/column names
+names(hypotheses) <- hypotheses[1,]
+# delete first line
+hypotheses <- hypotheses[-1,]
+# removal of row.names/numbering
+row.names(hypotheses) <- NULL
+#correct types
+hypotheses$hypothesis <- as.numeric(hypotheses$hypothesis) 
+hypotheses$Nmin_expanded_in <- as.numeric(hypotheses$hypothesis)
+hypotheses$Nmin_compared_to <- as.numeric(hypotheses$hypothesis)
+hypotheses$min_expansion_factor <- as.numeric(hypotheses$hypothesis)
+
 
 # loop through hypotheses
 for (hypothesis in hypotheses$hypothesis) {

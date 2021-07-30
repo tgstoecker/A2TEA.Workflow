@@ -10,15 +10,31 @@ library(tibble)
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
+
 # define the number of additional best blast hits to include in the follow-up analyses
 add_blast_hits = snakemake@params[["add_blast_hits"]]
+
+# define the required expansion factor (part of hypothesis.tsv)
+expansion_factor = as.numeric(snakemake@params[["expansion_factor"]])
+
+# get ploidy information of each species (supplied by user; part of species.tsv)
+species_table <- read.delim("config/species.tsv", header = TRUE, sep = "\t", row.names = "species")
 
 # using snakemake propagation + python strsplit() is really cool since the input is just a vector
 ## even if we have multiple species in expanded, compared or both ;D
 expanded_in = snakemake@params[["expansion"]]
 compared_to = snakemake@params[["comparison"]]
 c_t_species <- compared_to
-all_species <- c(expanded_in, compared_to)
+all_species <- unique(c(expanded_in, compared_to))
+
+# defining:
+# at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
+Nmin_expanded_in <- as.numeric(snakemake@params[["Nmin_expanded_in"]])
+Nmin_compared_to <- as.numeric(snakemake@params[["Nmin_compared_to"]])
+
+# define whether or not only HOGs should be considered that have at least 1 gene from each expanded_in/compared_to species
+expanded_in_all_found <- as.character(snakemake@params[["expanded_in_all_found"]])
+compared_to_all_found <- as.character(snakemake@params[["compared_to_all_found"]])
 
 #read-in Orthogroup-GeneCounts-table
 message("Reading in Orthogroup-GeneCounts-table:")
@@ -143,24 +159,84 @@ HOG_tibble_complete <- HOG_tibble
 message("Applying expansion rule/s per hypothesis:")
 
 # function has to reduce input dataset; this way each iteration (compared species) is included
-# for all compared species first check for each HOG if expanded species is >= 3* 
-# then keep rows in which expanded species has at least 3
-# since 3*1 = 3, we can simply choose to keep all rows with at least 3 in expanded_in since this 
-## is performed after the other filtering ;D
-# this we should talk about... how to deal with 0 cases
-# in any case having this as user input shoud be the goal
+# for all compared species first check for each HOG if expanded species is >= #* 
+# then keep rows in which expanded species has at least # (default: 2)
 
-for (t in expanded_in) {
-for (i in c_t_species) {
-        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3*(get(i)))
-        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(expanded_in) >= 3)
-    # this line will remove all HOGs with 0 cases in BOTH compared species
-    # this means, that for now, a multispecies comparison demands that
-    # for all compared_to species at least 1 gene has to be in the HOG!
-        HOG_tibble <- HOG_tibble %>% dplyr::filter(get(i) > 0)
-        expanded_HOGs <- HOG_tibble
+
+for (e in expanded_in) {
+    # create expansion counter column for each expanded species
+    exp_species_name = paste0("exp_counter_", e)
+    HOG_tibble <- HOG_tibble %>% tibble::add_column(!!(exp_species_name) := 0)
+
+    for (c in c_t_species) {
+        HOG_tibble <- HOG_tibble %>% 
+                       dplyr::mutate(!!(exp_species_name) := 
+                              dplyr::case_when(
+                                # although cases in which the ct species has no genes are ignored via 
+                                # the multiplication in the 2nd step, this underlines that we do so
+                                get(c) > 0 &
+                                get(e)*species_table[e, "ploidy"] >= expansion_factor*(get(c))*species_table[c, "ploidy"] ~ get(exp_species_name) + 1,
+                                TRUE ~ 0,
+                              )
+                        ) 
+        
     }
-    }
+}
+
+# then we perform summing over all exp_counter_ columns based on user choices
+# at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
+# create new column
+# for each exp_counter_* species check if value >= y
+# all passing exp_counter_* species are counted; if sum >= x retain HOG
+
+HOG_tibble <- HOG_tibble %>%
+  mutate(pass =
+    # selecting columns that we want to use use for subsequent function
+    select(., contains("exp_counter_")) %>%
+    # use pmap on this subset to get a vector of min from each row
+    # dataframe is a list so pmap works on each element of the list; here, each row  
+    # we sum the occurences (per row!) of exp_counter_* cols that greater/equal to user cutoff 
+    purrr::pmap_dbl(., ~ sum(c(...) >= Nmin_compared_to))
+  )
+
+# lastly, retain rows/HOGs that pass x cutoff = number of expanded species
+# & drop unnecessary columns
+HOG_tibble <- HOG_tibble %>%
+  filter(pass >= Nmin_expanded_in) %>%
+  select(-contains("exp_counter_"), -pass)
+
+
+# additional optional filter1 - expanded_in gene family complete criterium
+if (expanded_in_all_found == "YES") {
+  HOG_tibble <- HOG_tibble %>%
+  # create column with per-row sum of expanded_in species that have at least 1 gene in the HOG
+  mutate(expanded_in_pass =
+    select(., contains(expanded_in)) %>%
+    purrr::pmap_dbl(., ~ sum(c(...) >= 1))
+  ) %>%
+  # only keep rows/HOGs in which at least 1 gene of each expanded_in species occurs
+  filter(expanded_in_pass >= length(expanded_in)) %>%
+  # remove expanded_in_pass column
+  select(-expanded_in_pass)
+}
+
+
+# additional optional filter2 - compared_to gene family complete criterium
+if (compared_to_all_found == "YES") {
+  HOG_tibble <- HOG_tibble %>%
+  # create column with per-row sum of compared_to species that have at least 1 gene in the HOG
+  mutate(compared_to_pass =
+    select(., contains(compared_to)) %>%
+    purrr::pmap_dbl(., ~ sum(c(...) >= 1))
+  ) %>%
+  # only keep rows/HOGs in which at least 1 gene of each compared_to species occurs
+  filter(compared_to_pass >= length(compared_to)) %>%
+  # remove compared_to_pass column
+  select(-compared_to_pass)
+}
+
+# new object: expanded_HOGs
+expanded_HOGs <- HOG_tibble
 
 
 # based on filtering criteria create per hypothesis table with:

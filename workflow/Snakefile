@@ -33,10 +33,8 @@ PE_samples = samples[samples["fq2"].notna()]
 ### read-in hypotheses information ###
 hypotheses = pd.read_csv("config/hypotheses.tsv", dtype=str, sep="\t").set_index(["hypothesis"], drop=False)
 
-HYPOTHESES = hypotheses.index.tolist()
-N_HYPOTHESES = len(HYPOTHESES)
-#N_HYPOTHESES
-
+HYPOTHESES = hypotheses.columns.tolist()[1:]
+N_HYPOTHESES = len(hypotheses.columns)-1
 
 ### defining wildcard constraints ###
 wildcard_constraints:

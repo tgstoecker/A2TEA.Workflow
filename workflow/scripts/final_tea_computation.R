@@ -46,6 +46,9 @@ library(ggplotify)
 library(ape)
 
 
+# get user choice for DEG FDR cutoff value
+DEG_FDR = snakemake@params["DEG_FDR"]
+
 ## Find all DESeq2 differential expression RDS objects and load them
 ### Names are given based on the species/ecotype/etc. name
 dea_list <- list.files(path = "R/deseq2/dea_final/", pattern = "dea_*", full.names=TRUE)
@@ -115,14 +118,14 @@ HOG_DE.a2tea <- full_join(combined_AllSpeciesDEResultsDataFrames, HOG_file_long,
               by = c("gene")) %>% 
                 replace_na(list(HOG = "singleton"))
 
-#add column for significance - default level is padj <= 0.1
+#add column for significance - level is set by user in config.yaml ["DEG_FDR"]
 #subset tidyverse with the right functions ;D
 significant <- vector()
 for (FDR in HOG_DE.a2tea$padj) {
-    if (!is.na(FDR) && FDR < 0.1) {
+    if (!is.na(FDR) && FDR < DEG_FDR) {
         significant <- c(significant, "yes")
     }
-    else if (!is.na(FDR) && FDR > 0.1) {
+    else if (!is.na(FDR) && FDR > DEG_FDR) {
         significant <- c(significant, "no")
     }
     else if (is.na(FDR)) {
@@ -135,7 +138,27 @@ HOG_DE.a2tea <- add_column(HOG_DE.a2tea, significant, .after = "padj")
 ## Load in the rest of the data - hypotheses, trees, fasta and msa for the start 
 ### VennDiagrammes included
 ### + toDo general stats, especially once Orthofinder calculates for HOG)
-hypotheses <- read_delim("config/hypotheses.tsv", delim = "\t")
+# read-in hypothesis object
+# we transpose the table since the following code was written for the old layout of hypotheses.tsv
+hypotheses <- as.data.frame(
+                t(
+                  read.table("config/hypotheses.tsv",
+                             header = FALSE,
+                             sep = "\t",
+                             row.names = NULL)
+                )
+              )
+# first line as header/column names
+names(hypotheses) <- hypotheses[1,]
+# delete first line
+hypotheses <- hypotheses[-1,]
+# removal of row.names/numbering
+row.names(hypotheses) <- NULL
+#correct types
+hypotheses$hypothesis <- as.numeric(hypotheses$hypothesis)
+hypotheses$Nmin_expanded_in <- as.numeric(hypotheses$hypothesis)
+hypotheses$Nmin_compared_to <- as.numeric(hypotheses$hypothesis)
+hypotheses$min_expansion_factor <- as.numeric(hypotheses$hypothesis)
 
 # create hypotheses object
 # each object has list of exp. OGs

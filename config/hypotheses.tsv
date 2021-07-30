@@ -1,3 +1,9 @@
-hypothesis	name	expanded_in	compared_to
-1	"Expanded in Arabidopsis compared to Monocots"	Arabidopsis_thaliana	Zea_mays;Hordeum_vulgare
-2	"Expanded in barley compared to maize"	Hordeum_vulgare	Zea_mays
+hypothesis	1	2	3	4	5
+name	"Expanded in Arabidopsis compared to Monocots"	"Expanded in barley compared to maize"	"bla"	"bla2"	"bla3"
+expanded_in	Arabidopsis_thaliana	Hordeum_vulgare	Zea_mays	Hordeum_vulgare;Zea_mays	Hordeum_vulgare;Zea_mays
+compared_to	Zea_mays;Hordeum_vulgare	Zea_mays	Hordeum_vulgare;Arabidopsis_thaliana	Arabidopsis_thaliana	Hordeum_vulgare;Arabidopsis_thaliana
+Nmin_expanded_in	1	1	1	1	1
+Nmin_compared_to	2	1	1	1	1
+min_expansion_factor	2	2	3	2	2
+expanded_in_all_found	YES	NO	YES	NO	NO
+compared_to_all_found	YES	NO	YES	NO	NO

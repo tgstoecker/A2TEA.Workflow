@@ -25,7 +25,12 @@ checkpoint expansion:
         name = get_hypo_name,
         expansion = get_exp_species,
         comparison = get_com_species,
-        add_blast_hits = config["add_blast_hits"]
+        add_blast_hits = config["add_blast_hits"],
+        expansion_factor = get_expansion_factor,
+        Nmin_expanded_in = get_Nmin_expanded_in,
+        Nmin_compared_to = get_Nmin_compared_to,
+        expanded_in_all_found = get_expanded_in_all_found,
+        compared_to_all_found = get_compared_to_all_found,
     output:
         directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
         directory("checks/tea/{hypothesis}/"),

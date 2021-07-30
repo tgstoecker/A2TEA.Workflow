@@ -10,6 +10,8 @@ dependencies:
   - r-plyr
   - r-tidyr
   - r-tibble
+  - r-purrr
+#==0.3.4
   - bioconductor-ggtree 
 #==3.0.1
   - bioconductor-biostrings 

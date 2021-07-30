@@ -12,3 +12,4 @@ def get_species_fasta(wildcards):
 
 def get_longest_isoforms(wildcards):
     return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
+
