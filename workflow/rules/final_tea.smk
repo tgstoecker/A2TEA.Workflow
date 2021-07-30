@@ -5,7 +5,9 @@ rule final_tea_output:
         expand(rules.cafe5_complete_set.output, hypothesis=HYPOTHESES),
     output:
         "tea/A2TEA_finished.RData"
-#    conda:
-#        "../envs/final_tea.yaml"
+    params:
+        DEG_FDR = config["DEG_FDR"]
+    conda:
+        "../envs/final_tea.yaml"
     script:
         "../scripts/final_tea_computation.R"

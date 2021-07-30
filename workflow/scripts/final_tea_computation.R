@@ -46,6 +46,9 @@ library(ggplotify)
 library(ape)
 
 
+# get user choice for DEG FDR cutoff value
+DEG_FDR = snakemake@params["DEG_FDR"]
+
 ## Find all DESeq2 differential expression RDS objects and load them
 ### Names are given based on the species/ecotype/etc. name
 dea_list <- list.files(path = "R/deseq2/dea_final/", pattern = "dea_*", full.names=TRUE)
@@ -115,14 +118,14 @@ HOG_DE.a2tea <- full_join(combined_AllSpeciesDEResultsDataFrames, HOG_file_long,
               by = c("gene")) %>% 
                 replace_na(list(HOG = "singleton"))
 
-#add column for significance - default level is padj <= 0.1
+#add column for significance - level is set by user in config.yaml ["DEG_FDR"]
 #subset tidyverse with the right functions ;D
 significant <- vector()
 for (FDR in HOG_DE.a2tea$padj) {
-    if (!is.na(FDR) && FDR < 0.1) {
+    if (!is.na(FDR) && FDR < DEG_FDR) {
         significant <- c(significant, "yes")
     }
-    else if (!is.na(FDR) && FDR > 0.1) {
+    else if (!is.na(FDR) && FDR > DEG_FDR) {
         significant <- c(significant, "no")
     }
     else if (is.na(FDR)) {
