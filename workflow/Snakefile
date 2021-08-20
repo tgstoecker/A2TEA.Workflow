@@ -1,6 +1,6 @@
 from snakemake.utils import min_version
 
-min_version("6.4.1")
+min_version("6.7.0")
 
 import pandas as pd
 import os
