@@ -59,8 +59,11 @@ STAR: >
 
 
 ## try automatic filtering for longest isoform of fastas?
-## -> relatively stable for standard fasta files from e.g. Ensembl
-## when not set to "YES", we assume you performed appropiate filtering yourself or specifically want all isoforms
+## -> very stable for standard fasta files from e.g. Ensembl, NCBI, etc.
+## when not set to "YES", we assume you performed appropiate filtering yourself
+### if you perform the filtering yourself take care to have the fasta headers for a gene/protein to be the simple gene identifier (no .1; .p3; etc.)
+### this is important since for the differential expression analysis we use tximport to reduce the cdna based quantification with kallisto to gene level,
+### and association between orthology and expression analysis is the purpose of this software
 auto_isoform_filtering: "YES"
 
 ## use chunks for blasting?
