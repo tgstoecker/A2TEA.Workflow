@@ -32,23 +32,14 @@ if len(GEN_FASTA_SPECIES) != 0:
             '--genomeFastaFiles {input.fasta} '
             '--sjdbGTFfile {input.annotation} '
             '--sjdbOverhang {params.length} '
-            '--outTmpDir {params.temp_dir}'
-
-
-    rule STAR_index_log:
-        input:
-            expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
-        output:
-            "logs/star_index/Log.out"
-        shell:
-            "mv Log.out {output}"
+            '--outTmpDir {params.temp_dir} '
+            '{log}'
 
 
     rule STAR_align:
         input:
             trim_check = "checks/trimmed/trim_cleanup.check",
             dir = expand("STAR_indexes/{species}", species = GEN_FASTA_SPECIES),
-            index_log = "logs/star_index/Log.out",
         output:
             # see STAR manual for additional output files -
             align = "star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
