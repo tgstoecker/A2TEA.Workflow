@@ -349,6 +349,14 @@ for (i in 1:length(HOG_level_list)) {
 }
 
 
+
+##################
+#### tea-value 
+## after tests & talking with Heiko an enrichment Fisher approach might be better suited to tackle this problem..
+## anyways in the following; commented out and not working with the newest code are the initial formula based ideas for the tea-value
+
+##################################################################
+
 ## computation of tea value (first idea)
 ## expansion ratio (exp/com) (9/4) x expression ratio (com/exp) (2/6) 
 ## ---- don't need (n_species_expanded/n_species_compared); stays equal in a hypothesis; 
@@ -371,129 +379,131 @@ for (i in 1:length(HOG_level_list)) {
 # e2_ratio <- divide expansion_ratio by expression_ratio
 # tea-value <- divide e2_ratio by total number of genes in HOG and then by total number of SigDE in HOG
 
-# outer most loop; going through hypotheses in HOG_level_list
-for (i in 1:length(HOG_level_list)) {
-    
-    # access the names of all species important for the hypothesis - expanded_in; compared_to
-    print(c(unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";")), 
-            unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";"))))
-    
-    # creating a relevant species vector might make this more future proof;
-    # since I might change the completeness of the HOG_level_list elements
-#    relevant_species <- c(unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";")), 
-#                          unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";")))
-    
-    expanded_species <- unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";"))
-    
-    compared_species <- unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";"))                              
-                                  
-    ## pre-allocate empty vector for tea value with length of nrow of current hypothesis of HOG_level_list
-    # neat; because NAs already in there so I can just skip if the HOG shows no expansion ;D
-    tea_value <- rep(NA, nrow(HOG_level_list[[i]]))
-    
-    
-    ## create "geneCount_workset" containing HOGs and counts of all relevant species
-    geneCount_workset <-  HOG_level_list[[i]]
+## outer most loop; going through hypotheses in HOG_level_list
+#for (i in 1:length(HOG_level_list)) {
+#    
+#    # access the names of all species important for the hypothesis - expanded_in; compared_to
+#    print(c(unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";")), 
+#            unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";"))))
+#    
+#    # creating a relevant species vector might make this more future proof;
+#    # since I might change the completeness of the HOG_level_list elements
+##    relevant_species <- c(unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";")), 
+##                          unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";")))
+#    
+#    expanded_species <- unlist(str_split(HYPOTHESES.a2tea[[i]]@expanded_in, ";"))
+#    
+#    compared_species <- unlist(str_split(HYPOTHESES.a2tea[[i]]@compared_to, ";"))                              
+#                                  
+#    ## pre-allocate empty vector for tea value with length of nrow of current hypothesis of HOG_level_list
+#    # neat; because NAs already in there so I can just skip if the HOG shows no expansion ;D
+#    tea_value <- rep(NA, nrow(HOG_level_list[[i]]))
+#    
+#    
+#    ## create "geneCount_workset" containing HOGs and counts of all relevant species
+#    geneCount_workset <-  HOG_level_list[[i]]
+#
+#    # create geneCount_EXP_workset & geneCount_COMP_workset + drop columns that are unnecessary                  
+#    geneCount_EXP_workset <- geneCount_workset %>% 
+#                             select(ends_with("_total")) %>%
+#                             select(contains(expanded_species))
+#                        # also remove the "_total" ending
+#    geneCount_EXP_workset <- geneCount_EXP_workset %>% 
+#                             setNames(names(geneCount_EXP_workset) %>% 
+#                             stringr::str_replace("_total",""))
+#                          
+#    geneCount_COMP_workset <- geneCount_workset %>% 
+#                             select(ends_with("_total")) %>%
+#                             select(contains(compared_species))
+#                        # also remove the "_total" ending
+#    geneCount_COMP_workset <- geneCount_COMP_workset %>% 
+#                             setNames(names(geneCount_COMP_workset) %>% 
+#                             stringr::str_replace("_total",""))
+#                    
+#
+#    ## create "geneSig_workset" containing HOGs and counts of all relevant species 
+#    geneSig_workset <-  HOG_level_list[[i]]
+#    
+#    # create geneSig_EXP_workset & geneSig_COMP_workset + drop columns that are unnecessary                  
+#    geneSig_EXP_workset <- geneSig_workset %>% 
+#                             select(ends_with("_sigDE")) %>%
+#                             select(contains(expanded_species))
+#                        # also remove the "_sigDE" ending
+#    geneSig_EXP_workset <- geneSig_EXP_workset %>% 
+#                             setNames(names(geneSig_EXP_workset) %>% 
+#                             stringr::str_replace("_sigDE",""))
+#                          
+#    geneSig_COMP_workset <- geneSig_workset %>% 
+#                             select(ends_with("_sigDE")) %>%
+#                             select(contains(compared_species))
+#                        # also remove the "_sigDE" ending
+#    geneSig_COMP_workset <- geneSig_COMP_workset %>% 
+#                             setNames(names(geneSig_COMP_workset) %>% 
+#                             stringr::str_replace("_sigDE",""))
+#
+#                              
+#    # nested loop that goes through current hypothesis HOG_level_list line by line
+#    for (j in 1:nrow(HOG_level_list[[i]])) {
+#        # write value into index slot if current HOG does pass hard filter expansion criterium
+#        # if expansion == "no" do nothing; since we prefilled all positions with NA
+#        if (HOG_level_list[[i]][j,"expansion"] == "yes") {
+#            
+#            ## compute all the different sub-values for the tea_value
+#            # count of all genes in expanded species in HOG
+#            geneCount_EXP_HOG <- geneCount_EXP_workset[j,] %>%
+#                                 dplyr::rowwise() %>%
+#                                 sum()
+#            
+#            # count of all genes in compared species in HOG
+#            geneCount_COMP_HOG <- geneCount_COMP_workset[j,] %>%
+#                                      dplyr::rowwise() %>%
+#                                      sum()
+#            
+#            # sum genes of expanded & compared species in HOG
+#            geneCount_BOTH_HOG <- sum(geneCount_EXP_HOG, geneCount_COMP_HOG)
+#            
+#            
+#            # count of all sig DE genes in expanded species in HOG
+#            geneSig_EXP_HOG <- geneSig_EXP_workset[j,] %>%
+#                                 dplyr::rowwise() %>%
+#                                 sum()
+#            
+#            # count of all sig DE genes in compared species in HOG
+#            geneSig_COMP_HOG <- geneSig_COMP_workset[j,] %>%
+#                                      dplyr::rowwise() %>%
+#                                      sum()
+#            
+#            ## sigDE columns can contain zero (NA in table) counts
+#            ## we exchange this for a pseudocount 1
+#            ## doesn't impact tea_value too much
+#            if (is.na(geneSig_EXP_HOG)) {
+#                geneSig_EXP_HOG <- 1
+#            }
+#            
+#            if (is.na(geneSig_COMP_HOG)) {
+#                geneSig_COMP_HOG <- 1
+#            }
+#            
+#            # sum Sig DE genes of expanded & compared species in HOG
+#            geneSig_BOTH_HOG <- sum(geneSig_EXP_HOG, geneSig_COMP_HOG)
+#
+#            
+#            ## perform tea value calculation
+#            int_tea_value <- (geneCount_EXP_HOG / geneCount_COMP_HOG) * (geneSig_COMP_HOG / geneSig_EXP_HOG) / 
+#                                                  (geneCount_BOTH_HOG * geneSig_BOTH_HOG)
+#            
+#            # lastly, add computed value to tea_value at index of current j loop position
+#            tea_value[j] <- int_tea_value
+#        }
+#    }
+#    
+#    ## add tea_value as new column to HOG_level_list table
+#    HOG_level_list[[i]] <- HOG_level_list[[i]] %>% 
+#                               add_column(tea_value, .after = "HOG")
+#    
+#}
 
-    # create geneCount_EXP_workset & geneCount_COMP_workset + drop columns that are unnecessary                  
-    geneCount_EXP_workset <- geneCount_workset %>% 
-                             select(ends_with("_total")) %>%
-                             select(contains(expanded_species))
-                        # also remove the "_total" ending
-    geneCount_EXP_workset <- geneCount_EXP_workset %>% 
-                             setNames(names(geneCount_EXP_workset) %>% 
-                             stringr::str_replace("_total",""))
-                          
-    geneCount_COMP_workset <- geneCount_workset %>% 
-                             select(ends_with("_total")) %>%
-                             select(contains(compared_species))
-                        # also remove the "_total" ending
-    geneCount_COMP_workset <- geneCount_COMP_workset %>% 
-                             setNames(names(geneCount_COMP_workset) %>% 
-                             stringr::str_replace("_total",""))
-                    
-
-    ## create "geneSig_workset" containing HOGs and counts of all relevant species 
-    geneSig_workset <-  HOG_level_list[[i]]
-    
-    # create geneSig_EXP_workset & geneSig_COMP_workset + drop columns that are unnecessary                  
-    geneSig_EXP_workset <- geneSig_workset %>% 
-                             select(ends_with("_sigDE")) %>%
-                             select(contains(expanded_species))
-                        # also remove the "_sigDE" ending
-    geneSig_EXP_workset <- geneSig_EXP_workset %>% 
-                             setNames(names(geneSig_EXP_workset) %>% 
-                             stringr::str_replace("_sigDE",""))
-                          
-    geneSig_COMP_workset <- geneSig_workset %>% 
-                             select(ends_with("_sigDE")) %>%
-                             select(contains(compared_species))
-                        # also remove the "_sigDE" ending
-    geneSig_COMP_workset <- geneSig_COMP_workset %>% 
-                             setNames(names(geneSig_COMP_workset) %>% 
-                             stringr::str_replace("_sigDE",""))
-
-                               
-    # nested loop that goes through current hypothesis HOG_level_list line by line
-    for (j in 1:nrow(HOG_level_list[[i]])) {
-        # write value into index slot if current HOG does pass hard filter expansion criterium
-        # if expansion == "no" do nothing; since we prefilled all positions with NA
-        if (HOG_level_list[[i]][j,"expansion"] == "yes") {
-            
-            ## compute all the different sub-values for the tea_value
-            # count of all genes in expanded species in HOG
-            geneCount_EXP_HOG <- geneCount_EXP_workset[j,] %>%
-                                 dplyr::rowwise() %>%
-                                 sum()
-            
-            # count of all genes in compared species in HOG
-            geneCount_COMP_HOG <- geneCount_COMP_workset[j,] %>%
-                                      dplyr::rowwise() %>%
-                                      sum()
-            
-            # sum genes of expanded & compared species in HOG
-            geneCount_BOTH_HOG <- sum(geneCount_EXP_HOG, geneCount_COMP_HOG)
-            
-            
-            # count of all sig DE genes in expanded species in HOG
-            geneSig_EXP_HOG <- geneSig_EXP_workset[j,] %>%
-                                 dplyr::rowwise() %>%
-                                 sum()
-            
-            # count of all sig DE genes in compared species in HOG
-            geneSig_COMP_HOG <- geneSig_COMP_workset[j,] %>%
-                                      dplyr::rowwise() %>%
-                                      sum()
-            
-            ## sigDE columns can contain zero (NA in table) counts
-            ## we exchange this for a pseudocount 1
-            ## doesn't impact tea_value too much
-            if (is.na(geneSig_EXP_HOG)) {
-                geneSig_EXP_HOG <- 1
-            }
-            
-            if (is.na(geneSig_COMP_HOG)) {
-                geneSig_COMP_HOG <- 1
-            }
-            
-            # sum Sig DE genes of expanded & compared species in HOG
-            geneSig_BOTH_HOG <- sum(geneSig_EXP_HOG, geneSig_COMP_HOG)
-
-            
-            ## perform tea value calculation
-            int_tea_value <- (geneCount_EXP_HOG / geneCount_COMP_HOG) * (geneSig_COMP_HOG / geneSig_EXP_HOG) / 
-                                                  (geneCount_BOTH_HOG * geneSig_BOTH_HOG)
-            
-            # lastly, add computed value to tea_value at index of current j loop position
-            tea_value[j] <- int_tea_value
-        }
-    }
-    
-    ## add tea_value as new column to HOG_level_list table
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>% 
-                               add_column(tea_value, .after = "HOG")
-    
-}
+######################################################################
 
 
 ## adding the computed CAFE p-values to the HOG_level_list(s)
@@ -507,8 +517,8 @@ for (hypothesis_num in 1:length(HOG_level_list)) {
                                                   by = c("HOG" = "#FamilyID")
                                                  ) %>%
                                         rename(cafe_pvalue = pvalue) %>%
-                                        relocate(cafe_pvalue, .after = tea_value) %>%
-                                        arrange(tea_value)
+                                        relocate(cafe_pvalue, .after = "HOG") %>%
+                                        arrange(cafe_pvalue)
 }
 
 
