@@ -5,8 +5,10 @@ if len(GEN_FASTA_SPECIES) != 0:
 #######
     rule STAR_index:
         input:
-            fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species],
-            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+#            fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species],
+            fasta = "resources/{species}.gen.fa",
+#            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+            annotation = "resources/{species}.gtf"
         output:
             directory("STAR_indexes/{species}")
         message:

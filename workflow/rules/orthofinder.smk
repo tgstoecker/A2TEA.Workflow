@@ -1,23 +1,26 @@
 if config["auto_isoform_filtering"] == "YES":
     rule filter_isoforms:
+        input: 
+            "resources/{species}.pep.fa"
         output:
-            "FS/longest_isoforms/{species}.fa"
+            "resources/longest_isoforms/{species}.fa"
         params:
-            fa = get_species_fasta,
+#            fa = get_species_fasta,
             iso = get_longest_isoforms,
         conda:
             "../envs/longest_isoforms.yaml"
         shell:
-            "python workflow/scripts/longest_isoforms.py {params.fa} && "
-            "mv {params.iso} {output}"
+#            "python workflow/scripts/longest_isoforms.py {params.fa} && "
+            "python workflow/scripts/longest_isoforms.py {input} && "
+            "mv resources/longest_isoforms/{wildcards.species}.pep.fa {output}"
 
 
     rule Orthofinder_link_all:
         input:
-            "FS/longest_isoforms/{species}.fa",
+            "resources/longest_isoforms/{species}.fa",
         output:
             ORTHOFINDER + "{species}.fa"
-        params: get_longest_isoforms,
+#        params: get_longest_isoforms,
         conda:
             "../envs/coreutils.yaml"
         shell:
@@ -26,16 +29,20 @@ if config["auto_isoform_filtering"] == "YES":
 
 else:
     rule Orthofinder_link_all_and_isoform_loc_copy:
+        input:
+            "resources/{species}.pep.fa"
         output:
             link = ORTHOFINDER + "{species}.fa",
-            iso_link = "FS/longest_isoforms/{species}.fa"
-        params:
-            fa = get_species_fasta,
+            iso_link = "resources/longest_isoforms/{species}.fa"
+#        params:
+#            fa = get_species_fasta,
         conda:
             "../envs/coreutils.yaml"
         shell:
-            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.link} && "
-            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.iso_link}"
+#            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.link} && "
+#            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.iso_link}"
+            "ln --symbolic $(readlink --canonicalize {input}) {output.link} && "
+            "ln --symbolic $(readlink --canonicalize {input}) {output.iso_link}"
 
 
 rule Orthofinder_prepare:

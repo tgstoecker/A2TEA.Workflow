@@ -48,6 +48,8 @@ wildcard_constraints:
 ### all snakemake files to be included in the workflow ###
 ## (!) keep _utils.smk before the coressponding base rules; utils always contain python functions and should be handled first ##
 include: "rules/common_utils.smk"
+include: "rules/ref_utils.smk"
+include: "rules/ref.smk"
 include: "rules/quality_control_utils.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming_utils.smk"

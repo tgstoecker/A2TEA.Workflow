@@ -5,7 +5,8 @@ if len(CDNA_FASTA_SPECIES) != 0:
 ##########
     rule kallisto_index:
         input:
-            fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
+#            fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species],
+            fasta="resources/{species}.cdna.fa"
         output:
             "kallisto_indexes/{species}.idx"
         log:
