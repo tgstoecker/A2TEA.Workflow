@@ -1,3 +1,22 @@
+#backup R-based installation if conda didn't work or wasn't used
+#we check if packages are installed first
+
+# list of bioconductor packages
+bioc_packages = c("DESeq2")
+
+# load or install&load all
+package.check <- lapply(
+  bioc_packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+    BiocManager::install(x)
+    library(x, character.only = TRUE)
+    }
+  }
+)
+
+
+# load libraries
 library(DESeq2)
 
 gen_fasta_samples <- read.delim("R/gen_fasta_samples.csv")

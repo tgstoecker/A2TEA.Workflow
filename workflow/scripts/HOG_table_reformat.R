@@ -1,4 +1,21 @@
-#to reduce loading time; we could reduce down to readr, plyr, dplyr, stringr
+#backup R-based installation if conda didn't work or wasn't used
+#we check if packages are installed first
+
+# list of cran packages
+cran_packages = c("readr", "plyr", "dplyr", "stringr", "tibble")
+# load or install&load all
+package.check <- lapply(
+  cran_packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
+      library(x, character.only = TRUE)
+    }
+  }
+)
+
+
+#load libraries
 library(readr)
 library(plyr)
 library(dplyr)
