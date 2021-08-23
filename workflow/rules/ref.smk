@@ -37,10 +37,11 @@ rule pep_fasta_handling:
         pep_fasta = lambda wildcards: species_table.pep_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
     log:
         "logs/handling_pep_fasta/handling_{species}_pep_fasta.log"
-    #this rule needs a wildcard_constraint, to prevent it from competing with the "filter_isoforms" rule 
-    #this is done easily by preventing the wildcard "species" here, from being the string 'longest_isoform' 
-    wildcard_constraints:
-         species='[^(longest_isoform)][0-9a-zA-Z]*'
+#this rule needs a wildcard_constraint, to prevent it from competing with the "filter_isoforms" rule 
+#this is done easily by preventing the wildcard "species" here, from being the string 'longest_isoform' 
+#some downstream changes made this superfluous, keeping it here for if the probem should arise again later
+#    wildcard_constraints:
+#         species='[^(longest_isoform)][0-9a-zA-Z]*'
     run:
         handle_pep_fasta(params.pep_fasta, params.species)
 

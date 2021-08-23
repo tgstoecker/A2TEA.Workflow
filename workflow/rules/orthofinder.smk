@@ -1,6 +1,6 @@
 if config["auto_isoform_filtering"] == "YES":
     rule filter_isoforms:
-        input: 
+        input:
             "resources/{species}.pep.fa"
         output:
             "resources/longest_isoforms/{species}.fa"

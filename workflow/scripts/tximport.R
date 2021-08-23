@@ -37,7 +37,7 @@ library(readr)
 library(DESeq2)
 
 
-txdb_snakemake.wildcards <- makeTxDbFromGFF(snakemake@params[["annotation"]], format="auto")
+txdb_snakemake.wildcards <- makeTxDbFromGFF(snakemake@input[["annotation"]], format="auto")
 
 k_snakemake.wildcards <- keys(txdb_snakemake.wildcards, keytype = "TXNAME")
 tx2gene_snakemake.wildcards <- select(txdb_snakemake.wildcards, k_snakemake.wildcards, "GENEID", "TXNAME")
