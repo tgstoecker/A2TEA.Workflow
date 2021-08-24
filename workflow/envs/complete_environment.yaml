@@ -84,3 +84,4 @@ dependencies:
   - libstdcxx-ng=9.3.0=h6de172a_19
   - sysroot_linux-64=2.12=he073ed8_14
   - make
+  - gffread =0.12.1

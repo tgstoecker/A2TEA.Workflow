@@ -14,14 +14,19 @@ dependencies:
   - r-tibble
   - bioconductor-deseq2
   - bioconductor-ggtree 
+  - bioconductor-biostrings
+  - r-seqinr
+  - r-upsetr
+  - r-cowplot
+  - r-ggplotify
 #==3.0.1
-  - bioconductor-biostrings 
+#  - bioconductor-biostrings 
 #==2.60.0
-  - r-seqinr 
+#  - r-seqinr 
 #==3.4_5
-  - r-upsetr 
+#  - r-upsetr 
 #==1.4.0
-  - r-cowplot 
+#  - r-cowplot 
 #==1.1.1
-  - r-ggplotify 
+#  - r-ggplotify 
 #==0.0.7
