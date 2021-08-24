@@ -49,7 +49,7 @@ def get_com_species(wildcards):
 #+the filtering for longest isoform also only retains the base name of the gene/protein
 def get_all_hypothesis_species(wildcards):
     """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-    path_prefix = 'FS/longest_isoforms/'
+    path_prefix = 'resources/longest_isoforms/'
     suffix = '.fa'
     exp = hypotheses.loc[ 'expanded_in', (wildcards.hypothesis) ]
     ct = hypotheses.loc[ 'compared_to', (wildcards.hypothesis) ]

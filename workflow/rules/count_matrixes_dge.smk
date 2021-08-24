@@ -5,13 +5,14 @@ if len(GEN_FASTA_SPECIES) != 0:
     rule featureCounts:
         input:
             bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+            gtf="resources/{species}.gtf"
         output:
             gene_level="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt",
 #            transcript_level="featureCounts/{species}/transcript_level/{sample}_{unit}_counts.txt",
             gene_level_summary="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt.summary",
         params:
             #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
+#            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
             paired= get_paired_info,
         log:
             gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
@@ -21,7 +22,7 @@ if len(GEN_FASTA_SPECIES) != 0:
         conda:
             "../envs/subread.yaml"
         shell:
-            "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {params.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
+            "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {input.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
 #        "featureCounts -T {threads} {params.paired} -O -M -t exon -g transcript_id -a {params.gtf} -o {output.transcript_level} {input.bams} 2> {log.transcript_level} "
 
 
@@ -61,11 +62,12 @@ if len(CDNA_FASTA_SPECIES) != 0:
 
     rule tximport_and_setup:
         input:
-            expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
+            quants=expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
+            annotation="resources/{species}.gtf",
         output:
             "R/tximport/{species}/DESeqDataSet_{species}"
         params:
-            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
+#            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
             species = lambda wildcards: samples.species[samples.species == wildcards.species],
         conda:
             "../envs/deseq2_tximport.yaml"

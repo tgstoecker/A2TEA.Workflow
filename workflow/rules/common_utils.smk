@@ -76,6 +76,7 @@ def all_species_with_cDNA_fasta(sp):
 
 GEN_FASTA_SPECIES = all_species_with_genomic_fasta(SPECIES)
 CDNA_FASTA_SPECIES = all_species_with_cDNA_fasta(SPECIES)
+ALL_SPECIES = GEN_FASTA_SPECIES + CDNA_FASTA_SPECIES
 
 
 #create subsets of samples depending on which input is given

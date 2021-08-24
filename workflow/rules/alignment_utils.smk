@@ -5,7 +5,13 @@ if len(GEN_FASTA_SPECIES) != 0:
         """Get raw FASTQ files from unit sheet."""
         if is_single_end(wildcards.sample, wildcards.unit):
             s = GEN_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1"] ].dropna()
-            return [ f"trimmed/{s.fq1}" ]
+            if not is_gzipped(s.fq1):
+                return [ f"trimmed/{s.fq1}.gz" ]
+            else:
+                return [ f"trimmed/{s.fq1}" ]
         else:
             u = GEN_FASTA_SAMPLES.loc[ (wildcards.sample, wildcards.unit), ["fq1", "fq2"] ].dropna()
-            return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]
+            if not is_gzipped(s.fq1):
+                return [ f"trimmed/{u.fq1}.gz", f"trimmed/{u.fq2}.gz" ]
+            else:
+                return [ f"trimmed/{u.fq1}", f"trimmed/{u.fq2}" ]

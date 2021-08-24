@@ -11,5 +11,5 @@ def get_species_fasta(wildcards):
     return species_table.loc[wildcards.species]["pep_fasta"]
 
 def get_longest_isoforms(wildcards):
-    return os.path.join("FS/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
+    return os.path.join("resources/longest_isoforms/", os.path.split(get_species_fasta(wildcards))[1])
 
