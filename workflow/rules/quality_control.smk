@@ -70,6 +70,8 @@ if len(GEN_FASTA_SPECIES) != 0:
                 kallisto = "logs/kallisto/quant/",
                 star = "star/",
                 featureCounts = "featureCounts/",
+            conda:
+                "../envs/multiqc.yaml"
             log:
                 "logs/multiqc/multiqc.log"
             shell:
@@ -97,6 +99,8 @@ if len(GEN_FASTA_SPECIES) != 0:
                 trimmomatic = "logs/trimmomatic/",
                 star = "star/",
                 featureCounts = "featureCounts/",
+            conda:
+                "../envs/multiqc.yaml"
             log:
                 "logs/multiqc/multiqc.log"
             shell:
@@ -122,6 +126,8 @@ if len(GEN_FASTA_SPECIES) == 0:
                 plot = "-ip",
                 trimmomatic = "logs/trimmomatic/",
                 kallisto = "logs/kallisto/quant/",
+            conda:
+                "../envs/multiqc.yaml"
             log:
                 "logs/multiqc/multiqc.log"
             shell:
