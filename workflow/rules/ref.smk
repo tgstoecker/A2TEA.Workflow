@@ -5,8 +5,7 @@ rule annotation_handling:
         temp("resources/{species}.annotation")
     params:
         species = lambda wildcards: wildcards.species,
-        #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-        annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[9:],
+        annotation = lambda wildcards: species_table[species_table.index == wildcards.species]['annotation'].item(),
     log: 
         "logs/annotation_handling/handling_{species}_annotation.log"
     run:
@@ -33,8 +32,7 @@ rule pep_fasta_handling:
         "resources/{species}.pep.fa"
     params:
         species = lambda wildcards: wildcards.species,
-        #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-        pep_fasta = lambda wildcards: species_table.pep_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
+        pep_fasta = lambda wildcards: species_table[species_table.index == wildcards.species]['pep_fasta'].item(),
     log:
         "logs/handling_pep_fasta/handling_{species}_pep_fasta.log"
 #this rule needs a wildcard_constraint, to prevent it from competing with the "filter_isoforms" rule 
@@ -53,8 +51,7 @@ rule cdna_fasta_handling:
         "resources/{species}.cdna.fa"
     params:
         species = lambda wildcards: wildcards.species,
-        #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-        cdna_fasta = lambda wildcards: species_table.cDNA_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
+        cdna_fasta = lambda wildcards: species_table[species_table.index == wildcards.species]['cDNA_fasta'].item(),
     log:
         "logs/handling_pep_fasta/handling_{species}_cdna_fasta.log"
     run:
@@ -68,8 +65,7 @@ rule gen_fasta_handling:
         "resources/{species}.gen.fa"
     params:
         species = lambda wildcards: wildcards.species,
-        #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-        gen_fasta = lambda wildcards: species_table.gen_fasta[species_table.index == wildcards.species].to_string(index=False)[9:],
+        gen_fasta = lambda wildcards: species_table[species_table.index == wildcards.species]['gen_fasta'].item(),
     log:
         "logs/handling_pep_fasta/handling_{species}_gen_fasta.log"
     run:
