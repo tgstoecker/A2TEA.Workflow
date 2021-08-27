@@ -1,0 +1,3 @@
+[submodule "AHRD_Snakemake"]
+	path = AHRD_Snakemake
+	url = https://github.com/groupschoof/AHRD_Snakemake

@@ -50,6 +50,8 @@ wildcard_constraints:
 include: "rules/common_utils.smk"
 include: "rules/ref_utils.smk"
 include: "rules/ref.smk"
+include: "rules/function_ahrd_utils.smk"
+include: "rules/function_ahrd.smk"
 include: "rules/quality_control_utils.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming_utils.smk"
