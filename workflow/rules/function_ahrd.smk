@@ -19,12 +19,46 @@ rule create_ahrd_species_tsv:
         create_ahrd_species_tsv(input.ahrd_fastas)
 
 
+#rule run_AHRD_wrapper:
+
 #rule ahrd_done:
 #    input:
 #        expand("../results/{species}.ahrd_output.tsv", species=SPECIES)
 
 
-#rule check user supplied tables
+rule handle_user_func_annotations:
+    input:
+        "config/species.tsv"
+    output:
+        "resources/functional_annotation/{species}.func_annotation.tsv"
+    params:
+        species = lambda wildcards: wildcards.species,
+        func_annotation= lambda wildcards: species_table[species_table.index == wildcards.species]['function'].item(),
+    log:
+        "logs/functional_annotation/non_ahrd/{species}.handle.log"
+    run:
+        handle_user_func_annotation_table(params.func_annotation, params.species)
+
+
+rule check_user_func_annotations:
+    input:
+        "resources/functional_annotation/{species}.func_annotation.tsv"
+    output:
+        touch("checks/functional_annotation/non_ahrd/{species}.check")
+    params:
+        species = lambda wildcards: wildcards.species,
+    log:
+        "logs/functional_annotation/non_ahrd/{species}.check.log"
+    run:
+        check_user_func_annotation_table_validity(input[0], params.species)
+
 
 #rule combine into R list object
 # user supplied as well ahrd based...
+rule test_user_func:
+    input:
+        expand("checks/functional_annotation/non_ahrd/{species}.check", species=NON_AHRD_SPECIES)
+    output:
+        touch("test_user_func.txt")
+
+
