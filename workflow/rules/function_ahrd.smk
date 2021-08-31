@@ -14,7 +14,7 @@ checkpoint create_ahrd_species_tsv:
         #expand to subset of species for which AHRD should be run on
         ahrd_fastas = expand("resources/longest_isoforms/{species}.fa", species=AHRD_SPECIES),
     output:
-        touch("checks/ahrd/new_ahrd_species_tsv_incl_{species}")
+        touch("checks/ahrd/new_ahrd_species_tsv_incl_{species}.check")
     run:
         create_ahrd_species_tsv(input.ahrd_fastas)
 
