@@ -9,6 +9,8 @@ from urllib.request import urlretrieve
 from urllib.request import urlcleanup
 
 
+##PART 1 - dealing with running AHRD for species the user did not supply their own functional annotation file
+
 #create a subset of the species - those that should be annotated using AHRD
 species_df = pd.read_csv('config/species.tsv', sep='\t')
 ahrd_species_df = species_df.query("function=='AHRD'")
@@ -18,7 +20,7 @@ NON_AHRD_SPECIES= non_ahrd_species_df["species"].tolist()
 
 #function to write a custom species.tsv file for running the AHRD snakemake wrapper
 def create_ahrd_species_tsv(ahrd_species):
-    with open('AHRD_Snakemake/resources/species.tsv', 'wt') as out_file:
+    with open('workflow/rules/AHRD_Snakemake/resources/species.tsv', 'wt') as out_file:
         tsv_writer = csv.writer(out_file, delimiter='\t')
         tsv_writer.writerow(['species', 'pep_fasta'])
         
@@ -28,6 +30,35 @@ def create_ahrd_species_tsv(ahrd_species):
             s_name_noext = os.path.splitext(s_name)[0]
             tsv_writer.writerow([s_name_noext, s_path])
 
+
+#read-in of AHRD species.tsv in function that is called by the next two functions (modified from AHRD_snakemake common.smk)
+#the trick is that since the AHRD_Snakemake example species.tsv exists at the first evaluation no error is thrown;
+#then after we have created the AHRD species.tsv based on the A2TEA species.tsv these functions are called by the AHRD_wrapper
+#the new/actual species.tsv (updated in AHRD_Snakemake/resources/) is being parsed and used
+def get_ahrd_species_table():
+    species_table = pd.read_table("workflow/rules/AHRD_Snakemake/resources/species.tsv").set_index("species")
+    return species_table
+
+def get_species_fasta(wildcards):
+    species_table = get_ahrd_species_table()
+    return species_table.loc[wildcards.species]["pep_fasta"]
+
+def calc_mem_usage_in_mb(wildcards):
+    species_table = get_ahrd_species_table()
+    fastaPath = species_table.loc[wildcards.species]["pep_fasta"]
+    fastaSizeInByte = Path(fastaPath).stat().st_size
+    fastaSizeInKB = fastaSizeInByte/1024
+    fastaSizeInMB = fastaSizeInKB/1024
+    projectedMemUsage = 11000+fastaSizeInMB*540
+    return int(projectedMemUsage)
+
+def species_tsv_checkpoint_end(wildcards):
+    checkpoint_output = checkpoints.create_ahrd_species_tsv.get(**wildcards).output
+    ahrd_results = expand("results/{species}.ahrd_output.tsv", species=AHRD_SPECIES)
+    return ahrd_results
+
+
+##PART 2 - dealing with user supplied functional annotation input
 
 #function handle supplied function annotation tables
 #checking if URL is supplied and if gzipped based on functions currently part of ref_utils.smk
@@ -65,4 +96,3 @@ def check_user_func_annotation_table_validity(file, species):
         exit()
     else:
         print("User supplied functional annotation file for species - ", species, "- checked")
-

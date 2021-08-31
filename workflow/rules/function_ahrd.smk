@@ -1,30 +1,50 @@
+##PART 1 - dealing with running AHRD for species the user did not supply their own functional annotation file
+
 #not strictly necessary, since "with open" will overwrite the species.tsv; but I want this to be clean
 rule delete_example_species_tsv:
-#    input:
-#       ahrd_dir =  rules.download_ahrd_wrapper.output,
     output:
         temp(touch("checks/ahrd/ahrd_clean.check"))
     shell:
-        "rm AHRD_Snakemake/resources/species.tsv"
+        "rm workflow/rules/AHRD_Snakemake/resources/species.tsv"
 
 
-rule create_ahrd_species_tsv:
+checkpoint create_ahrd_species_tsv:
     input:
         old_rem = "checks/ahrd/ahrd_clean.check",
         #expand to subset of species for which AHRD should be run on
         ahrd_fastas = expand("resources/longest_isoforms/{species}.fa", species=AHRD_SPECIES),
     output:
-        "AHRD_Snakemake/resources/species.tsv"
+        touch("checks/ahrd/new_ahrd_species_tsv_incl_{species}")
     run:
         create_ahrd_species_tsv(input.ahrd_fastas)
 
 
-#rule run_AHRD_wrapper:
+#rule combine into R list object
+# user supplied as well ahrd based...
 
-#rule ahrd_done:
-#    input:
-#        expand("../results/{species}.ahrd_output.tsv", species=SPECIES)
+#depending rule of the checkpoint needs to get function as input
+#AHRD_snakemake rules are performed between this rule and the checkpoint
+rule ahrd_checkpoint_end:
+    input:
+        species_tsv_checkpoint_end,
+    output:
+        touch("checks/ahrd/{species}.species_tsv_checkpoint_end.check")
+#    shell:
+#        touch({output})
+#   script:
+#        "Rscript that creates RDATA object with list object inside for each species table"
 
+
+rule ahrd_done:
+    input:
+        expand("checks/ahrd/{species}.species_tsv_checkpoint_end.check", species=AHRD_SPECIES)
+    output:
+        touch("checks/ahrd/ahrd_done.txt")
+
+
+############################################################################################
+
+##PART 2 - dealing with user supplied functional annotation input
 
 rule handle_user_func_annotations:
     input:
@@ -51,14 +71,3 @@ rule check_user_func_annotations:
         "logs/functional_annotation/non_ahrd/{species}.check.log"
     run:
         check_user_func_annotation_table_validity(input[0], params.species)
-
-
-#rule combine into R list object
-# user supplied as well ahrd based...
-rule test_user_func:
-    input:
-        expand("checks/functional_annotation/non_ahrd/{species}.check", species=NON_AHRD_SPECIES)
-    output:
-        touch("test_user_func.txt")
-
-
