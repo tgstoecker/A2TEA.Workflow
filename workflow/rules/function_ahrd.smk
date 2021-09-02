@@ -34,12 +34,12 @@ rule ahrd_checkpoint_end:
 #   script:
 #        "Rscript that creates RDATA object with list object inside for each species table"
 
-
-rule ahrd_done:
-    input:
-        expand("checks/ahrd/{species}.species_tsv_checkpoint_end.check", species=AHRD_SPECIES)
-    output:
-        touch("checks/ahrd/ahrd_done.txt")
+#can be removed once I have a rule that combines AHRD/nonAHRD handling
+#rule ahrd_done:
+#    input:
+#        expand("checks/ahrd/{species}.species_tsv_checkpoint_end.check", species=AHRD_SPECIES)
+#    output:
+#        touch("checks/ahrd/ahrd_done.check")
 
 
 ############################################################################################
@@ -71,3 +71,28 @@ rule check_user_func_annotations:
         "logs/functional_annotation/non_ahrd/{species}.check.log"
     run:
         check_user_func_annotation_table_validity(input[0], params.species)
+
+
+###Part 3 - merging all functional annotation tables inside Rscript - list data structure with a per species func. annotation table
+rule create_func_annotation_RDS:
+    input:
+        #ahrd_done
+        ahrd_checks = expand("checks/ahrd/{species}.species_tsv_checkpoint_end.check", species=AHRD_SPECIES),
+#        ahrd_done = "checks/ahrd/ahrd_done.check",
+        #ahrd files
+#        ahrd_files = expand("results/{species}.ahrd_output.tsv", species=AHRD_SPECIES),
+        #checked user supplied func. annotation tables
+        user_file_checks = expand("checks/functional_annotation/non_ahrd/{species}.check", species=NON_AHRD_SPECIES),
+        #get renamed user supplied func. annotation tables
+        renamed_user_files = expand("resources/functional_annotation/{species}.func_annotation.tsv", species=NON_AHRD_SPECIES),
+    output:
+        "results/functional_annotation/species_functional_annotation.rds"
+    params:
+        #ahrd files - need to be called via params since otherwise our checkpoint logic won't work (since we use easy expand() here)
+        ahrd_files = expand("results/{species}.ahrd_output.tsv", species=AHRD_SPECIES),
+    log:
+        "logs/functional_annotation/func_annotation_combine.log"
+#    conda:
+#        "../envs/func_annotation.yaml"
+    script:
+        "../scripts/func_annotation_combine.R"
