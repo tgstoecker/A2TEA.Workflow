@@ -19,6 +19,15 @@ Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster rep
 
 Download/Clone the current release of the A2TEA workflow into the directory.
 
+`git clone https://bitbucket.team.uni-bonn.de/scm/cbig/a2tea.git`
+
+Setup the AHRD_Snakemake subworkflow by navigating into the cloned A2TEA directory and entering:
+
+```
+git submodule init
+git submodule update
+```
+
 
 # Installation
 ## Option 1 (recommended):

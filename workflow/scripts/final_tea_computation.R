@@ -49,6 +49,9 @@ library(ape)
 # get user choice for DEG FDR cutoff value
 DEG_FDR = snakemake@params["DEG_FDR"]
 
+#get functional annotation list object
+SFA = readRDS(snakemake@input[["SFA"]])
+
 ## Find all DESeq2 differential expression RDS objects and load them
 ### Names are given based on the species/ecotype/etc. name
 dea_list <- list.files(path = "R/deseq2/dea_final/", pattern = "dea_*", full.names=TRUE)
@@ -527,4 +530,5 @@ save(hypotheses,
      HYPOTHESES.a2tea, 
      HOG_DE.a2tea, 
      HOG_level_list,
+     SFA,
      file = "tea/A2TEA_finished.RData")

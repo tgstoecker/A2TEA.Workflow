@@ -11,8 +11,10 @@ import yaml
 #pandas actually truncates too long names.. if you don't stop it ;D
 pd.set_option("display.max_colwidth", 10000)
 
-### read-in config ###
+### read-in configfiles - AHRD_Snakemake comes with it's own ###
+#later config files entries overwrite earlier ones if they share a name - CAUTION!
 configfile: "config/config.yaml"
+configfile: "workflow/rules/AHRD_Snakemake/config/config.yaml"
 
 ### read-in species information ###
 species_table = pd.read_table("config/species.tsv").set_index("species")
@@ -45,11 +47,22 @@ wildcard_constraints:
 # assign directory containing sequencing reads as specified in config.yaml
 #reads_dir = config["reads_dir"]
 
+
 ### all snakemake files to be included in the workflow ###
 ## (!) keep _utils.smk before the coressponding base rules; utils always contain python functions and should be handled first ##
 include: "rules/common_utils.smk"
 include: "rules/ref_utils.smk"
 include: "rules/ref.smk"
+include: "rules/function_ahrd_utils.smk"
+include: "rules/function_ahrd.smk"
+#AHRD_Snakemake rules
+#common.smk ignored since we need modified rules for this workflow (inside rules/function_ahrd.smk)
+include: "rules/AHRD_Snakemake/workflow/rules/download.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/diamond.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/get_ahrd.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/create_ahrd_input.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/run_ahrd.smk"
+#end AHRD_Snakemake rules
 include: "rules/quality_control_utils.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming_utils.smk"

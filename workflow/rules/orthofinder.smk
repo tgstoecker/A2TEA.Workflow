@@ -5,12 +5,10 @@ if config["auto_isoform_filtering"] == "YES":
         output:
             "resources/longest_isoforms/{species}.fa"
         params:
-#            fa = get_species_fasta,
             iso = get_longest_isoforms,
         conda:
             "../envs/longest_isoforms.yaml"
         shell:
-#            "python workflow/scripts/longest_isoforms.py {params.fa} && "
             "python workflow/scripts/longest_isoforms.py {input} && "
             "mv resources/longest_isoforms/{wildcards.species}.pep.fa {output}"
 
@@ -20,7 +18,6 @@ if config["auto_isoform_filtering"] == "YES":
             "resources/longest_isoforms/{species}.fa",
         output:
             ORTHOFINDER + "{species}.fa"
-#        params: get_longest_isoforms,
         conda:
             "../envs/coreutils.yaml"
         shell:
@@ -34,13 +31,9 @@ else:
         output:
             link = ORTHOFINDER + "{species}.fa",
             iso_link = "resources/longest_isoforms/{species}.fa"
-#        params:
-#            fa = get_species_fasta,
         conda:
             "../envs/coreutils.yaml"
         shell:
-#            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.link} && "
-#            "ln --symbolic $(readlink --canonicalize {params.fa}) {output.iso_link}"
             "ln --symbolic $(readlink --canonicalize {input}) {output.link} && "
             "ln --symbolic $(readlink --canonicalize {input}) {output.iso_link}"
 
@@ -88,7 +81,7 @@ if config["chunks_usage"] == "ON":
     rule Orthofinder_split:
         "Split the headers of the input pep fastas into multiple files"
         input:
-            fai = ancient(ORTHOFINDER + "Species{species_number}.fa.fai")
+            fai = ORTHOFINDER + "Species{species_number}.fa.fai"
         output:
             expand(ORTHOFINDER + "{{species_number}}/chunks/ids_{chunk_id}.tsv", chunk_id=['{0:05d}'.format(x) for x in range(0, CHUNKS_ORTHO)])
         params:
@@ -117,7 +110,7 @@ if config["chunks_usage"] == "ON":
         "Run blastp of each chunk"
         input:
             fasta = ORTHOFINDER + "Species{species_number}.fa",
-            fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
+            fai   = ORTHOFINDER + "Species{species_number}.fa.fai",
             chunk = ORTHOFINDER + "{species_number}/chunks/ids_{chunk_id}.tsv",
             db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
         output:
@@ -165,7 +158,7 @@ else:
         "Run blastp of each chunk"
         input:
             fasta = ORTHOFINDER + "Species{species_number}.fa",
-            fai   = ancient(ORTHOFINDER + "Species{species_number}.fa.fai"),
+            fai   = ORTHOFINDER + "Species{species_number}.fa.fai",
             db    = ORTHOFINDER + "diamondDBSpecies{database_number}.dmnd",
         output:
             tsv = ORTHOFINDER + "{species_number}/{database_number}/blastp.tsv"
