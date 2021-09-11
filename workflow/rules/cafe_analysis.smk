@@ -12,14 +12,14 @@ rule cafe5_setup:
         "../envs/cafe5_compile.yaml"
     shell:
         """
-        git clone https://github.com/tgstoecker/CAFE5 CAFE5_cloned/ &&
-        mv CAFE5_cloned/* CAFE5/ &&
-        rm -rf CAFE5_cloned/ &&
-        cd CAFE5/ &&
+        rm -rf CAFE5/;
+        git clone https://github.com/tgstoecker/CAFE5;
+        cd CAFE5/;
         autoconf &&
         ./configure &&
         make
         """
+
 
 # generate an ultrametric species tree from orthofinder output
 rule ultrametric_species_tree:
@@ -93,7 +93,6 @@ rule cafe5_filtered_set:
         table = "cafe/{hypothesis}/HOG_table_reformatted_filtered.tsv",
     output:
         directory("cafe/{hypothesis}/cafe_filtered_results"),
-#        lambda_file = "filtered_results/Gamma_results.txt",
     shell:
         "CAFE5/bin/cafe5 --cores 32 -i {input.table} -t {input.tree} -o {output} -k 3"
 
@@ -124,7 +123,6 @@ rule cafe5_complete_set:
     input:
         tree = "cafe/{hypothesis}/SpeciesTree_rooted_node_labels.txt.ultrametric.tre",
         table = "cafe/{hypothesis}/HOG_table_reformatted_complete.tsv",
-#        filtered_results = directory("cafe/cafe_filtered_results"),
         filtered_results = rules.cafe5_filtered_set.output,
     output:
         directory("cafe/{hypothesis}/cafe_complete_results"),
