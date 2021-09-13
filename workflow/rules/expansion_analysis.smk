@@ -27,6 +27,8 @@ checkpoint expansion:
         comparison = get_com_species,
         add_blast_hits = config["add_blast_hits"],
         expansion_factor = get_expansion_factor,
+        expansion_difference = get_expansion_difference,
+	ploidy_normalization = get_ploidy_normalization,
         Nmin_expanded_in = get_Nmin_expanded_in,
         Nmin_compared_to = get_Nmin_compared_to,
         expanded_in_all_found = get_expanded_in_all_found,
