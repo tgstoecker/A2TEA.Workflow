@@ -468,7 +468,69 @@ for (i in 1:length(hypotheses$hypothesis)) {
 }
 
 
+#####################################################################
+### Addition of HOG info to SFA tibbles
+### Create per hypothesis additional functional annotation table on HOG level 
+### (H/OG - non-redundant GO terms of all genes of all species in hypothesis)
 
+#we can use the HOG_file_long containing all genes - two columms: HOG; genes
+#to add HOG info to all rows in the SFA tables
+for (j in 1:length(SFA)) {
+  #removal of all singletons? - for now no
+  SFA[[j]] <- left_join(SFA[[j]], HOG_file_long, by = c("Protein-Accession" = "gene")) %>% 
+    relocate(HOG, .before = "Protein-Accession") #%>%
+#    filter(`HOG` != "NA")
+  }
+
+
+#"SFA" stands for Species Functional Annotation 
+SFA_OG_level <- vector(mode = "list", length = length(HOG_level_list))
+
+#create per hypothesis a HOG level GO annotation tibble that is non-redundant and free from unannotated HOGs
+#add everything to the SFA_OG_level list object
+for (i in 1:length(HOG_level_list)) {
+    
+    h_expanded_in <- unlist(str_split(hypotheses$expanded_in[i], ";"))
+    h_compared_to <- unlist(str_split(hypotheses$compared_to[i], ";"))
+    h_species <- unique(c(h_expanded_in, h_compared_to))
+    
+
+    #such an easy solution for combining df/tibbles that are list elements ;D
+    #h_species is hypothesis specific, so we always pick the subset of species and genes that we need
+    SFA_short <- bind_rows(SFA[h_species])
+
+    #dummy encoding for all singletons/genes without a HOG
+    #if we were to leave them as NA they are aggregated into one row
+    SFA_short <- SFA_short %>%
+      mutate(
+      HOG = case_when(
+        is.na(HOG) ~ paste0("singleton_rownum_", dplyr::row_number()),
+        TRUE ~ HOG
+      )
+    )
+
+  SFA_short <- SFA_short %>% 
+    select(HOG, `Protein-Accession`, `Gene-Ontology-Term`) %>%
+    group_by(HOG) %>%
+    #remove redundancy while collapsing with ", "
+    summarise(`Gene-Ontology-Term` = paste(unique(`Gene-Ontology-Term`), collapse=", ")) %>%
+    #we should remove all rows that have NO GO terms associated
+    #and remove all NAs from the Gene-Ontology-Term column if they have at least 1 GO term
+    #remove inline NAs in Gene-Ontology-Term column
+    mutate(
+      `Gene-Ontology-Term` = str_remove_all(`Gene-Ontology-Term`, "NA, |, NA") 
+    ) %>% 
+    #remove lines with only NA in Gene-Ontology-Term column
+    filter(!str_detect(`Gene-Ontology-Term`, 'NA'))
+
+    
+    #assign name of species to the ith element in list
+    names(SFA_OG_level)[[i]] <- paste0("hypothesis_", i)
+    #assign actual tibble with functional annotation of species to ith element of list
+    SFA_OG_level[[i]] <- SFA_short
+}
+
+#########################################################################################################
 
 ## Last step: saving everything to one file which is input for the A2TEA WebApp
 save(hypotheses, 
@@ -476,4 +538,5 @@ save(hypotheses,
      HOG_DE.a2tea, 
      HOG_level_list,
      SFA,
+     SFA_OG_level,
      file = "tea/A2TEA_finished.RData")
