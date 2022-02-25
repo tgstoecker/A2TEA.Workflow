@@ -75,6 +75,13 @@ def get_all_hypothesis_species(wildcards):
 def get_expansion_factor(wildcards):
     return hypotheses.loc["min_expansion_factor"][wildcards.hypothesis]
 
+# get user defined expansion_factor for each hypothesis by parsing hypotheses.tsv
+def get_expansion_difference(wildcards):
+    return hypotheses.loc["min_expansion_difference"][wildcards.hypothesis]
+
+# get whether or not the user wants to nomalize by species ploidy
+def get_ploidy_normalization(wildcards):
+    return hypotheses.loc["ploidy_normalization"][wildcards.hypothesis]
 
 # get user defined Nmin_expanded_in & Nmin_compared_to for each hypothesis by parsing hypotheses.tsv
 # explained: at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species

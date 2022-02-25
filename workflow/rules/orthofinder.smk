@@ -119,7 +119,7 @@ if config["chunks_usage"] == "ON":
             "logs/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.log"
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp_{chunk_id}.json"
-        threads: 6
+        threads: 24
         conda:
             "../envs/diamond.yaml"
         shell:
@@ -166,7 +166,7 @@ else:
             "logs/orthofinder/{species_number}/{database_number}/blastp.log"
         benchmark:
             "benchmarks/orthofinder/{species_number}/{database_number}/blastp.json"
-        threads: 6
+        threads: 24
         conda:
             "../envs/diamond.yaml"
         shell:
@@ -240,7 +240,7 @@ rule Orthofinder_Trees:
         "logs/orthofinder/trees.log"
     benchmark:
         "benchmarks/orthofinder/trees.bmk"
-    threads: 24
+    threads: 48
     conda:
         "../envs/orthofinder.yaml"
     shell:
@@ -265,7 +265,7 @@ rule Orthofinder_orthologues:
         orthofinder_dir = ORTHOFINDER + "Results_*_1",
     log:
         "logs/orthofinder/orthologues.log"
-    threads: 24
+    threads: 48
     conda:
         "../envs/orthofinder.yaml"
     shell:

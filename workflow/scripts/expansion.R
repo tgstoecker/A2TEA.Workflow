@@ -31,8 +31,12 @@ name = snakemake@params[["name"]]
 # define the number of additional best blast hits to include in the follow-up analyses
 add_blast_hits = snakemake@params[["add_blast_hits"]]
 
-# define the required expansion factor (part of hypothesis.tsv)
+# define the minimum expansion factor & expansion difference to call an expansion (part of hypothesis.tsv)
 expansion_factor = as.numeric(snakemake@params[["expansion_factor"]])
+expansion_difference = as.numeric(snakemake@params[["expansion_difference"]])
+
+# get user choice whether to perform ploidy normalization or not
+ploidy_normalization = as.character(snakemake@params[["ploidy_normalization"]])
 
 # get ploidy information of each species (supplied by user; part of species.tsv)
 species_table <- read.delim("config/species.tsv", header = TRUE, sep = "\t", row.names = "species")
@@ -179,26 +183,47 @@ message("Applying expansion rule/s per hypothesis:")
 # for all compared species first check for each HOG if expanded species is >= #* 
 # then keep rows in which expanded species has at least # (default: 2)
 
-
 for (e in expanded_in) {
     # create expansion counter column for each expanded species
     exp_species_name = paste0("exp_counter_", e)
     HOG_tibble <- HOG_tibble %>% tibble::add_column(!!(exp_species_name) := 0)
 
-    for (c in c_t_species) {
-        HOG_tibble <- HOG_tibble %>% 
-                       dplyr::mutate(!!(exp_species_name) := 
-                              dplyr::case_when(
+    if (ploidy_normalization == "YES") {
+        for (c in c_t_species) {
+            HOG_tibble <- HOG_tibble %>% 
+                            mutate(!!(exp_species_name) := 
+                            dplyr::case_when(
                                 # although cases in which the ct species has no genes are ignored via 
                                 # the multiplication in the 2nd step, this underlines that we do so
+                                # now with the second expansion distance criterium we should have it anyway
                                 get(c) > 0 &
-                                get(e)/species_table[e, "ploidy"] >= expansion_factor*(get(c))/species_table[c, "ploidy"] ~ get(exp_species_name) + 1,
+                                get(e)/species_table[e, "ploidy"]*2 >= expansion_factor*(get(c))/species_table[c, "ploidy"]*2 ~ get(exp_species_name) + 1,
+                                get(c) > 0 &
+                                get(e)/species_table[e, "ploidy"]*2 >= expansion_difference + (get(c))/species_table[c, "ploidy"]*2 ~ get(exp_species_name) + 1,
                                 TRUE ~ 0,
                               )
-                        ) 
-        
+                        )  
+        }
     }
+    #if the user did not set ploidy_normalization to "YES"
+    #here, no ploidy information is used to divide the number of genes per OG
+    else {
+        for (c in c_t_species) {
+            HOG_tibble <- HOG_tibble %>% 
+                            mutate(!!(exp_species_name) := 
+                            dplyr::case_when(
+                                get(c) > 0 &
+                                get(e) >= expansion_factor*(get(c)) ~ get(exp_species_name) + 1,
+                                get(c) > 0 &
+                                get(e) >= expansion_difference + get(c) ~ get(exp_species_name) + 1,
+                                TRUE ~ 0,
+                              )
+                        )
+        }
+    }
+       
 }
+
 
 # then we perform summing over all exp_counter_ columns based on user choices
 # at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
