@@ -1,3 +1,9 @@
+#setting CRAN repository
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+
 ## Install packages
 # if they are not installed (check via the following neat lapply approach)
 if (!requireNamespace("BiocManager", quietly=TRUE))
