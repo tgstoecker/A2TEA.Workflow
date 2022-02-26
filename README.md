@@ -64,6 +64,12 @@ Singularity container
 species.tsv:  
 - provide species name, species ploidy, a peptide fasta, an annotation file (.gff;.gff3;.gtf) as well as either a genomic or cDNA fasta (alignment or pseudoalignment), respectively
 - files can be gzipped, or functioning URLs
+- under 'function' choose for each species either "AHRD" or provide a tab seperated file with functional annotation information
+	- a validity check of user supplied function annotation tables is performed
+	- we require a tab seperated table with at least one column "Protein-Accession" & another column "Gene-Ontology-Term"
+	- multiple gene ontology terms per gene/transcript must be seperated by ", "
+	- one column needs to be titled "Protein-Accession" and should contain corresponding gene/transcript level identifiers 
+	- more work in progress here ... automatic parsing and functional enrichment in the future (will require check for gene/transcript identifiers as well...)
     
 samples.tsv:  
 - provide details for the fastq files you deposited/symlinked into rawreads/
