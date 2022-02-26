@@ -92,7 +92,7 @@ rule create_func_annotation_RDS:
         ahrd_files = expand("results/{species}.ahrd_output.tsv", species=AHRD_SPECIES),
     log:
         "logs/functional_annotation/func_annotation_combine.log"
-#    conda:
-#        "../envs/func_annotation.yaml"
+    conda:
+        "../envs/func_annotation.yaml"
     script:
         "../scripts/func_annotation_combine.R"
