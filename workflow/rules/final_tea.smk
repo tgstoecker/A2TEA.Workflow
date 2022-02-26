@@ -8,6 +8,8 @@ rule final_tea_output:
         "tea/A2TEA_finished.RData"
     params:
         DEG_FDR = config["DEG_FDR"]
+    log: 
+        "logs/final_tea/final_tea.log"
     conda:
         "../envs/final_tea.yaml"
     script:

@@ -1,3 +1,8 @@
+#set logging to file and terminal
+log <- file(snakemake@log[[1]], open="wt")
+sink(log, append=FALSE, split=FALSE, type="message")
+
+
 #setting CRAN repository
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
@@ -127,6 +132,7 @@ HOG_file_long <- HOG_file_merged %>%
 HOG_DE.a2tea <- full_join(combined_AllSpeciesDEResultsDataFrames, HOG_file_long, 
               by = c("gene")) %>% 
                 replace_na(list(HOG = "singleton"))
+
 
 #add column for significance - level is set by user in config.yaml ["DEG_FDR"]
 #subset tidyverse with the right functions ;D
@@ -331,7 +337,34 @@ sig_genes_per_species_and_HOG <- HOG_DE.a2tea %>%
             # easy workaround for duplicated rows
                                                 distinct()%>% 
             # rename species columns containing now the counts of sig. DE genes
-                                                    rename_at(vars(-HOG), ~ paste0(., '_sigDE'))
+                                                    rename_at(vars(-HOG), ~ paste0(., '_sigDE')) 
+
+#catch edge case where a species posesses zero sig. regulated genes...
+#if TRUE add column for this/these species since it won't have been created by the prev. step
+all_species_HOG_DE <- HOG_DE.a2tea %>%
+  group_by(species) %>%
+  summarize(all_species = n()) %>%
+  pull(species)
+
+sigDE_species_HOG_DE <- HOG_DE.a2tea %>%
+  filter(significant == c("yes")) %>%
+  filter(HOG != c("singleton")) %>%
+  group_by(species) %>%
+  summarize(all_sig_species = n()) %>%
+  pull(species)
+
+sig_diff_species_check <- setdiff(all_species_HOG_DE, sigDE_species_HOG_DE)
+
+if (length(sig_diff_species_check) > 0) {
+    for (i in sig_diff_species_check) {
+      assign("i_mod", paste0(i, "_sigDE"))
+      sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG %>%
+        add_column("{i_mod}" := 0)
+    }
+} else {
+    print("No species without any sig. diff. expressed genes ;D")
+}
+
 
 #handling per hypothesis as hypothesis specific total sig. diff. calculation and join with HOG_level_list 
 for (i in 1:length(HOG_level_list)) {
