@@ -66,6 +66,7 @@ species.tsv:
 - files can be gzipped, or functioning URLs
 - under 'function' choose for each species either "AHRD" or provide a tab seperated file with functional annotation information
 	- a validity check of user supplied function annotation tables is performed
+        - first line has to be the header - take note that when supplying AHRD output from a previous run etc. as a user supplied table you have to remove the first two lines (comment line and free line from the file)
 	- we require a tab seperated table with at least one column "Protein-Accession" & another column "Gene-Ontology-Term"
 	- multiple gene ontology terms per gene/transcript must be seperated by ", "
 	- one column needs to be titled "Protein-Accession" and should contain corresponding gene/transcript level identifiers 
