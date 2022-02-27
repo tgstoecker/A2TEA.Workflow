@@ -17,6 +17,8 @@ Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster rep
 
 `conda install -c conda-forge mamba`
 
+In it's current form, A2TEA requires at least snakemake v7.0.0 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake==7.0.0"`
+
 Download/Clone the current release of the A2TEA workflow into the directory.
 
 `git clone https://bitbucket.team.uni-bonn.de/scm/cbig/a2tea.git`
@@ -35,7 +37,7 @@ Use installation of software during runtime by starting the workflow with the `-
 This will install seperate small conda environments for groups of or individual rules and is more stable.
 
 
-## Option 2 (not recommended):
+## Option 2 (not recommended! & not yet updated):
 The included workflow/envscomplete_environment.yaml file can be used to install all required software into an isolated Conda environment with a name of your choice - in the following we will call it "A2TEA":
 
 `mamba env create --name A2TEA --file workflow/envscomplete_environment.yaml`
@@ -59,17 +61,23 @@ Singularity container
 ## Recommended steps
 1) Add or symlink all fastq files to the rawreads directory:  
   FASTQ files -> rawreads/  
-  
-2) Modify species.tsv, samples.tsv & hypotheses.tsv files  
+  The config/samples.tsv that you need to adapt to your data/experiments expects the files to be located here.
+
+2) Add or symlink all fasta & annotation files to a directory of your choosing - or jut take note where this data is located on your file system.
+   The species.tsv file (explained in detail in 3.)) allows A2TEA to find these files.
+   E.g. if you create a directory called 'FS/' in the main A2TEA directory and copy/symlink all fasta/annotation files there, then you have to refer to them as e.g. FS/fasta.fa in the species.tsv file.
+
+
+3) Modify species.tsv, samples.tsv & hypotheses.tsv files  
 species.tsv:  
 - provide species name, species ploidy, a peptide fasta, an annotation file (.gff;.gff3;.gtf) as well as either a genomic or cDNA fasta (alignment or pseudoalignment), respectively
 - files can be gzipped, or functioning URLs
 - under 'function' choose for each species either "AHRD" or provide a tab seperated file with functional annotation information
 	- a validity check of user supplied function annotation tables is performed
         - first line has to be the header - take note that when supplying AHRD output from a previous run etc. as a user supplied table you have to remove the first two lines (comment line and free line from the file)
-	- we require a tab seperated table with at least one column "Protein-Accession" & another column "Gene-Ontology-Term"
+	- we require a tab seperated table with at least one column "Protein-Accession" (= gene identifier) & another column "Gene-Ontology-Term"
+	- column titled "Protein-Accession" should contain corresponding gene/transcript level identifiers 
 	- multiple gene ontology terms per gene/transcript must be seperated by ", "
-	- one column needs to be titled "Protein-Accession" and should contain corresponding gene/transcript level identifiers 
 	- more work in progress here ... automatic parsing and functional enrichment in the future (will require check for gene/transcript identifiers as well...)
     
 samples.tsv:  
@@ -87,13 +95,14 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 - expanded_in_all_found - (boolean) does every memeber of expanded_in species have to be present (not expanded!) in the orthologous_group
 - compared_to_all_found - (boolean) does every memeber of compared_to species have to be present (not expanded!) in the orthologous_group
   
-3) Using the activated environment perform a dry-run and check for problems with:    
+4) Using the activated environment perform a dry-run and check for problems with:    
 `snakemake -np`  
+   Ignore warning messages (pink) "The code used to generate one or several output files has changed: ...". 
 
-4) Configure the config.yaml file to your needs  
+5) Configure the config.yaml file to your needs  
 - here you can adjust options for trimming, thread usage per rule and much more
 
-5) Run A2TEA with (exchange XX for the amount of cores you can offer):  
+6) Run A2TEA with (exchange XX for the amount of cores you can offer):  
 `snakemake --cores XX --use-conda`  (remove `use-conda` if you installed all software into one conda environment - option 2)
 
 # Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
