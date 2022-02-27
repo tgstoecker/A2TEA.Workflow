@@ -1,6 +1,6 @@
 from snakemake.utils import min_version
 
-min_version("6.7.0")
+min_version("7.0.0")
 
 import pandas as pd
 import os
@@ -60,6 +60,7 @@ include: "rules/function_ahrd.smk"
 include: "rules/AHRD_Snakemake/workflow/rules/download.smk"
 include: "rules/AHRD_Snakemake/workflow/rules/diamond.smk"
 include: "rules/AHRD_Snakemake/workflow/rules/get_ahrd.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/extract_header_and_length.smk"
 include: "rules/AHRD_Snakemake/workflow/rules/create_ahrd_input.smk"
 include: "rules/AHRD_Snakemake/workflow/rules/run_ahrd.smk"
 #end AHRD_Snakemake rules
