@@ -17,7 +17,7 @@ Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster rep
 
 `conda install -c conda-forge mamba`
 
-In it's current form, A2TEA requires at least snakemake v7.0.0 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake==7.0.0"`
+In it's current form, A2TEA requires at least snakemake v7.0.0 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake>=7.0.0"`
 
 Download/Clone the current release of the A2TEA workflow into the directory.
 
