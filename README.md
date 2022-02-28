@@ -159,6 +159,9 @@ library(readr)
 library(Biostrings)
 library(ape)
 
+#using the following line fixes bug in which "phylo" is not found... need to investigate
+setClass("phylo")
+
 # define three classes
 # class for the expanded_OG - containing all different types of data we have on it\n",
 setClass("expanded_OG", slots=list(genes="spec_tbl_df",
