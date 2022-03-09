@@ -90,8 +90,8 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 - name - (string) descriptive name (in quotations!); e.g. "Expanded in Arabidopsis compared to Monocots"
 - expanded_in - (string) one or multiple species (seperated by ";") which are checked for gene family expansion events compared to one or multiple species (seperated by ";") under compared_to
 - compared_to - (string) see above
-- Nmin_expanded_in - (integer) minimum number of expanded_in species that need fulfill expansion criteria for the gene family to be called expanded
-- Nmin_compared_to - (integer) minimum number of compared_to species that need fulfill expansion criteria (but in the opposite way aka contraction) for the gene family to be called expanded
+- Nmin_expanded_in - (integer) minimum number of expanded_in species that need to fulfill expansion criteria for the gene family to be called expanded
+- Nmin_compared_to - (integer) minimum number of compared_to species that need to fulfill expansion criteria (but in the opposite way aka contraction) for the gene family to be called expanded
 - min_expansion_factor - (integer) minimum factor of expansion between expanded_in and compared_to species (!NOTE: set to unrealistically high integer - e.g. 100 - to use only "min_expansion_difference" criterium)
 - min_expansion_difference - (integer) minimum # of additional genes expanded_in species possesses in contrast to compared_to species (per orthologous group) (!NOTE: set to unrealistically high integer - e.g. 100 - to use only "min_expansion_factor" criterium)
 - expanded_in_all_found - (boolean) does every memeber of expanded_in species have to be present (not expanded!) in the orthologous_group
