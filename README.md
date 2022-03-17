@@ -118,14 +118,15 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
   
   
 # Some additional important pointers on usage:
-1) Species name between samples.tsv, species.tsv & hypotheses.tsv HAS to match up!
-2) Add the appropiate path "path/to/file" before the files in the species.tsv table 
-3) Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file! However using cDNA fasta for one species and genome fasta for another is totally fine.  
-4) URLs to the the fasta/annotation files are also supported.  
-5) For reads, annotation and fastas both gzipped and uncompressed files are supported.
-6) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
-7) With "auto_isoform_filtering" you can choose whether to try an automated approach for filtering the peptide fastas for their longest isoform or doing this yourself before starting the workflow. If the option is not set to "YES" the filtering is skipped.
-8) With "add_blast_hits" you can define the max number of additional best blast hits to include in the follow-up analyses. Tree visualizations often are more informative if we use more than an individual (H)OG.  
+1) Make sure that there are no ":" in your peptide fasta headers (e.g. custom headers) - this will lead to problems because orthofinder exchanges ":" for "_"  
+2) Species name between samples.tsv, species.tsv & hypotheses.tsv HAS to match up!  
+3) Add the appropiate path "path/to/file" before the files in the species.tsv table  
+4) Do NOT provide both a cDNA and genome fasta for a given species in the species.tsv file! However using cDNA fasta for one species and genome fasta for another is totally fine.  
+5) URLs to the the fasta/annotation files are also supported.  
+6) For reads, annotation and fastas both gzipped and uncompressed files are supported.
+7) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
+8) With "auto_isoform_filtering" you can choose whether to try an automated approach for filtering the peptide fastas for their longest isoform or doing this yourself before starting the workflow. If the option is not set to "YES" the filtering is skipped.
+9) With "add_blast_hits" you can define the max number of additional best blast hits to include in the follow-up analyses. Tree visualizations often are more informative if we use more than an individual (H)OG.  
 
 
 # Common resons for errors: 
