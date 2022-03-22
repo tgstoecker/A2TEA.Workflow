@@ -1,34 +1,56 @@
 # if there is at least 1 species for which a genomic fasta was supplied -> classic alignment with STAR
 if len(GEN_FASTA_SPECIES) != 0:
 
+    #check whether gene or transcript level quantification was chosen
+    if config["transcript_level_quantification"] == "NO":
 
-    rule featureCounts:
-        input:
-            bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
-            gtf="resources/{species}.gtf"
-        output:
-            gene_level="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt",
-#            transcript_level="featureCounts/{species}/transcript_level/{sample}_{unit}_counts.txt",
-            gene_level_summary="featureCounts/{species}/gene_level/{sample}_{unit}_counts.txt.summary",
-        params:
-            #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
-#            gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
-            paired= get_paired_info,
-        log:
-            gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
-            transcript_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_transcript.log",
-        threads:
-            config["threads_featureCounts"]
-        conda:
-            "../envs/subread.yaml"
-        shell:
-            "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {input.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
-#        "featureCounts -T {threads} {params.paired} -O -M -t exon -g transcript_id -a {params.gtf} -o {output.transcript_level} {input.bams} 2> {log.transcript_level} "
+        rule featureCounts_gene_level:
+            input:
+                bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+                gtf="resources/{species}.gtf"
+            output:
+                gene_level="featureCounts/{species}/{sample}_{unit}_counts.txt",
+                gene_level_summary="featureCounts/{species}/{sample}_{unit}_counts.txt.summary",
+            params:
+                #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
+               #gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
+                paired= get_paired_info,
+            log:
+                gene_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_gene.log",
+                transcript_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_transcript.log",
+            threads:
+                config["threads_featureCounts"]
+            conda:
+                "../envs/subread.yaml"
+            shell:
+                "featureCounts -T {threads} {params.paired} -O -M -t exon -g gene_id -a {input.gtf} -o {output.gene_level} {input.bams} 2> {log.gene_level} "
+
+    if config["transcript_level_quantification"] == "YES":
+        rule featureCounts_transcript_level:
+            input:
+                bams="star/{species}/{sample}_{unit}_Aligned.sortedByCoord.out.bam",
+                gtf="resources/{species}.gtf"
+            output:
+                transcript_level="featureCounts/{species}/{sample}_{unit}_counts.txt",
+                transcript_level_summary="featureCounts/{species}/{sample}_{unit}_counts.txt.summary",
+            params:
+                #calling gtf this way is quite janky - change of the index name will lead to an error, because here specfially "species\n" is sliced away
+                #gtf = lambda wildcards:species_table.annotation[species_table.index == wildcards.species].to_string(index=False)[8:],
+                paired= get_paired_info,
+            log:
+                transcript_level="logs/featureCounts/{species}/{sample}_{unit}_featurecount_transcript.log",
+            threads:
+                config["threads_featureCounts"]
+            conda:
+                "../envs/subread.yaml"
+            shell:
+                "featureCounts -T {threads} {params.paired} -O -M -t exon -g transcript_id -a {input.gtf} -o {output.transcript_level} {input.bams} 2> {log.transcript_level}"
+
 
 
     rule merge_counts:
         input:
-            expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt", sample=GEN_FASTA_SAMPLES.itertuples()),
+            expand("featureCounts/{sample.species}/{sample.sample}_{sample.unit}_counts.txt", sample=GEN_FASTA_SAMPLES.itertuples()),
         output:
             "featureCounts/{species}/gene_level/counts_merged.txt",
         params:
@@ -69,6 +91,7 @@ if len(CDNA_FASTA_SPECIES) != 0:
         params:
 #            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
             species = lambda wildcards: samples.species[samples.species == wildcards.species],
+            quantification_level = config["transcript_level_quantification"],
         conda:
             "../envs/deseq2_tximport.yaml"
         script:

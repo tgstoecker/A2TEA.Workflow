@@ -42,6 +42,10 @@ txdb_snakemake.wildcards <- makeTxDbFromGFF(snakemake@input[["annotation"]], for
 k_snakemake.wildcards <- keys(txdb_snakemake.wildcards, keytype = "TXNAME")
 tx2gene_snakemake.wildcards <- select(txdb_snakemake.wildcards, k_snakemake.wildcards, "GENEID", "TXNAME")
 
+#user choice for whether gene or transcript level analysis should be performed
+quantification_level <- as.character(snakemake@params[["quantification_level"]])
+print(quantification_level)
+quantification_level == "NO"
 
 samples <- read.delim("config/samples.tsv")
 samples_snakemake.wildcards <- samples[samples$species == snakemake@params[["species"]], ]
@@ -51,8 +55,14 @@ files_snakemake.wildcards <- file.path("kallisto_quant", snakemake@wildcards, sa
 
 names(files_snakemake.wildcards) <- paste0(sample_snakemake.wildcards_names)
 
-txi.kallisto_snakemake.wildcards <- tximport(files_snakemake.wildcards, type = "kallisto", tx2gene = tx2gene_snakemake.wildcards, txOut = FALSE, importer = readr::read_tsv)
 
+if (quantification_level == "NO") {
+  #if user chose gene level analysis
+  txi.kallisto_snakemake.wildcards <- tximport(files_snakemake.wildcards, type = "kallisto", tx2gene = tx2gene_snakemake.wildcards, txOut = FALSE, importer = readr::read_tsv)
+} else {
+  #else just output/use transcript-level - txOut = TRUE
+  txi.kallisto_snakemake.wildcards <- tximport(files_snakemake.wildcards, type = "kallisto", txOut = TRUE, importer = readr::read_tsv)
+}
 
 #sampleTable <- samples[1:8,"condition", drop=FALSE]
 rownames(samples_snakemake.wildcards) <- colnames(txi.kallisto_snakemake.wildcards$counts)

@@ -59,11 +59,22 @@ STAR: >
 
 ## automatic filtering for longest isoform of fasta files
 ## -> very stable for standard fasta files from e.g. Ensembl, NCBI, etc.
-## when not set to "YES", we assume you performed appropiate filtering yourself
-### if you perform the filtering yourself take care to have the fasta headers for a gene/protein to be the simple gene identifier (no .1; .p3; etc.)
-### this is important since for the differential expression analysis we use tximport to reduce the cdna based quantification with kallisto to gene level,
+## when not set to "YES", we assume you performed appropiate (or no) filtering yourself
+### if you perform the filtering yourself and want to perform gene level Diff. Exp. Analysis take care to have the fasta headers for a protein to be the simple gene identifier (no .1; .p3; etc.)
+### choosing automatic isoform filtering will create a subset peptide fasta file with only the longest isoform per gene; the header will be shortened to JUST the gene name identifier; this option MUST be used in conjunction with transcript_level_quantification: "NO"
+### this is important since for the differential expression analysis we use tximport to reduce the cdna based quantification with tximport/kallisto to gene level (featureCounts if DNA fasta supplied),
 ### and association between orthology and expression analysis is the purpose of this software
-auto_isoform_filtering: "YES"
+### The choice to use gene or transcript level diff. exp. analysis is controlled by transcript_level_quantification: "YES" - set it to "NO" if you want gene level analysis
+#IN ANY USE-CASE: THE NAMES BETWEEN PEP. FASTA AND EITHER GENES OR TRANSCRIPTS IN THE SPECIES SPECIFIC GTF HAS TO MATCH!!
+#### some examples: 
+##### case 1. you have standard fasta and annotation files from ensembl/NCBI; want to have one rep. protein seq. per GENE and trust the automatic process -> auto_isoform_filtering: "YES" & transcript_level_quantification: "NO"
+##### case 2. you filtered for longest isoform yourself (peptide fasta headers = gene names in respective gtf!) and are ok with the names being reduced to gene identifier -> auto_isoform_filtering: "NO" & transcript_level_quantification: "NO"
+##### case 3. you don't want to our filter & either want to use the whole or a custom subset of the transcriptome -> auto_isoform_filtering: "NO" & transcript_level_quantification: "YES"
+###### case 3 continued: this is the hands-on case in which you the USER are mostly responsible; again, both featureCounts/tximport(kallisto) will produce count tables with the transcript names as found in the gtf;
+###### case 3 continued: these transcript names have to match the headers in the peptide fasta files
+auto_isoform_filtering: "NO"
+transcript_level_quantification: "YES"
+
 
 ## use chunks for blasting?
 ## coreutils split - is sometimes not easy to install

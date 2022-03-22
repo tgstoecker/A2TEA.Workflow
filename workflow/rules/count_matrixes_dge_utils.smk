@@ -14,10 +14,10 @@ if len(GEN_FASTA_SPECIES) != 0:
         # only the actual counts (ending with .txt) are considered in the diectory
         # also the output is sorted - when sticking to control and treatment everything is as it should
         # control 1-4, treatment 1-4
-        if os.path.exists(os.path.join("featureCounts/"+wildcards.species+"/gene_level/")):
-            for c in sorted(os.listdir("featureCounts/"+wildcards.species+"/gene_level/")):
+        if os.path.exists(os.path.join("featureCounts/"+wildcards.species+"/")):
+            for c in sorted(os.listdir("featureCounts/"+wildcards.species+"/")):
                 if c.endswith(".txt"):
-                    counts.append(os.path.join("featureCounts/",wildcards.species,"gene_level/",c))
+                    counts.append(os.path.join("featureCounts/",wildcards.species,c))
             return counts
         else:
             return

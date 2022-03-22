@@ -61,7 +61,7 @@ if len(GEN_FASTA_SPECIES) != 0:
                 trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
                 kallisto = expand("kallisto_quant/{sample.species}/{sample.sample}_{sample.unit}", sample=CDNA_FASTA_SAMPLES.itertuples()),
                 star = expand("star/{sample.species}/{sample.sample}_{sample.unit}_Log.final.out", sample=GEN_FASTA_SAMPLES.itertuples()),
-                featureCounts = expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
+                featureCounts = expand("featureCounts/{sample.species}/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
             output:
                 "multiqc/multiqc_report.html"
             params:
@@ -91,7 +91,7 @@ if len(GEN_FASTA_SPECIES) != 0:
                 trimmomatic_SE = expand("checks/trimmed/{sample.sample}_{sample.unit}_SE.check", sample=SE_samples.itertuples()),
                 trimmomatic_PE = expand("checks/trimmed/{sample.sample}_{sample.unit}_PE.check", sample=PE_samples.itertuples()),
                 star = expand("star/{sample.species}/{sample.sample}_{sample.unit}_Log.final.out", sample=GEN_FASTA_SAMPLES.itertuples()),
-                featureCounts = expand("featureCounts/{sample.species}/gene_level/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
+                featureCounts = expand("featureCounts/{sample.species}/{sample.sample}_{sample.unit}_counts.txt.summary", sample=GEN_FASTA_SAMPLES.itertuples()),
             output:
                 "multiqc/multiqc_report.html"
             params:

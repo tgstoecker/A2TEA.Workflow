@@ -40,5 +40,23 @@ rownames(gfs_snakemake.wildcards) = gfs_snakemake.wildcards[,1]
 all(rownames(gfs_snakemake.wildcards) %in% colnames(counts))
 
 dds = DESeqDataSetFromMatrix(countData = counts, colData = gfs_snakemake.wildcards, design = ~ condition)
-dea = DESeq(dds)
+#dea = DESeq(dds)
+
+# if normal DESeq function fails due to lack of dispersion use alternative way:
+# "all gene-wise dispersion estimates are within 2 orders of magnitude"
+# "<<-" global assignment
+
+tryCatch(
+    {
+        dea <<- DESeq(dds)
+    },
+    error=function(b) {
+                         dea <- estimateSizeFactors(dds)
+                         dea <- estimateDispersionsGeneEst(dea)
+                         dispersions(dea) <- mcols(dea)$dispGeneEst
+                         dea <<- nbinomWaldTest(dea)
+                }
+)
+
+
 saveRDS(dea, file=snakemake@output[[1]])
