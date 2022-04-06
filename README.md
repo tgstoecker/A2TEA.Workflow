@@ -173,10 +173,8 @@ You can use the the A2TEA_finished.RData output in your own R instance or use ou
 #required packages for classes
 library(readr)
 library(Biostrings)
-library(ape)
+library(treeio)
 
-#using the following line fixes bug in which "phylo" is not found... need to investigate
-setClass("phylo")
 
 # define three classes
 # class for the expanded_OG - containing all different types of data we have on it\n",
