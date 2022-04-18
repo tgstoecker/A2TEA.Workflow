@@ -12,6 +12,7 @@ dependencies:
   - r-plyr
   - r-tidyr
   - r-tibble
+  - r-reshape2
   - ucsc-fasomerecords ==377
   - muscle ==3.8.1551
   - trimal =>1.4

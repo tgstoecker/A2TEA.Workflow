@@ -2,7 +2,7 @@
 #we check if packages are installed first
 
 # list of cran packages
-cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble")
+cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble", "reshape2")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
@@ -22,7 +22,7 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 library(tibble)
-
+library(reshape2)
 
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
@@ -389,7 +389,253 @@ for (i in expanded_HOGs$HOG) {
 #-> to be read and used in final_tea_computation.R script
 saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
-#lastly create .check to know it's done
+#####
+
+### Adding OGs instead of BLAST hits ###
+message("Adding OGs instead of BLAST hits")
+
+#transforming ph_orthogroups to long format - nice & neat lookup table ;D
+long_ph_orthogroups <- ph_orthogroups %>%
+  select(-OG, -`Gene Tree Parent Clade`) %>%
+  melt(., id.vars = c("HOG")) %>%
+  rename(species=variable, id=value) %>%
+  mutate(species = as.character(species)) %>%
+  separate_rows(id, sep = ", ") %>%
+  drop_na()
+
+
+#create final summary list - per OG (name) the cumulative steps of additional OGs
+summary_add_OG_analysis_list <- vector(mode = "list", length = length(expanded_HOGs$HOG))
+
+#create classes for nested S3-list structure holding all additional OG sets per OG analysis
+setClass("add_OG_analysis", 
+         slots=list(add_OG_analysis="list")
+         )
+
+setClass("add_OG_set", 
+         slots=list(genes="tbl_df")
+         )
+
+
+#dir.create(paste("../tea/", num, "/add_OGs_sets/", sep = ""))
+#dir.create(paste("tea/", num, "/add_OGs_sets/", sep = ""))
+
+#similarly to the additional BLAST hits approach we iterate over the expanded OGs
+loop_index <- 0
+for (i in expanded_HOGs$HOG) {
+    
+    #not pretty but was quick solution
+    loop_index <- loop_index + 1
+    
+    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
+    BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
+                                             qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
+    sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
+
+    #after the sorting of BLAST hits we move on to merging the OG information into the current exp. OG BLAST hits results
+
+    #we can create a merged dataframe from the blast table (HOG specific) and the long format HOG table (general)
+    #difficulty is that in case of singletons we have NA under HOG
+    #easiest way I can think of is a named list
+    self_and_closest_ogs <- left_join(sorted_BLAST_hits_exp_og_genes, long_ph_orthogroups, by = c("sseqid_name" = "id")) %>%
+      group_by(sseqid_name) %>%
+      arrange(evalue, -bitscore, -pident) %>%
+      slice(1) %>%
+      ungroup() %>%
+      arrange(evalue, -bitscore, -pident) %>%
+      mutate(HOG = as.character(HOG),
+             HOG = ifelse(is.na(HOG), paste("singleton", sep = "-", cumsum(is.na(HOG))),
+                          as.character(HOG))) %>%
+      group_by(HOG) %>%
+      arrange(evalue, -bitscore, -pident) %>%
+      slice(1) %>%
+      ungroup() %>%
+      arrange(evalue, -bitscore, -pident)
+     
+
+    #first row will should correspond to self match - the OG itself
+    #self_and_closest_ogs
+
+    #here the information provided by the user regarding max. additional OGs is used
+    #suppose user chose max 5 additional orthogroups in config file
+    add_OGs = 3
+
+
+    #need to add check for number of additonal OGs/singletons
+    #e.g. user sets max. add. OGs/singletons to 5 but we only can provide 4
+    #+ have to consider the expanded OG itself, so:
+    available_add_OGs <- nrow(self_and_closest_ogs) - 1 
+    #available_add_OGs
+
+    #in this case set add_OGs to max available
+    if (available_add_OGs < add_OGs) {
+      add_OGs <- available_add_OGs
+    } 
+
+    #empty list of precomputed size - add OGs plus the expanded OG itself
+    add_OG_analysis_list <- vector(mode = "list", length = add_OGs+1)
+
+
+    for (j in 1:(add_OGs+1)) {
+      og_name <- self_and_closest_ogs[j,] %>%
+      pull(HOG)
+  
+      #differnetiate between OG case and a singleton case - different handling:
+      #for HOG get all associated genes/proteins from large long format table
+      #for singletons get singelton gene/protein from the table itself
+      if (!str_detect(og_name, "singleton") == TRUE) {
+  
+        name_curr_close_HOG <- self_and_closest_ogs[j,] %>%
+                                 pull(HOG)
+  
+        ids_curr_close_HOG <- long_ph_orthogroups %>%
+                                filter(HOG %in% name_curr_close_HOG) %>%
+                                pull(id)
+  
+        add_OG_analysis_list[[j]] <- ids_curr_close_HOG
+        names(add_OG_analysis_list)[j] <- name_curr_close_HOG
+  
+      } else {
+        name_curr_close_singleton <- self_and_closest_ogs[j,] %>%
+                                     pull(HOG)
+  
+        id_curr_close_HOG <- self_and_closest_ogs[j,] %>%
+                               pull(sseqid_name)
+  
+        add_OG_analysis_list[[j]] <- id_curr_close_HOG
+        names(add_OG_analysis_list)[j] <- name_curr_close_singleton
+      }
+    }
+    
+    #create copy of the list and remove the names
+    #add all previous gene/proteins to the next OG
+    # -> e.g. the former seventh OG list element will contain all genes/proteins of all lower numbered OGs
+    #the final "cum_add_OG_analysis_list" will be a list with each next element having the cumulative set of all previous and own gene/protein ids 
+    cum_add_OG_analysis_list <- add_OG_analysis_list
+    names(cum_add_OG_analysis_list) <- NULL
+    #copy_add_OG_analysis_list
+
+    for (k in 0:(length(cum_add_OG_analysis_list)-1)) {
+      cum_add_OG_analysis_list[[k+1]] <- unlist(c(cum_add_OG_analysis_list[k], cum_add_OG_analysis_list[k+1]))
+    }
+
+    #lapply(cum_add_OG_analysis_list, length)
+    #print(i)
+    #print(cum_add_OG_analysis_list)
+    
+    
+    #create directory/ies - for each HOG under "add_OGs_sets"
+    dir.create(paste("tea/", num, "/add_OGs_sets/", i, sep = ""))
+    #dir.create(paste("../tea/", num, "/add_OGs_sets/", i, sep = ""))    
+    
+    #iterate over cum. list and write cumulative sets into seperate files
+    for (l in 1:length(cum_add_OG_analysis_list)) {
+      write_lines(cum_add_OG_analysis_list[[l]],
+                  paste("tea/", num, "/add_OGs_sets/", i, "/add_OGs_set_num-", l, ".txt", sep = "")
+                  #paste("../tea/", num, "/add_OGs_sets/", i, "/add_OGs_set_num-", l, ".txt", sep = "")
+      )
+
+    }
+
+    #append current cum. list to summary list & name element after OG
+    summary_add_OG_analysis_list[[loop_index]] <- cum_add_OG_analysis_list
+    names(summary_add_OG_analysis_list)[loop_index] <- i
+    
+}
+
+
+## in this final step we use the summary list to create S3-list nest structure which contains all info 
+## of the summary but in the format we will embed in the final results object as part of the final_tea computation
+
+#length of add OGs analysis summary list
+summary_length <- length(summary_add_OG_analysis_list)
+
+#create empty list of length of the summary list
+add_og_complete_object <- vector(mode = "list", length = summary_length)
+
+#iterate over all OGs in summary list
+for (og in 1:summary_length) {
+ 
+  #amount of sets for current OG - (necessary since less addtional OGs than max wished by user is possible)
+  curr_og_n_sets <- length(summary_add_OG_analysis_list[[og]])
+    
+  #empty list with n elements = n sets for currently analyzed OG
+  og_all_sets <- vector(mode = "list", length = curr_og_n_sets)
+    
+  for (set in 1:curr_og_n_sets) {
+
+    curr_set <- new("add_OG_set",
+               genes=as_tibble(
+                       unlist(
+                         summary_add_OG_analysis_list[[og]][set],
+                       )  
+                     ) 
+        )
+    curr_set <- list(curr_set)
+    #names(curr_set) <- paste0(set)
+  
+    og_all_sets[set] <- curr_set
+    names(og_all_sets)[set] <- paste0("set_", set)
+      
+  }
+    
+  curr_add_og <- new("add_OG_analysis",
+                     add_OG_analysis=og_all_sets
+                     )
+
+  curr_add_og <- list(curr_add_og) 
+ 
+  add_og_complete_object[og] <- curr_add_og
+
+  names(add_og_complete_object)[og]  <- names(summary_add_OG_analysis_list[og])
+}
+
+
+# save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
+saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_sets/add_OG_analysis_object.RDS", sep = ""))
+#saveRDS(add_og_complete_object, paste("../tea/", num, "/add_OGs_sets/add_OG_analysis_object.RDS", sep = ""))
+
+
+
+# nested snakemake checkpoints are annoying at the moment 
+# quick fix - create empty addtional set_num files which we can ignore but nonetheless exist
+message("adding empty missing files - current dirty workaround to avoid nested snakemake checkpoints")
+
+add_OGs = 3
+
+max_n_sets = add_OGs + 1
+
+for (n in names(add_og_complete_object)) {
+    
+    og_n_sets <- length(
+         list.files(path = paste0("tea/", num, "/add_OGs_sets/", n))
+        )
+    
+    og_sets <- list.files(path = paste0("tea/", num, "/add_OGs_sets/", n))
+    
+    if (og_n_sets < max_n_sets) {
+#        print(og_sets)
+        n_missing_sets <- max_n_sets - og_n_sets
+#        print(n_missing_sets)
+        
+        for (m in 1:n_missing_sets) {
+          value <- max_n_sets - m + 1
+#          print(value)
+          missing_file <- paste0("tea/", num, "/add_OGs_sets/", n, "/", "add_OGs_set_num-", value, ".txt")
+#          print(missing_file)
+            
+          file.create(missing_file)
+        }
+    }
+    
+}
+
+
+
+#####
+
+
+#### Lastly, create .check to know everything is done
 message("Creating .check - Expansions successfully computed for hypothesis ", num)
 exp_OGs_proteinnames.check <- "check"
 dir.create(paste("checks/tea/", num, "/", sep=""))

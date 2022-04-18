@@ -108,3 +108,13 @@ def solve_expansion(wildcards):
     file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
     return file_names
 
+
+#since wildcard constrainsts sometimes clash with glob wildcards - see e.g. https://github.com/snakemake/snakemake/issues/482,
+#my hacky workaround is to add ".add" to all filenames related to the additionalOGs analysis
+def solve_expansion_add_OG_analysis(wildcards):
+    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
+    file_names = expand("tea/{hypothesis}/add_OGs_sets/trees/{OG}/add_OGs_set_num-{set_num}.tree.add", 
+                        hypothesis=wildcards.hypothesis, 
+                        OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG, 
+                        set_num=list(range(1, 5)))
+    return file_names
