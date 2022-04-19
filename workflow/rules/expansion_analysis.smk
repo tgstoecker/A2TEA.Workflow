@@ -26,6 +26,7 @@ checkpoint expansion:
         expansion = get_exp_species,
         comparison = get_com_species,
         add_blast_hits = config["add_blast_hits"],
+        add_OGs = config["add_OGs"],
         expansion_factor = get_expansion_factor,
         expansion_difference = get_expansion_difference,
 	ploidy_normalization = get_ploidy_normalization,
@@ -39,8 +40,8 @@ checkpoint expansion:
         directory("tea/{hypothesis}/expansion_tibble/"),
         "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
         #for additional OGs instead of BLAST hits
-        directory("tea/{hypothesis}/add_OGs_sets/"),
-        "tea/{hypothesis}/add_OGs_sets/add_OG_analysis_object.RDS",
+        directory("tea/{hypothesis}/add_OGs_sets/id_lists/"),
+        "tea/{hypothesis}/add_OGs_object/add_OG_analysis_object.RDS",
     threads: 1
     conda:
         "../envs/expansion.yaml"
@@ -55,8 +56,6 @@ rule fasta_extraction:
         hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
     output:
         "tea/{hypothesis}/fa_records/{OG}.fa"
-#    wildcard_constraints:
-#        OG="N0"
     threads: 1
     conda:
         "../envs/expansion.yaml"
@@ -122,7 +121,7 @@ rule expansion_checkpoint_finish:
 #in the final_tea script I simply ignore such cases
 rule fasta_extraction_add_OG_analysis:
     input:
-        protein_lists = "tea/{hypothesis}/add_OGs_sets/{OG}/add_OGs_set_num-{set_num}.txt",
+        protein_lists = "tea/{hypothesis}/add_OGs_sets/id_lists/{OG}/add_OGs_set_num-{set_num}.txt",
         hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
     output:
         "tea/{hypothesis}/add_OGs_sets/fa_records/{OG}/add_OGs_set_num-{set_num}.fa.add"

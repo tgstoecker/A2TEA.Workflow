@@ -87,9 +87,21 @@ chunks_number: 2
 # define the expansion factor, e.g. 2 -> expanded species has to have 2-times the genes for the HOG to be considered "expanded"
 # <- use this explanation somewhere more appropiate
 
+
+## Tree visualizations often are more informative if we use more than an individual (H)OG
+
 # define the max number of additional best blast hits to include in the follow-up analyses
 # tree visualizations often are more informative if we use more than an individual (H)OG
 add_blast_hits: 50
+
+# the trees can be more informative if look at complete OGs and not just single best additional matches
+# define the max number of additional OGs to include in the follow-up analyses
+# this is based on the best blast hits of the expanded OG in question;
+# the next based blast hit belonging to another OG will lead to include this OG in an addtional set
+# if set to e.g. 3 for each expanded OG we include the next three "closest" OGs
+# if there aren't any usable blast hits less than 3 will be added
+# set to 0 if you aren't interested in this (only the base OG which will be analyzed)
+add_OGs: 5
 
 
 # FDR cutoff for significance if differential gene expresssion analysis

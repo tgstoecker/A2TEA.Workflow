@@ -31,6 +31,9 @@ name = snakemake@params[["name"]]
 # define the number of additional best blast hits to include in the follow-up analyses
 add_blast_hits = snakemake@params[["add_blast_hits"]]
 
+# define the number of additional best blast hits to include in the follow-up analyses
+add_OGs = snakemake@params[["add_OGs"]]
+
 # define the minimum expansion factor & expansion difference to call an expansion (part of hypothesis.tsv)
 expansion_factor = as.numeric(snakemake@params[["expansion_factor"]])
 expansion_difference = as.numeric(snakemake@params[["expansion_difference"]])
@@ -417,8 +420,7 @@ setClass("add_OG_set",
          )
 
 
-#dir.create(paste("../tea/", num, "/add_OGs_sets/", sep = ""))
-#dir.create(paste("tea/", num, "/add_OGs_sets/", sep = ""))
+dir.create(paste("tea/", num, "/add_OGs_sets/id_lists/", sep = ""))
 
 #similarly to the additional BLAST hits approach we iterate over the expanded OGs
 loop_index <- 0
@@ -457,9 +459,9 @@ for (i in expanded_HOGs$HOG) {
     #self_and_closest_ogs
 
     #here the information provided by the user regarding max. additional OGs is used
-    #suppose user chose max 5 additional orthogroups in config file
-    add_OGs = 3
-
+    #we copy the value to an "internal" object since in the following commands we modify in each iteration depending on the underlying OG/s
+    #the initial add_OGs value chosen by the user is used later and must not be modified
+    add_OGs_internal = add_OGs
 
     #need to add check for number of additonal OGs/singletons
     #e.g. user sets max. add. OGs/singletons to 5 but we only can provide 4
@@ -468,15 +470,15 @@ for (i in expanded_HOGs$HOG) {
     #available_add_OGs
 
     #in this case set add_OGs to max available
-    if (available_add_OGs < add_OGs) {
-      add_OGs <- available_add_OGs
+    if (available_add_OGs < add_OGs_internal) {
+      add_OGs_internal <- available_add_OGs
     } 
 
     #empty list of precomputed size - add OGs plus the expanded OG itself
-    add_OG_analysis_list <- vector(mode = "list", length = add_OGs+1)
+    add_OG_analysis_list <- vector(mode = "list", length = add_OGs_internal + 1)
 
 
-    for (j in 1:(add_OGs+1)) {
+    for (j in 1:(add_OGs_internal + 1)) {
       og_name <- self_and_closest_ogs[j,] %>%
       pull(HOG)
   
@@ -524,14 +526,14 @@ for (i in expanded_HOGs$HOG) {
     #print(cum_add_OG_analysis_list)
     
     
-    #create directory/ies - for each HOG under "add_OGs_sets"
-    dir.create(paste("tea/", num, "/add_OGs_sets/", i, sep = ""))
+    #create directory/ies - for each HOG under "add_OGs_sets/id_lists/"
+    dir.create(paste("tea/", num, "/add_OGs_sets/id_lists/", i, sep = ""))
     #dir.create(paste("../tea/", num, "/add_OGs_sets/", i, sep = ""))    
     
     #iterate over cum. list and write cumulative sets into seperate files
     for (l in 1:length(cum_add_OG_analysis_list)) {
       write_lines(cum_add_OG_analysis_list[[l]],
-                  paste("tea/", num, "/add_OGs_sets/", i, "/add_OGs_set_num-", l, ".txt", sep = "")
+                  paste("tea/", num, "/add_OGs_sets/id_lists/", i, "/add_OGs_set_num-", l, ".txt", sep = "")
                   #paste("../tea/", num, "/add_OGs_sets/", i, "/add_OGs_set_num-", l, ".txt", sep = "")
       )
 
@@ -592,7 +594,7 @@ for (og in 1:summary_length) {
 
 
 # save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
-saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_sets/add_OG_analysis_object.RDS", sep = ""))
+saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_object/add_OG_analysis_object.RDS", sep = ""))
 #saveRDS(add_og_complete_object, paste("../tea/", num, "/add_OGs_sets/add_OG_analysis_object.RDS", sep = ""))
 
 
@@ -601,28 +603,23 @@ saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_sets/add_OG_analysi
 # quick fix - create empty addtional set_num files which we can ignore but nonetheless exist
 message("adding empty missing files - current dirty workaround to avoid nested snakemake checkpoints")
 
-add_OGs = 3
-
+#max_n_sets + 1 since user choice is the number of ADDITIONAL sets but we have ti remember the expanded OG itself (always set_num = 1)
 max_n_sets = add_OGs + 1
 
 for (n in names(add_og_complete_object)) {
     
     og_n_sets <- length(
-         list.files(path = paste0("tea/", num, "/add_OGs_sets/", n))
+         list.files(path = paste0("tea/", num, "/add_OGs_sets/id_lists/", n))
         )
     
-    og_sets <- list.files(path = paste0("tea/", num, "/add_OGs_sets/", n))
+    og_sets <- list.files(path = paste0("tea/", num, "/add_OGs_sets/id_lists/", n))
     
     if (og_n_sets < max_n_sets) {
-#        print(og_sets)
         n_missing_sets <- max_n_sets - og_n_sets
-#        print(n_missing_sets)
         
         for (m in 1:n_missing_sets) {
           value <- max_n_sets - m + 1
-#          print(value)
-          missing_file <- paste0("tea/", num, "/add_OGs_sets/", n, "/", "add_OGs_set_num-", value, ".txt")
-#          print(missing_file)
+          missing_file <- paste0("tea/", num, "/add_OGs_sets/id_lists/", n, "/", "add_OGs_set_num-", value, ".txt")
             
           file.create(missing_file)
         }
@@ -631,9 +628,7 @@ for (n in names(add_og_complete_object)) {
 }
 
 
-
 #####
-
 
 #### Lastly, create .check to know everything is done
 message("Creating .check - Expansions successfully computed for hypothesis ", num)
