@@ -490,6 +490,15 @@ for (i in 1:length(HOG_level_list)) {
     HOG_level_list[[i]] <- full_join(HOG_level_list[[i]], h_sig_genes_per_species_and_HOG, by = c("HOG"))
 }
 
+
+#transforming all NA entries of the HOG tables to 0s - allows for correct filtering in the WebApp
+for (i in 1:length(HOG_level_list)) {
+    
+    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+                             mutate_all(~replace(., is.na(.), 0))
+}
+
+#structure of final list object
 str(HOG_level_list)
 
 
