@@ -201,11 +201,11 @@ rule expansion_checkpoint_finish_add_OG_analysis:
         "touch {output}"
 
 
-rule merge_ultimate:
-    input:
-        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
-        expand("checks/expansion/{hypothesis}_finished_add_OG_analysis.txt", hypothesis=HYPOTHESES),
-    output:
-        "works.txt"
-    shell:
-        "touch {output}"
+#rule merge_ultimate:
+#    input:
+#        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
+#        expand("checks/expansion/{hypothesis}_finished_add_OG_analysis.txt", hypothesis=HYPOTHESES),
+#    output:
+#        "works.txt"
+#    shell:
+#        "touch {output}"

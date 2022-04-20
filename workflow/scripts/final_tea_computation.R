@@ -196,9 +196,10 @@ setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    num_genes_complete="numeric",
                                    genes_HOG="tbl_df",
                                    genes_extend_hits="tbl_df",
-                                   fasta_files="list", 
+#                                   fasta_files="list", 
                                    msa="AAStringSet", 
-                                   tree="phylo"))
+                                   tree="phylo",
+                                   add_OG_analysis="list"))
 
 
 # class for the hypotheses
@@ -228,10 +229,47 @@ setClass("extended_BLAST_hits",
                     genes_extend_hits="tbl_df")
          )
 
+#class for adding OGs analysis
+setClass("add_OG_analysis",
+         slots=list(add_OG_analysis="list")
+         )
+#another class for adding OGs analysis
+setClass("add_OG_set",
+         slots=list(genes="tbl_df",
+                #    fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
+                    msa="AAStringSet", 
+                    tree="phylo"
+                   )
+         )
+
+
 #remove protein_names in the snakemake pipeline - directories clean enough
 for (hypothesis in hypotheses$hypothesis) {  
     # read-in extended_BLAST_hits.RDS object of hypothesis
     extended_BLAST_hits <- readRDS(paste0("tea/", hypothesis, "/extended_BLAST_hits/extended_BLAST_hits.RDS"))
+
+    # add_OG_analysis_object.RDS object of hypothesis
+    add_OG_analysis <- readRDS(paste0("tea/", hypothesis, "/add_OGs_object/add_OG_analysis_object.RDS"))
+    
+    ## adding addtional OGs analysis output as modular attachments
+    #This needs to be done before the original steps since we add fasta, msa & trees 
+    #to the sets of the add_OGs_analysis object first before adding it as a list object 
+    #during the original extended BLAST hits approach
+
+    for (exp_OG in names(add_OG_analysis)) {
+      
+      for (set in 1:length(add_OG_analysis[[exp_OG]]@add_OG_analysis)) {
+      
+        #adding msa info
+        add_OG_analysis[[exp_OG]]@add_OG_analysis[[set]]@msa <- readAAStringSet(paste0("tea/", hypothesis, "/add_OGs_sets/muscle/", exp_OG, "/add_OGs_set_num-", set, ".afa.add"))
+               
+        #adding tree info
+        add_OG_analysis[[exp_OG]]@add_OG_analysis[[set]]@tree <- read.tree(paste0("tea/", hypothesis, "/add_OGs_sets/trees/", exp_OG, "/add_OGs_set_num-", set, ".tree.add"))
+
+      }
+      
+    }
+
 
     # create empty list object for hypothesis
     assign(paste0("hypothesis_", hypothesis), list())
@@ -256,9 +294,12 @@ for (hypothesis in hypotheses$hypothesis) {
              num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
              genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
              genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
-             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
+#             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
              msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
-             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")))
+             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")),
+             #here we add the complete add_OG analysis results (x sets per OG) to the original object
+             add_OG_analysis=add_OG_analysis[[exp_OG]]@add_OG_analysis)
+
         x <- list(test)
         names(x) <- paste0(exp_OG)
         t <- c(t, x)
@@ -295,6 +336,58 @@ for (hypothesis in hypotheses_list) {
 
 # final object is called:
 # HYPOTHESES.a2tea
+
+
+## Creating a non-redundant fasta file containing all genes part of the final objects
+n_hypotheses <- length(HYPOTHESES.a2tea)
+
+A2TEA.fa.seqs <- vector(mode = "list")
+
+for (hypothesis in 1:n_hypotheses) {
+    
+  exp_OGs <- names(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs)
+    
+  #extended hits analysis
+  for (og in exp_OGs) {
+    A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
+                                hypothesis, 
+                                "/fa_records/", 
+                                og,
+                                ".fa"), 
+                         seqtype = "AA", 
+                         as.string = TRUE))
+  }  
+
+  #add OGs analysis
+  for (og in exp_OGs) {
+    
+    n_sets <- length(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs[[og]])
+      
+    for (set in 1:n_sets) {
+        
+      A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
+                                hypothesis, 
+                                "/add_OGs_sets/fa_records/", 
+                                og,
+                                "/add_OGs_set_num-", set, ".fa.add"), 
+                         seqtype = "AA", 
+                         as.string = TRUE))
+
+    }
+      
+  }  
+    
+}
+
+
+A2TEA.fa.seqs <- unique(A2TEA.fa.seqs)
+
+#naming list elements - with id of gene/transcript/protein
+for (i in 1:length(A2TEA.fa.seqs)) {
+    
+  names(A2TEA.fa.seqs)[i] <- attr(A2TEA.fa.seqs[[i]], which = "name")
+}
+
 
 
 ## Creation of HOG level tables 
@@ -574,8 +667,11 @@ for (i in 1:length(HOG_level_list)) {
 ## Last step: saving everything to one file which is input for the A2TEA WebApp
 save(hypotheses, 
      HYPOTHESES.a2tea, 
+     A2TEA.fa.seqs,
      HOG_DE.a2tea, 
      HOG_level_list,
      SFA,
      SFA_OG_level,
-     file = "tea/A2TEA_finished.RData")
+     file = "tea/A2TEA_finished.RData",
+     compress = "xz", 
+     compression_level = 9)
