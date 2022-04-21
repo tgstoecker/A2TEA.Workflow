@@ -671,6 +671,143 @@ for (i in 1:length(HOG_level_list)) {
     SFA_OG_level[[i]] <- SFA_short
 }
 
+
+#######
+### ### Adding overview of all species (superset of all hypothesis) table - how many genes per OG + how many sigDE
+##-> adding as as LAST element an overview table for all species to HOG_level_list
+#this needs to happen AFTER all other HOG_level_list operations since this is not hypothesis specific
+
+# why do we need this: only with such a superset/hypothesis independent table we have the possibility to create arbitrary sets we can compare the hypotheses to
+#e.g. with this we can define any conserved set of species we want to compare subset hypotheses against (overrepresentation style analysis like Caro needs)
+#by creating this superset, in the WebApp it is then possible to manually define any combination the user might be interested in
+#this allows for the freedom necessary, in cases where one species might want/need to be removed without the need of re-running the pipeline, or
+#more than one experiment is formulated in the hypotheses.tsv (e.g. truly seperated analysis, that were run in one analysis run)
+
+#get complete orthofinder table
+ph_orthogroups <- readr::read_delim(file = "orthofinder/final-results/Phylogenetic_Hierarchical_Orthogroups/N0.tsv",
+                          delim = "\t"
+                         )
+
+
+#vector of all unique species names over all hypotheses
+all_species <- unique(c(
+               unlist(str_split(hypotheses$expanded_in, pattern = ";")), 
+               unlist(str_split(hypotheses$compared_to, pattern = ";"))
+                     ))
+
+#create dataframe with numbers of genes per PHOG
+#we combine expanded_in and compared_to vectors to easily compute for everything we need
+all_HOG_df <- setNames(base::data.frame(matrix(ncol = 1 + length(all_species), nrow = 0)),
+                  c("HOG", all_species))
+
+for (i in 1:nrow(ph_orthogroups)) {
+    
+    row = 0
+    
+    row <- c(ph_orthogroups[i,]$HOG)
+    
+        for (j in c(all_species)) {
+            if (is.na(ph_orthogroups[i,][[j]]))
+            {
+                test = 0
+                row <- c(row, test)
+            }
+            else 
+            {
+                test = length(unlist(strsplit(ph_orthogroups[i,][[j]], ",")))
+                row <- c(row, test)
+            }
+}
+    all_HOG_df[i,] <- row
+} 
+
+all_HOG_tibble <- as_tibble(all_HOG_df)
+
+for (k in 1:length(all_species)) {
+    o = all_species[k]
+    all_HOG_tibble[[o]] <- as.numeric(all_HOG_tibble[[o]])
+}
+
+# append "_gene_count" to all species in all_HOG_tibble
+# get number of significantly regulated genes per HOG (per species and total) 
+# get count of species, HOG, significant combination from HOG_DE.a2tea
+# reduce it to HOG, species, count
+sig_genes_per_species_and_HOG <- HOG_DE.a2tea %>%
+                                     filter(significant == c("yes")) %>%
+                                     filter(HOG != c("singleton")) %>%
+                                        group_by(HOG, species, significant) %>%
+                                        mutate(count = n()) %>%
+                                        ungroup() %>%
+            # https://www.r-bloggers.com/2018/05/workaround-for-tidyrspread-with-duplicate-row-identifiers/
+            # spread error when no indexing for data
+                                            group_by(species) %>%
+                                            mutate(grouped_id = row_number()) %>%
+                                            spread(species, count) %>%
+                                            select(-grouped_id) %>%
+            # easy workaround for duplicated rows
+                                                distinct()%>%
+            # rename species columns containing now the counts of sig. DE genes
+                                                    rename_at(vars(-HOG), ~ paste0(., '_sigDE'))
+
+#catch edge case where a species posesses zero sig. regulated genes...
+#if TRUE add column for this/these species since it won't have been created by the prev. step
+all_species_HOG_DE <- HOG_DE.a2tea %>%
+  group_by(species) %>%
+  summarize(all_species = n()) %>%
+  pull(species)
+
+sigDE_species_HOG_DE <- HOG_DE.a2tea %>%
+  filter(significant == c("yes")) %>%
+  filter(HOG != c("singleton")) %>%
+  group_by(species) %>%
+  summarize(all_sig_species = n()) %>%
+  pull(species)
+
+sig_diff_species_check <- setdiff(all_species_HOG_DE, sigDE_species_HOG_DE)
+
+if (length(sig_diff_species_check) > 0) {
+    for (i in sig_diff_species_check) {
+      assign("i_mod", paste0(i, "_sigDE"))
+      sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG %>%
+        add_column("{i_mod}" := 0)
+    }
+} else {
+    print("No species without any sig. diff. expressed genes ;D")
+}
+
+
+
+h_sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%
+  group_by(HOG) %>%
+  # mutate all NAs to 0s#
+  mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
+  # merge rows per HOG - results in one line per HOG
+  select(HOG, paste0(all_species, "_sigDE")) %>%
+  distinct() %>%
+  summarise_all(list(sum))
+
+  
+# change the zeros back to NAs
+h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
+                                       na_if(0)
+#
+all_HOG_tibble <- all_HOG_tibble %>% rename_at(vars(-HOG), ~ paste0(., '_total'))
+all_HOG_tibble <- full_join(all_HOG_tibble, h_sig_genes_per_species_and_HOG, by = c("HOG"))
+    
+#substitute remaining NAs for 0s
+all_HOG_tibble <- all_HOG_tibble %>% mutate_all(~replace(., is.na(.), 0))
+
+#make it a list
+all_species_overview <- list(all_HOG_tibble)
+
+#name it a list
+names(all_species_overview) <- "all_species_overview"
+
+#add to HOG_level_list as last list element
+HOG_level_list <- c(HOG_level_list, all_species_overview)
+
+
+
 #########################################################################################################
 
 ## Last step: saving everything to one file which is input for the A2TEA WebApp
