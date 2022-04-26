@@ -196,9 +196,10 @@ setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    num_genes_complete="numeric",
                                    genes_HOG="tbl_df",
                                    genes_extend_hits="tbl_df",
-                                   fasta_files="list", 
+#                                   fasta_files="list", 
                                    msa="AAStringSet", 
-                                   tree="phylo"))
+                                   tree="phylo",
+                                   add_OG_analysis="list"))
 
 
 # class for the hypotheses
@@ -228,10 +229,47 @@ setClass("extended_BLAST_hits",
                     genes_extend_hits="tbl_df")
          )
 
+#class for adding OGs analysis
+setClass("add_OG_analysis",
+         slots=list(add_OG_analysis="list")
+         )
+#another class for adding OGs analysis
+setClass("add_OG_set",
+         slots=list(genes="tbl_df",
+                #    fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
+                    msa="AAStringSet", 
+                    tree="phylo"
+                   )
+         )
+
+
 #remove protein_names in the snakemake pipeline - directories clean enough
 for (hypothesis in hypotheses$hypothesis) {  
     # read-in extended_BLAST_hits.RDS object of hypothesis
     extended_BLAST_hits <- readRDS(paste0("tea/", hypothesis, "/extended_BLAST_hits/extended_BLAST_hits.RDS"))
+
+    # add_OG_analysis_object.RDS object of hypothesis
+    add_OG_analysis <- readRDS(paste0("tea/", hypothesis, "/add_OGs_object/add_OG_analysis_object.RDS"))
+    
+    ## adding addtional OGs analysis output as modular attachments
+    #This needs to be done before the original steps since we add fasta, msa & trees 
+    #to the sets of the add_OGs_analysis object first before adding it as a list object 
+    #during the original extended BLAST hits approach
+
+    for (exp_OG in names(add_OG_analysis)) {
+      
+      for (set in 1:length(add_OG_analysis[[exp_OG]]@add_OG_analysis)) {
+      
+        #adding msa info
+        add_OG_analysis[[exp_OG]]@add_OG_analysis[[set]]@msa <- readAAStringSet(paste0("tea/", hypothesis, "/add_OGs_sets/muscle/", exp_OG, "/add_OGs_set_num-", set, ".afa.add"))
+               
+        #adding tree info
+        add_OG_analysis[[exp_OG]]@add_OG_analysis[[set]]@tree <- read.tree(paste0("tea/", hypothesis, "/add_OGs_sets/trees/", exp_OG, "/add_OGs_set_num-", set, ".tree.add"))
+
+      }
+      
+    }
+
 
     # create empty list object for hypothesis
     assign(paste0("hypothesis_", hypothesis), list())
@@ -256,9 +294,12 @@ for (hypothesis in hypotheses$hypothesis) {
              num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
              genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
              genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
-             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
+#             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
              msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
-             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")))
+             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")),
+             #here we add the complete add_OG analysis results (x sets per OG) to the original object
+             add_OG_analysis=add_OG_analysis[[exp_OG]]@add_OG_analysis)
+
         x <- list(test)
         names(x) <- paste0(exp_OG)
         t <- c(t, x)
@@ -295,6 +336,58 @@ for (hypothesis in hypotheses_list) {
 
 # final object is called:
 # HYPOTHESES.a2tea
+
+
+## Creating a non-redundant fasta file containing all genes part of the final objects
+n_hypotheses <- length(HYPOTHESES.a2tea)
+
+A2TEA.fa.seqs <- vector(mode = "list")
+
+for (hypothesis in 1:n_hypotheses) {
+    
+  exp_OGs <- names(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs)
+    
+  #extended hits analysis
+  for (og in exp_OGs) {
+    A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
+                                hypothesis, 
+                                "/fa_records/", 
+                                og,
+                                ".fa"), 
+                         seqtype = "AA", 
+                         as.string = TRUE))
+  }  
+
+  #add OGs analysis
+  for (og in exp_OGs) {
+    
+    n_sets <- length(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs[[og]])
+      
+    for (set in 1:n_sets) {
+        
+      A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
+                                hypothesis, 
+                                "/add_OGs_sets/fa_records/", 
+                                og,
+                                "/add_OGs_set_num-", set, ".fa.add"), 
+                         seqtype = "AA", 
+                         as.string = TRUE))
+
+    }
+      
+  }  
+    
+}
+
+
+A2TEA.fa.seqs <- unique(A2TEA.fa.seqs)
+
+#naming list elements - with id of gene/transcript/protein
+for (i in 1:length(A2TEA.fa.seqs)) {
+    
+  names(A2TEA.fa.seqs)[i] <- attr(A2TEA.fa.seqs[[i]], which = "name")
+}
+
 
 
 ## Creation of HOG level tables 
@@ -397,6 +490,15 @@ for (i in 1:length(HOG_level_list)) {
     HOG_level_list[[i]] <- full_join(HOG_level_list[[i]], h_sig_genes_per_species_and_HOG, by = c("HOG"))
 }
 
+
+#transforming all NA entries of the HOG tables to 0s - allows for correct filtering in the WebApp
+for (i in 1:length(HOG_level_list)) {
+    
+    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+                             mutate_all(~replace(., is.na(.), 0))
+}
+
+#structure of final list object
 str(HOG_level_list)
 
 
@@ -569,13 +671,153 @@ for (i in 1:length(HOG_level_list)) {
     SFA_OG_level[[i]] <- SFA_short
 }
 
+
+#######
+### ### Adding overview of all species (superset of all hypothesis) table - how many genes per OG + how many sigDE
+##-> adding as as LAST element an overview table for all species to HOG_level_list
+#this needs to happen AFTER all other HOG_level_list operations since this is not hypothesis specific
+
+# why do we need this: only with such a superset/hypothesis independent table we have the possibility to create arbitrary sets we can compare the hypotheses to
+#e.g. with this we can define any conserved set of species we want to compare subset hypotheses against (overrepresentation style analysis like Caro needs)
+#by creating this superset, in the WebApp it is then possible to manually define any combination the user might be interested in
+#this allows for the freedom necessary, in cases where one species might want/need to be removed without the need of re-running the pipeline, or
+#more than one experiment is formulated in the hypotheses.tsv (e.g. truly seperated analysis, that were run in one analysis run)
+
+#get complete orthofinder table
+ph_orthogroups <- readr::read_delim(file = "orthofinder/final-results/Phylogenetic_Hierarchical_Orthogroups/N0.tsv",
+                          delim = "\t"
+                         )
+
+
+#vector of all unique species names over all hypotheses
+all_species <- unique(c(
+               unlist(str_split(hypotheses$expanded_in, pattern = ";")), 
+               unlist(str_split(hypotheses$compared_to, pattern = ";"))
+                     ))
+
+#create dataframe with numbers of genes per PHOG
+#we combine expanded_in and compared_to vectors to easily compute for everything we need
+all_HOG_df <- setNames(base::data.frame(matrix(ncol = 1 + length(all_species), nrow = 0)),
+                  c("HOG", all_species))
+
+for (i in 1:nrow(ph_orthogroups)) {
+    
+    row = 0
+    
+    row <- c(ph_orthogroups[i,]$HOG)
+    
+        for (j in c(all_species)) {
+            if (is.na(ph_orthogroups[i,][[j]]))
+            {
+                test = 0
+                row <- c(row, test)
+            }
+            else 
+            {
+                test = length(unlist(strsplit(ph_orthogroups[i,][[j]], ",")))
+                row <- c(row, test)
+            }
+}
+    all_HOG_df[i,] <- row
+} 
+
+all_HOG_tibble <- as_tibble(all_HOG_df)
+
+for (k in 1:length(all_species)) {
+    o = all_species[k]
+    all_HOG_tibble[[o]] <- as.numeric(all_HOG_tibble[[o]])
+}
+
+# append "_gene_count" to all species in all_HOG_tibble
+# get number of significantly regulated genes per HOG (per species and total) 
+# get count of species, HOG, significant combination from HOG_DE.a2tea
+# reduce it to HOG, species, count
+sig_genes_per_species_and_HOG <- HOG_DE.a2tea %>%
+                                     filter(significant == c("yes")) %>%
+                                     filter(HOG != c("singleton")) %>%
+                                        group_by(HOG, species, significant) %>%
+                                        mutate(count = n()) %>%
+                                        ungroup() %>%
+            # https://www.r-bloggers.com/2018/05/workaround-for-tidyrspread-with-duplicate-row-identifiers/
+            # spread error when no indexing for data
+                                            group_by(species) %>%
+                                            mutate(grouped_id = row_number()) %>%
+                                            spread(species, count) %>%
+                                            select(-grouped_id) %>%
+            # easy workaround for duplicated rows
+                                                distinct()%>%
+            # rename species columns containing now the counts of sig. DE genes
+                                                    rename_at(vars(-HOG), ~ paste0(., '_sigDE'))
+
+#catch edge case where a species posesses zero sig. regulated genes...
+#if TRUE add column for this/these species since it won't have been created by the prev. step
+all_species_HOG_DE <- HOG_DE.a2tea %>%
+  group_by(species) %>%
+  summarize(all_species = n()) %>%
+  pull(species)
+
+sigDE_species_HOG_DE <- HOG_DE.a2tea %>%
+  filter(significant == c("yes")) %>%
+  filter(HOG != c("singleton")) %>%
+  group_by(species) %>%
+  summarize(all_sig_species = n()) %>%
+  pull(species)
+
+sig_diff_species_check <- setdiff(all_species_HOG_DE, sigDE_species_HOG_DE)
+
+if (length(sig_diff_species_check) > 0) {
+    for (i in sig_diff_species_check) {
+      assign("i_mod", paste0(i, "_sigDE"))
+      sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG %>%
+        add_column("{i_mod}" := 0)
+    }
+} else {
+    print("No species without any sig. diff. expressed genes ;D")
+}
+
+
+
+h_sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%
+  group_by(HOG) %>%
+  # mutate all NAs to 0s#
+  mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
+  # merge rows per HOG - results in one line per HOG
+  select(HOG, paste0(all_species, "_sigDE")) %>%
+  distinct() %>%
+  summarise_all(list(sum))
+
+  
+# change the zeros back to NAs
+h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
+                                       na_if(0)
+#
+all_HOG_tibble <- all_HOG_tibble %>% rename_at(vars(-HOG), ~ paste0(., '_total'))
+all_HOG_tibble <- full_join(all_HOG_tibble, h_sig_genes_per_species_and_HOG, by = c("HOG"))
+    
+#substitute remaining NAs for 0s
+all_HOG_tibble <- all_HOG_tibble %>% mutate_all(~replace(., is.na(.), 0))
+
+#make it a list
+all_species_overview <- list(all_HOG_tibble)
+
+#name it a list
+names(all_species_overview) <- "all_species_overview"
+
+#add to HOG_level_list as last list element
+HOG_level_list <- c(HOG_level_list, all_species_overview)
+
+
+
 #########################################################################################################
 
 ## Last step: saving everything to one file which is input for the A2TEA WebApp
 save(hypotheses, 
      HYPOTHESES.a2tea, 
+     A2TEA.fa.seqs,
      HOG_DE.a2tea, 
      HOG_level_list,
      SFA,
      SFA_OG_level,
-     file = "tea/A2TEA_finished.RData")
+     file = "tea/A2TEA_finished.RData",
+     compress = "xz", 
+     compression_level = 9)
