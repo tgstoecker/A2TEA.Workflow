@@ -149,7 +149,7 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
 # Output  
 The final output is a single file - tea/A2TEA_finished.RData.  
 This file can be used in R by using the load() command.  
-Doing this, provides 3 seperate objects in your R environment containing all results in a compact form factor:  
+Doing this, provides 4 seperate objects in your R environment containing all results in a compact form factor:  
 - HYPOTHESES.a2tea - List object with one S4 object per hypothesis. 
 Each S4 object contains several layers of nested information.   
 E.g. `HYPOTHESES.a2tea$hypothesis_2@expanded_OGs$N0.HOG0001225` would refer to a specific expanded orthologous group and S4 data object that contains:
@@ -164,8 +164,9 @@ E.g. `HYPOTHESES.a2tea$hypothesis_2@expanded_OGs$N0.HOG0001225` would refer to a
   - msa (multiple sequence alignment - orthologous group + extended BLAST hits)
   - tree (phylogenetic tree - orthologous group + extended BLAST hits)
 See the class definitions below for more details.  
-- HOG_level_list - List object with one dataframe/tibble per hypothesis. Info includes Orthologous group, # genes per species, boolean expansion info, # of significant diff. exp. genes and more.
-- HOG_DE.a2tea - Dataframe/Tibble with DESeq2 results for all genes + additional columns
+- HOG_level_list - List object with one dataframe/tibble per hypothesis. Info includes Orthologous group, # genes per species, boolean expansion info, # of significant diff. exp. genes and more. Last n list element is a non-redundant superset of all species analyzed over all formulated hypothesis. This makes it easy to create a comparison set e.g. conserved OGs of all species to which the hypothesis then can be compared.  
+- HOG_DE.a2tea - Dataframe/Tibble with DESeq2 results for all genes + additional columns  
+- A2TEA.fa.seqs - Non-redundant list object containg corresponding AA fasta sequences of all genes/transcripts in the final analysis. (includes those of exp. OGs + those in additonal BLAST hits & additional OGs based on user chosen parameters).
 
 You can use the the A2TEA_finished.RData output in your own R instance or use our WebApp (!name) which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets.
 
@@ -176,36 +177,50 @@ library(Biostrings)
 library(treeio)
 
 
-# define three classes
-# class for the expanded_OG - containing all different types of data we have on it\n",
+# define necessary classes
+# class for the expanded_OG - containing all different types of data we have on it
 setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    blast_table="tbl_df",
-                                   nrow_table="numeric",
                                    num_genes_HOG="numeric",
                                    num_genes_extend="numeric",
                                    num_genes_complete="numeric",
                                    genes_HOG="tbl_df",
                                    genes_extend_hits="tbl_df",
-                                   fasta_files="list", 
-                                   msa="AAStringSet", 
-                                   tree="phylo"))
+                                   msa="AAMultipleAlignment", 
+                                   tree="phylo",
+                                   add_OG_analysis="list"))
 
-
-# class for the hypotheses\n",
-setClass("hypothesis", slots=list(description="character",
+# class for the hypothese
+setClass("hypothesis", slots=list(description="character", 
                                   number="character",
-                                  expanded_in="character",
-                                  compared_to="character",
+                                  expanded_in ="character", 
+                                  compared_to="character", 
                                   expanded_OGs="list",
                                   species_tree="phylo"))
 
-# class for extended BLAST hits info\n",
-setClass("extended_BLAST_hits", slots=list(blast_table="tbl_df",
-                        num_genes_HOG="numeric",
-                        num_genes_extend="numeric",
-                        num_genes_complete="numeric",
-                        genes_HOG="tbl_df",
-                        genes_extend_hits="tbl_df"))
+# class for extended BLAST hits info
+setClass("extended_BLAST_hits", 
+         slots=list(blast_table="tbl_df",
+                    num_genes_HOG="numeric",
+                    num_genes_extend="numeric",
+                    num_genes_complete="numeric",
+                    genes_HOG="tbl_df",
+                    genes_extend_hits="tbl_df")
+         )
+
+
+#class for adding OGs analysis
+setClass("add_OG_analysis",
+         slots=list(add_OG_analysis="list")
+         )
+
+#another class for adding OGs analysis
+setClass("add_OG_set",
+         slots=list(genes="tbl_df",
+                    msa="AAStringSet", 
+                    tree="phylo"
+                   )
+         )
 ``` 
 
 ### The workflow in its current form:
