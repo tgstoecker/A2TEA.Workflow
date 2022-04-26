@@ -113,7 +113,7 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 	- some examples:
 		- case 1. you have standard fasta and annotation files from ensembl/NCBI; want to have one rep. protein seq. per GENE and trust the automatic process -> auto_isoform_filtering: "YES" & transcript_level_quantification: "NO"
 		- case 2. you filtered for longest isoform yourself (peptide fasta headers = gene names in respective gtf!) and are ok with the names being reduced to gene identifier -> auto_isoform_filtering: "NO" & transcript_level_quantification: "NO"
-		- case 3. you don't want to our filter & either want to use the whole or a custom subset of the transcriptome -> auto_isoform_filtering: "NO" & transcript_level_quantification: "YES"; this is the hands-on case in which you the USER are mostly responsible; again, both featureCounts/tximport(kallisto) will produce count tables with the transcript names as found in the gtf; these transcript names have to match the headers in the peptide fasta files
+		- case 3. you don't want to our filter & either want to use the whole or a custom subset of the transcriptome -> auto_isoform_filtering: "NO" & transcript_level_quantification: "YES"; this is the hands-on case in which you the USER are mostly responsible; again, both featureCounts/tximport(kallisto) will produce count tables with the transcript names as found in the gtf; these transcript names have to match the headers in the peptide fasta files (e.g. removing additional info from common fasta headers `sed '/^>/ s/ .*//' file.fasta`)
 
 
 6) Run A2TEA with (exchange XX for the amount of cores you can offer):  
