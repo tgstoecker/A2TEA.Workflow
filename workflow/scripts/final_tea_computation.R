@@ -190,15 +190,15 @@ hypotheses$hypothesis
 # class for the expanded_OG - containing all different types of data we have on it
 setClass("expanded_OG", slots=list(genes="spec_tbl_df",
                                    blast_table="tbl_df",
-                                   nrow_table="numeric",
-                                   num_genes_HOG="numeric",
-                                   num_genes_extend="numeric",
-                                   num_genes_complete="numeric",
-                                   genes_HOG="tbl_df",
-                                   genes_extend_hits="tbl_df",
+#                                   nrow_table="numeric",
+#                                   num_genes_HOG="numeric",
+#                                   num_genes_extend="numeric",
+#                                   num_genes_complete="numeric",
+#                                   genes_HOG="tbl_df",
+#                                   genes_extend_hits="tbl_df",
 #                                   fasta_files="list", 
-                                   msa="AAStringSet", 
-                                   tree="phylo",
+#                                   msa="AAStringSet", 
+#                                   tree="phylo",
                                    add_OG_analysis="list"))
 
 
@@ -221,12 +221,12 @@ setClass("hypothesis",
 
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df",
-                    num_genes_HOG="numeric",
-                    num_genes_extend="numeric",
-                    num_genes_complete="numeric",
-                    genes_HOG="tbl_df",
-                    genes_extend_hits="tbl_df")
+         slots=list(blast_table="tbl_df")
+#                    num_genes_HOG="numeric",
+#                    num_genes_extend="numeric",
+#                    num_genes_complete="numeric",
+#                    genes_HOG="tbl_df",
+#                    genes_extend_hits="tbl_df")
          )
 
 #class for adding OGs analysis
@@ -289,14 +289,14 @@ for (hypothesis in hypotheses$hypothesis) {
         test <- new("expanded_OG", 
              genes=read_table(paste0("tea/", hypothesis, "/exp_OGs_proteinnames/", exp_OG, ".txt"), col_names = FALSE),
              blast_table=extended_BLAST_hits[[exp_OG]]@blast_table,
-             num_genes_HOG=extended_BLAST_hits[[exp_OG]]@num_genes_HOG,
-             num_genes_extend=extended_BLAST_hits[[exp_OG]]@num_genes_extend,
-             num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
-             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
-             genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
+#             num_genes_HOG=extended_BLAST_hits[[exp_OG]]@num_genes_HOG,
+#             num_genes_extend=extended_BLAST_hits[[exp_OG]]@num_genes_extend,
+#             num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
+#             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
+#             genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
 #             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
-             msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
-             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")),
+#             msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
+#             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")),
              #here we add the complete add_OG analysis results (x sets per OG) to the original object
              add_OG_analysis=add_OG_analysis[[exp_OG]]@add_OG_analysis)
 
@@ -348,15 +348,15 @@ for (hypothesis in 1:n_hypotheses) {
   exp_OGs <- names(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs)
     
   #extended hits analysis
-  for (og in exp_OGs) {
-    A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
-                                hypothesis, 
-                                "/fa_records/", 
-                                og,
-                                ".fa"), 
-                         seqtype = "AA", 
-                         as.string = TRUE))
-  }  
+#  for (og in exp_OGs) {
+#    A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
+#                                hypothesis, 
+#                                "/fa_records/", 
+#                                og,
+#                                ".fa"), 
+#                         seqtype = "AA", 
+#                         as.string = TRUE))
+#  }  
 
   #add OGs analysis
   for (og in exp_OGs) {

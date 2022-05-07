@@ -25,7 +25,7 @@ checkpoint expansion:
         name = get_hypo_name,
         expansion = get_exp_species,
         comparison = get_com_species,
-        add_blast_hits = config["add_blast_hits"],
+#        add_blast_hits = config["add_blast_hits"],
         add_OGs = config["add_OGs"],
         expansion_factor = get_expansion_factor,
         expansion_difference = get_expansion_difference,
@@ -50,62 +50,62 @@ checkpoint expansion:
 
 
 
-rule fasta_extraction:
-    input:
-        protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
-        hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
-    output:
-        "tea/{hypothesis}/fa_records/{OG}.fa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
+#rule fasta_extraction:
+#    input:
+#        protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
+#        hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
+#    output:
+#        "tea/{hypothesis}/fa_records/{OG}.fa"
+#    threads: 1
+#    conda:
+#        "../envs/expansion.yaml"
+#    shell:
+#        "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
 
 
-rule muscle_MSA:
-    input:
-        "tea/{hypothesis}/fa_records/{OG}.fa"
-    output:
-        "tea/{hypothesis}/muscle/{OG}.afa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "muscle -in {input} -out {output}"
+#rule muscle_MSA:
+#    input:
+#        "tea/{hypothesis}/fa_records/{OG}.fa"
+#    output:
+#        "tea/{hypothesis}/muscle/{OG}.afa"
+#    threads: 1
+#    conda:
+#        "../envs/expansion.yaml"
+#    shell:
+#        "muscle -in {input} -out {output}"
 
 
-rule trimAl:
-    input:
-        "tea/{hypothesis}/muscle/{OG}.afa"
-    output:
-        "tea/{hypothesis}/trimAl/{OG}.afa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "trimal -automated1 -in {input} -out {output}"
+#rule trimAl:
+#    input:
+#        "tea/{hypothesis}/muscle/{OG}.afa"
+#    output:
+#        "tea/{hypothesis}/trimAl/{OG}.afa"
+#    threads: 1
+#    conda:
+#        "../envs/expansion.yaml"
+#    shell:
+#        "trimal -automated1 -in {input} -out {output}"
 
 
-rule FastTree:
-    input:
-        "tea/{hypothesis}/trimAl/{OG}.afa"
-    output:
-        "tea/{hypothesis}/trees/{OG}.tree"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "FastTree {input} > {output}"
+#rule FastTree:
+#    input:
+#        "tea/{hypothesis}/trimAl/{OG}.afa"
+#    output:
+#        "tea/{hypothesis}/trees/{OG}.tree"
+#    threads: 1
+#    conda:
+#        "../envs/expansion.yaml"
+#    shell:
+#        "FastTree {input} > {output}"
 
 
-rule expansion_checkpoint_finish:
-    input:
-        solve_expansion
-    output:
-        "checks/expansion/{hypothesis}_finished.txt",
-    shell:
-        "touch {output}"
+#rule expansion_checkpoint_finish:
+#    input:
+#        solve_expansion
+#    output:
+#        "checks/expansion/{hypothesis}_finished.txt",
+#    shell:
+#        "touch {output}"
 
 
 

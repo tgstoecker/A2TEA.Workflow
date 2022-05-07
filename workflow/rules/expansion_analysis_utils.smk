@@ -103,10 +103,12 @@ def get_compared_to_all_found(wildcards):
 
 #SOLVING expansion checkpoint HERE!
 #after rule FastTree in expansion_analysis.smk
-def solve_expansion(wildcards):
-    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
-    file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-    return file_names
+
+#ext BLAST hits
+#def solve_expansion(wildcards):
+#    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
+#    file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
+#    return file_names
 
 
 #since wildcard constrainsts sometimes clash with glob wildcards - see e.g. https://github.com/snakemake/snakemake/issues/482,

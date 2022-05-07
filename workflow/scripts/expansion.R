@@ -29,7 +29,8 @@ num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
 
 # define the number of additional best blast hits to include in the follow-up analyses
-add_blast_hits = snakemake@params[["add_blast_hits"]]
+#add_blast_hits = 50
+#snakemake@params[["add_blast_hits"]]
 
 # define the number of additional best blast hits to include in the follow-up analyses
 add_OGs = snakemake@params[["add_OGs"]]
@@ -322,12 +323,12 @@ extended_BLAST_hits <- list()
 
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df",
-                    num_genes_HOG="numeric",
-                    num_genes_extend="numeric",
-                    num_genes_complete="numeric",
-                    genes_HOG="tbl_df",
-                    genes_extend_hits="tbl_df")
+         slots=list(blast_table="tbl_df")
+#                    num_genes_HOG="numeric",
+#                    num_genes_extend="numeric",
+#                    num_genes_complete="numeric",
+#                    genes_HOG="tbl_df",
+#                    genes_extend_hits="tbl_df")
          )
 
 
@@ -336,10 +337,8 @@ for (i in expanded_HOGs$HOG) {
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
                                              qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
-    # add number of chosen additional best blast hits to size of HOG 
-    HOG_set_extended <- length(exp_og_genes) + add_blast_hits
     
-        # get gene name of last gene to be added based on number of add_blast_hits
+    # get gene name of last gene to be added based on number of add_blast_hits
     all_blast_genes <- na.omit(
        unique(
          c(
@@ -354,7 +353,8 @@ for (i in expanded_HOGs$HOG) {
     # set of all extended blast hits (based on threshold) - vector of gene names (ordered!)
     # also nice: don't need a conditional since `%>% head(n = add_blast_hits)` will work,
     # even if add_blast_hits param is > setdiff(all_blast_genes, exp_og_genes) 
-    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_blast_hits)
+    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
+      #%>% head(n = add_blast_hits)
     # length(extended_blast_hits_genes)
   
     # non redundant set of gene names of HOG + n additional blast hits as defined in the user threshold
@@ -373,12 +373,12 @@ for (i in expanded_HOGs$HOG) {
  
     # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
     ext_B_hits <- new("extended_BLAST_hits",
-      blast_table=HOG_and_ext_blast_hits_table,
-      num_genes_HOG=length(exp_og_genes),
-      num_genes_extend = length(extended_blast_hits_genes),
-      num_genes_complete=length(HOG_and_ext_blast_hits_genes),
-      genes_HOG=as_tibble(exp_og_genes),
-      genes_extend_hits=as_tibble(extended_blast_hits_genes)
+      blast_table=HOG_and_ext_blast_hits_table
+#      num_genes_HOG=length(exp_og_genes),
+#      num_genes_extend = length(extended_blast_hits_genes),
+#      num_genes_complete=length(HOG_and_ext_blast_hits_genes),
+#      genes_HOG=as_tibble(exp_og_genes),
+#      genes_extend_hits=as_tibble(extended_blast_hits_genes)
             )
     # assign name based on name of the underlying expanded HOG
     ext_B_hits <- list(ext_B_hits)
@@ -392,7 +392,6 @@ for (i in expanded_HOGs$HOG) {
 #-> to be read and used in final_tea_computation.R script
 saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
-#####
 
 ### Adding OGs instead of BLAST hits ###
 message("Adding OGs instead of BLAST hits")
