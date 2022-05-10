@@ -14,7 +14,6 @@ package.check <- lapply(
   }
 )
 
-
 #load libraries
 library(readr)
 library(plyr)
@@ -27,9 +26,6 @@ library(reshape2)
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
-
-# define the number of additional best blast hits to include in the follow-up analyses
-add_blast_hits = snakemake@params[["add_blast_hits"]]
 
 # define the number of additional best blast hits to include in the follow-up analyses
 add_OGs = snakemake@params[["add_OGs"]]
@@ -63,7 +59,6 @@ compared_to_all_found <- as.character(snakemake@params[["compared_to_all_found"]
 #read-in Orthogroup-GeneCounts-table
 message("Reading in Orthogroup-GeneCounts-table:")
 OG.GC <- readr::read_tsv("orthofinder/final-results/Orthogroups/Orthogroups.GeneCount.tsv")
-
 
 #concatenate all BLAST seaches to one file and create parseable tibble with read_delim
 #could add that only BLAST searches of our species in this hypothesis are used - toDO for later
@@ -313,8 +308,7 @@ message("Creating .txt files for all expanded OGs with reciprocal best BLAST hit
 ## come-up with filter criteria to have better trees?
 ## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
 ####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
-dir.create(paste("tea/", num, "/exp_OGs_proteinnames/", sep = ""))
-#dir.create(paste("tea/", num, "/extended_BLAST_hits/", sep = ""))
+dir.create(paste("tea/", num, "/expansion_cp_target_OGs/", sep = ""))
 
 ## define custom class for extended blast hits
 # need a list object to hold all data of this class
@@ -322,12 +316,7 @@ extended_BLAST_hits <- list()
 
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df",
-                    num_genes_HOG="numeric",
-                    num_genes_extend="numeric",
-                    num_genes_complete="numeric",
-                    genes_HOG="tbl_df",
-                    genes_extend_hits="tbl_df")
+         slots=list(blast_table="tbl_df")
          )
 
 
@@ -336,10 +325,8 @@ for (i in expanded_HOGs$HOG) {
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
                                              qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
     sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
-    # add number of chosen additional best blast hits to size of HOG 
-    HOG_set_extended <- length(exp_og_genes) + add_blast_hits
     
-        # get gene name of last gene to be added based on number of add_blast_hits
+    # get gene name of last gene to be added based on number of add_blast_hits
     all_blast_genes <- na.omit(
        unique(
          c(
@@ -354,8 +341,7 @@ for (i in expanded_HOGs$HOG) {
     # set of all extended blast hits (based on threshold) - vector of gene names (ordered!)
     # also nice: don't need a conditional since `%>% head(n = add_blast_hits)` will work,
     # even if add_blast_hits param is > setdiff(all_blast_genes, exp_og_genes) 
-    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_blast_hits)
-    # length(extended_blast_hits_genes)
+    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
   
     # non redundant set of gene names of HOG + n additional blast hits as defined in the user threshold
     HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
@@ -368,17 +354,12 @@ for (i in expanded_HOGs$HOG) {
                                       filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
 
     write_lines(HOG_and_ext_blast_hits_genes,
-                paste("tea/", num, "/exp_OGs_proteinnames/", i, ".txt", sep = "")
+                paste("tea/", num, "/expansion_cp_target_OGs/", i, ".txt", sep = "")
     )
  
     # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
     ext_B_hits <- new("extended_BLAST_hits",
-      blast_table=HOG_and_ext_blast_hits_table,
-      num_genes_HOG=length(exp_og_genes),
-      num_genes_extend = length(extended_blast_hits_genes),
-      num_genes_complete=length(HOG_and_ext_blast_hits_genes),
-      genes_HOG=as_tibble(exp_og_genes),
-      genes_extend_hits=as_tibble(extended_blast_hits_genes)
+      blast_table=HOG_and_ext_blast_hits_table
             )
     # assign name based on name of the underlying expanded HOG
     ext_B_hits <- list(ext_B_hits)
@@ -392,7 +373,6 @@ for (i in expanded_HOGs$HOG) {
 #-> to be read and used in final_tea_computation.R script
 saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
-#####
 
 ### Adding OGs instead of BLAST hits ###
 message("Adding OGs instead of BLAST hits")
@@ -454,7 +434,6 @@ for (i in expanded_HOGs$HOG) {
       ungroup() %>%
       arrange(evalue, -bitscore, -pident)
      
-
     #first row will should correspond to self match - the OG itself
     #self_and_closest_ogs
 
@@ -521,14 +500,8 @@ for (i in expanded_HOGs$HOG) {
       cum_add_OG_analysis_list[[k+1]] <- unlist(c(cum_add_OG_analysis_list[k], cum_add_OG_analysis_list[k+1]))
     }
 
-    #lapply(cum_add_OG_analysis_list, length)
-    #print(i)
-    #print(cum_add_OG_analysis_list)
-    
-    
     #create directory/ies - for each HOG under "add_OGs_sets/id_lists/"
     dir.create(paste("tea/", num, "/add_OGs_sets/id_lists/", i, sep = ""))
-    #dir.create(paste("../tea/", num, "/add_OGs_sets/", i, sep = ""))    
     
     #iterate over cum. list and write cumulative sets into seperate files
     for (l in 1:length(cum_add_OG_analysis_list)) {
@@ -574,7 +547,6 @@ for (og in 1:summary_length) {
                      ) 
         )
     curr_set <- list(curr_set)
-    #names(curr_set) <- paste0(set)
   
     og_all_sets[set] <- curr_set
     names(og_all_sets)[set] <- paste0("set_", set)
@@ -595,13 +567,10 @@ for (og in 1:summary_length) {
 
 # save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
 saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_object/add_OG_analysis_object.RDS", sep = ""))
-#saveRDS(add_og_complete_object, paste("../tea/", num, "/add_OGs_sets/add_OG_analysis_object.RDS", sep = ""))
-
-
 
 # nested snakemake checkpoints are annoying at the moment 
 # quick fix - create empty addtional set_num files which we can ignore but nonetheless exist
-message("adding empty missing files - current dirty workaround to avoid nested snakemake checkpoints")
+message("adding empty missing files - current workaround to avoid nested snakemake checkpoints")
 
 #max_n_sets + 1 since user choice is the number of ADDITIONAL sets but we have ti remember the expanded OG itself (always set_num = 1)
 max_n_sets = add_OGs + 1
@@ -627,11 +596,10 @@ for (n in names(add_og_complete_object)) {
     
 }
 
-
 #####
 
 #### Lastly, create .check to know everything is done
-message("Creating .check - Expansions successfully computed for hypothesis ", num)
-exp_OGs_proteinnames.check <- "check"
-dir.create(paste("checks/tea/", num, "/", sep=""))
-write_file(exp_OGs_proteinnames.check, paste("checks/tea/", num, "/exp_OGs_proteinnames.check", sep = ""))
+#message("Creating .check - Expansions successfully computed for hypothesis ", num)
+#expansion_cp_target_OGs.check <- "check"
+#dir.create(paste("checks/tea/", num, "/", sep=""))
+#write_file(expansion_cp_target_OGs.check, paste("checks/tea/", num, "/expansion_cp_target_OGs.check", sep = ""))

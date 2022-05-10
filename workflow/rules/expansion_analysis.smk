@@ -25,7 +25,6 @@ checkpoint expansion:
         name = get_hypo_name,
         expansion = get_exp_species,
         comparison = get_com_species,
-        add_blast_hits = config["add_blast_hits"],
         add_OGs = config["add_OGs"],
         expansion_factor = get_expansion_factor,
         expansion_difference = get_expansion_difference,
@@ -35,78 +34,18 @@ checkpoint expansion:
         expanded_in_all_found = get_expanded_in_all_found,
         compared_to_all_found = get_compared_to_all_found,
     output:
-        directory("tea/{hypothesis}/exp_OGs_proteinnames/"),
-        directory("checks/tea/{hypothesis}/"),
-        directory("tea/{hypothesis}/expansion_tibble/"),
-        "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
+        #files describing the checkpoint-end needed wildcard "OG"
+        directory("tea/{hypothesis}/expansion_cp_target_OGs/"),
         #for additional OGs instead of BLAST hits
         directory("tea/{hypothesis}/add_OGs_sets/id_lists/"),
         "tea/{hypothesis}/add_OGs_object/add_OG_analysis_object.RDS",
+        directory("tea/{hypothesis}/expansion_tibble/"),
+        "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
     threads: 1
     conda:
         "../envs/expansion.yaml"
     script:
         "../scripts/expansion.R"
-
-
-
-rule fasta_extraction:
-    input:
-        protein_lists = "tea/{hypothesis}/exp_OGs_proteinnames/{OG}.txt",
-        hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
-    output:
-        "tea/{hypothesis}/fa_records/{OG}.fa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "faSomeRecords {input.hypothesis_fasta} {input.protein_lists} {output}"
-
-
-rule muscle_MSA:
-    input:
-        "tea/{hypothesis}/fa_records/{OG}.fa"
-    output:
-        "tea/{hypothesis}/muscle/{OG}.afa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "muscle -in {input} -out {output}"
-
-
-rule trimAl:
-    input:
-        "tea/{hypothesis}/muscle/{OG}.afa"
-    output:
-        "tea/{hypothesis}/trimAl/{OG}.afa"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "trimal -automated1 -in {input} -out {output}"
-
-
-rule FastTree:
-    input:
-        "tea/{hypothesis}/trimAl/{OG}.afa"
-    output:
-        "tea/{hypothesis}/trees/{OG}.tree"
-    threads: 1
-    conda:
-        "../envs/expansion.yaml"
-    shell:
-        "FastTree {input} > {output}"
-
-
-rule expansion_checkpoint_finish:
-    input:
-        solve_expansion
-    output:
-        "checks/expansion/{hypothesis}_finished.txt",
-    shell:
-        "touch {output}"
-
 
 
 #########
@@ -119,7 +58,7 @@ rule expansion_checkpoint_finish:
 #this way, I don't have to worry about evaluating whether or not the user chosen number of addtional OGs were able to be added (for more details see expansion.R script)
 #I stick to this trick inside the following rules checkpoint internal rules - if empty file then the biotools aren't used but rather an empty file is created
 #in the final_tea script I simply ignore such cases
-rule fasta_extraction_add_OG_analysis:
+rule fasta_extraction:
     input:
         protein_lists = "tea/{hypothesis}/add_OGs_sets/id_lists/{OG}/add_OGs_set_num-{set_num}.txt",
         hypothesis_fasta = "tea/{hypothesis}/ref_fasta/hypothesis_{hypothesis}_species.fa",
@@ -138,9 +77,8 @@ rule fasta_extraction_add_OG_analysis:
         """
 
 
-rule muscle_MSA_add_OG_analysis:
+rule muscle_MSA:
     input:
-#        protein_lists = "tea/{hypothesis}/add_OGs_sets/{OG}/add_OGs_set_num-{set_num}.txt",
         fasta_files = "tea/{hypothesis}/add_OGs_sets/fa_records/{OG}/add_OGs_set_num-{set_num}.fa.add"
     output:
         "tea/{hypothesis}/add_OGs_sets/muscle/{OG}/add_OGs_set_num-{set_num}.afa.add"
@@ -157,7 +95,7 @@ rule muscle_MSA_add_OG_analysis:
         """
 
 
-rule trimAl_add_OG_analysis:
+rule trimAl:
     input:
         "tea/{hypothesis}/add_OGs_sets/muscle/{OG}/add_OGs_set_num-{set_num}.afa.add"
     output:
@@ -174,7 +112,7 @@ rule trimAl_add_OG_analysis:
         fi
         """
 
-rule FastTree_add_OG_analysis:
+rule FastTree:
     input:
         "tea/{hypothesis}/add_OGs_sets/trimAl/{OG}/add_OGs_set_num-{set_num}.afa.add"
     output:
@@ -192,20 +130,10 @@ rule FastTree_add_OG_analysis:
         """
 
 
-rule expansion_checkpoint_finish_add_OG_analysis:
+rule expansion_checkpoint_finish:
     input:
         solve_expansion_add_OG_analysis,
     output:
         "checks/expansion/{hypothesis}_finished_add_OG_analysis.txt",
     shell:
         "touch {output}"
-
-
-#rule merge_ultimate:
-#    input:
-#        expand("checks/expansion/{hypothesis}_finished.txt", hypothesis=HYPOTHESES),
-#        expand("checks/expansion/{hypothesis}_finished_add_OG_analysis.txt", hypothesis=HYPOTHESES),
-#    output:
-#        "works.txt"
-#    shell:
-#        "touch {output}"

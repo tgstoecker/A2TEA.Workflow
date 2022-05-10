@@ -153,20 +153,13 @@ Doing this, provides 4 seperate objects in your R environment containing all res
 - HYPOTHESES.a2tea - List object with one S4 object per hypothesis. 
 Each S4 object contains several layers of nested information.   
 E.g. `HYPOTHESES.a2tea$hypothesis_2@expanded_OGs$N0.HOG0001225` would refer to a specific expanded orthologous group and S4 data object that contains:
-  - genes (orthologous group genes + extended BLAST hits)
-  - genes_HOG (only genes in orthologous group - orthofinder analysis)
-  - genes_extend_hits (only genes that are extended blast hits)
-  - num_genes_complete (number of all genes - orthologous group + extended BLAST hits)
-  - num_genes_HOG (# genes - only orthologous group)
-  - num_genes_extend (number of extended BLAST hits)
-  - fasta_files (peptide sequences for all genes - HOG + extended BLAST hits)
   - blast_table (complete blast results for HOG genes & extended BLAST hits)
-  - msa (multiple sequence alignment - orthologous group + extended BLAST hits)
-  - tree (phylogenetic tree - orthologous group + extended BLAST hits)
+  - add_OG_analysis (includes msa, tree and gene info for expanded OG and additional OGs based on best BLAST hits)
 See the class definitions below for more details.  
 - HOG_level_list - List object with one dataframe/tibble per hypothesis. Info includes Orthologous group, # genes per species, boolean expansion info, # of significant diff. exp. genes and more. Last n list element is a non-redundant superset of all species analyzed over all formulated hypothesis. This makes it easy to create a comparison set e.g. conserved OGs of all species to which the hypothesis then can be compared.  
 - HOG_DE.a2tea - Dataframe/Tibble with DESeq2 results for all genes + additional columns  
 - A2TEA.fa.seqs - Non-redundant list object containg corresponding AA fasta sequences of all genes/transcripts in the final analysis. (includes those of exp. OGs + those in additonal BLAST hits & additional OGs based on user chosen parameters).
+- SFA/SFA_OG_level - gene/transcript level tables that contains functional predicitons (human readable & GO terms) - see AHRD info
 
 You can use the the A2TEA_finished.RData output in your own R instance or use our WebApp (!name) which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets.
 
@@ -179,15 +172,7 @@ library(treeio)
 
 # define necessary classes
 # class for the expanded_OG - containing all different types of data we have on it
-setClass("expanded_OG", slots=list(genes="spec_tbl_df",
-                                   blast_table="tbl_df",
-                                   num_genes_HOG="numeric",
-                                   num_genes_extend="numeric",
-                                   num_genes_complete="numeric",
-                                   genes_HOG="tbl_df",
-                                   genes_extend_hits="tbl_df",
-                                   msa="AAMultipleAlignment", 
-                                   tree="phylo",
+setClass("expanded_OG", slots=list(blast_table="tbl_df",
                                    add_OG_analysis="list"))
 
 # class for the hypothese
@@ -198,25 +183,9 @@ setClass("hypothesis", slots=list(description="character",
                                   expanded_OGs="list",
                                   species_tree="phylo"))
 
-# class for extended BLAST hits info
-setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df",
-                    num_genes_HOG="numeric",
-                    num_genes_extend="numeric",
-                    num_genes_complete="numeric",
-                    genes_HOG="tbl_df",
-                    genes_extend_hits="tbl_df")
-         )
-
-
 #class for adding OGs analysis
-setClass("add_OG_analysis",
-         slots=list(add_OG_analysis="list")
-         )
-
-#another class for adding OGs analysis
 setClass("add_OG_set",
-         slots=list(genes="tbl_df",
+         slots=list(genes="spec_tbl_df",
                     msa="AAStringSet", 
                     tree="phylo"
                    )

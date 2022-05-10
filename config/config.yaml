@@ -72,8 +72,8 @@ STAR: >
 ##### case 3. you don't want to our filter & either want to use the whole or a custom subset of the transcriptome -> auto_isoform_filtering: "NO" & transcript_level_quantification: "YES"
 ###### case 3 continued: this is the hands-on case in which you the USER are mostly responsible; again, both featureCounts/tximport(kallisto) will produce count tables with the transcript names as found in the gtf;
 ###### case 3 continued: these transcript names have to match the headers in the peptide fasta files
-auto_isoform_filtering: "NO"
-transcript_level_quantification: "YES"
+auto_isoform_filtering: "YES"
+transcript_level_quantification: "NO"
 
 
 ## use chunks for blasting?
@@ -89,10 +89,6 @@ chunks_number: 2
 
 
 ## Tree visualizations often are more informative if we use more than an individual (H)OG
-
-# define the max number of additional best blast hits to include in the follow-up analyses
-# tree visualizations often are more informative if we use more than an individual (H)OG
-add_blast_hits: 50
 
 # the trees can be more informative if one looks at additional complete OGs and not just single best additional matches
 # define the max number of additional OGs to include in the follow-up analyses

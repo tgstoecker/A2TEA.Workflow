@@ -5,7 +5,6 @@
 
 def get_hypo_num(wildcards):
 #    """Get compared_to entries from hypotheses(.tsv) for each hypothesis. """
-#    num = hypotheses.loc[ (wildcards.hypothesis), 'hypothesis']
     num = str(wildcards.hypothesis)
     return num
 
@@ -103,16 +102,12 @@ def get_compared_to_all_found(wildcards):
 
 #SOLVING expansion checkpoint HERE!
 #after rule FastTree in expansion_analysis.smk
-def solve_expansion(wildcards):
-    checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
-    file_names = expand("tea/{hypothesis}/trees/{OG}.tree", hypothesis=wildcards.hypothesis, OG=glob_wildcards(os.path.join(checkpoint_output, "{OG}.txt")).OG)
-    return file_names
-
 
 #since wildcard constrainsts sometimes clash with glob wildcards - see e.g. https://github.com/snakemake/snakemake/issues/482,
 #my hacky workaround is to add ".add" to all filenames related to the additionalOGs analysis
 #python list(range()) works fine; need to add +2 since non-inclusive; e.g. user wants 2 additional OGs -> list(range(1, 4)) -> [1, 2, 3]
 def solve_expansion_add_OG_analysis(wildcards):
+    #.output[0] since top most output in checkpoint is correct dir!
     checkpoint_output = checkpoints.expansion.get(**wildcards).output[0]
     file_names = expand("tea/{hypothesis}/add_OGs_sets/trees/{OG}/add_OGs_set_num-{set_num}.tree.add", 
                         hypothesis=wildcards.hypothesis, 
