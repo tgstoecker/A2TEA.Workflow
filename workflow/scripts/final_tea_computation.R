@@ -50,7 +50,6 @@ library(tidyverse)
 library(ggtree)
 library(Biostrings)
 library(seqinr)
-#library(VennDiagram)
 library(UpSetR)
 library(cowplot)
 library(ggplotify)
@@ -180,25 +179,13 @@ hypotheses$min_expansion_factor <- as.numeric(hypotheses$min_expansion_factor)
 # each object has list of exp. OGs
 # iterate over list of hyptheses and associate expansions, fasta, msa and trees
 
-
 # first goal - hypothesis object with hypothesis and all exp.HOGs
 # parsing of hyptheses.tsv
 hypotheses$hypothesis
 
-
 # define three classes
 # class for the expanded_OG - containing all different types of data we have on it
-setClass("expanded_OG", slots=list(genes="spec_tbl_df",
-                                   blast_table="tbl_df",
-#                                   nrow_table="numeric",
-#                                   num_genes_HOG="numeric",
-#                                   num_genes_extend="numeric",
-#                                   num_genes_complete="numeric",
-#                                   genes_HOG="tbl_df",
-#                                   genes_extend_hits="tbl_df",
-#                                   fasta_files="list", 
-#                                   msa="AAStringSet", 
-#                                   tree="phylo",
+setClass("expanded_OG", slots=list(blast_table="tbl_df",
                                    add_OG_analysis="list"))
 
 
@@ -210,33 +197,26 @@ setClass("expanded_OG", slots=list(genes="spec_tbl_df",
 #had trouble getting this to work; thus solved differently
 # -> seperate list object "Ortho_intersect_plots" hypothesis specific access via index
 setClass("hypothesis", 
-#         prototype=prototype(ortho_intersect_plot=structure(list(), class="gList")),
          slots=list(description="character", 
                                   number="character",
                                   expanded_in ="character", 
                                   compared_to="character", 
                                   expanded_OGs="list",
                                   species_tree="phylo"))
-#                                  ortho_intersect_plot="gg"))
 
 # class for extended BLAST hits info
 setClass("extended_BLAST_hits", 
          slots=list(blast_table="tbl_df")
-#                    num_genes_HOG="numeric",
-#                    num_genes_extend="numeric",
-#                    num_genes_complete="numeric",
-#                    genes_HOG="tbl_df",
-#                    genes_extend_hits="tbl_df")
          )
 
 #class for adding OGs analysis
 setClass("add_OG_analysis",
          slots=list(add_OG_analysis="list")
          )
+
 #another class for adding OGs analysis
 setClass("add_OG_set",
-         slots=list(genes="tbl_df",
-                #    fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
+         slots=list(genes="spec_tbl_df",
                     msa="AAStringSet", 
                     tree="phylo"
                    )
@@ -274,10 +254,11 @@ for (hypothesis in hypotheses$hypothesis) {
     # create empty list object for hypothesis
     assign(paste0("hypothesis_", hypothesis), list())
     # assign list of names
-    expanded_OGs <- list.files(path = paste0("tea/", hypothesis, "/exp_OGs_proteinnames/"), 
+    expanded_OGs <- list.files(path = paste0("tea/", hypothesis, "/expansion_cp_target_OGs/"), 
                                pattern = "*", 
                                full.names=FALSE)
     expanded_OGs_short <- str_sub(expanded_OGs, end=-5)
+
     # assign or subset the orthofinder species_tree based on the current hypothesis
     speciesTree <- ape::keep.tip(read.tree("orthofinder/final-results/Species_Tree/SpeciesTree_rooted_node_labels.txt"), 
                                  c(unlist(str_split(hypotheses$expanded_in[hypothesis], ";")), 
@@ -287,16 +268,8 @@ for (hypothesis in hypotheses$hypothesis) {
 
     for (exp_OG in expanded_OGs_short) {
         test <- new("expanded_OG", 
-             genes=read_table(paste0("tea/", hypothesis, "/exp_OGs_proteinnames/", exp_OG, ".txt"), col_names = FALSE),
+             #genes=read_table(paste0("tea/", hypothesis, "/add_OGs_sets/id_lists/", exp_OG, "/add_OGs_set_num-1.txt"), col_names = FALSE),
              blast_table=extended_BLAST_hits[[exp_OG]]@blast_table,
-#             num_genes_HOG=extended_BLAST_hits[[exp_OG]]@num_genes_HOG,
-#             num_genes_extend=extended_BLAST_hits[[exp_OG]]@num_genes_extend,
-#             num_genes_complete=extended_BLAST_hits[[exp_OG]]@num_genes_complete,
-#             genes_HOG=extended_BLAST_hits[[exp_OG]]@genes_HOG,
-#             genes_extend_hits=extended_BLAST_hits[[exp_OG]]@genes_extend_hits,
-#             fasta_files=read.fasta(paste0("tea/", hypothesis, "/fa_records/", exp_OG,".fa"), seqtype = "AA", as.string = TRUE), 
-#             msa=readAAStringSet(paste0("tea/", hypothesis, "/muscle/", exp_OG, ".afa")), 
-#             tree=read.tree(paste0("tea/", hypothesis, "/trees/", exp_OG, ".tree")),
              #here we add the complete add_OG analysis results (x sets per OG) to the original object
              add_OG_analysis=add_OG_analysis[[exp_OG]]@add_OG_analysis)
 
@@ -315,8 +288,7 @@ for (hypothesis in hypotheses$hypothesis) {
                   expanded_in=unlist(str_split(hypotheses$expanded_in[hypothesis], ";")),
                   compared_to=unlist(str_split(hypotheses$compared_to[hypothesis], ";")), 
                   expanded_OGs=t,
-                  species_tree=speciesTree))#,
-#                  ortho_intersect_plot=NULL))
+                  species_tree=speciesTree))
 }
 
 
@@ -347,17 +319,6 @@ for (hypothesis in 1:n_hypotheses) {
     
   exp_OGs <- names(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs)
     
-  #extended hits analysis
-#  for (og in exp_OGs) {
-#    A2TEA.fa.seqs <- c(A2TEA.fa.seqs, read.fasta(paste0("tea/", 
-#                                hypothesis, 
-#                                "/fa_records/", 
-#                                og,
-#                                ".fa"), 
-#                         seqtype = "AA", 
-#                         as.string = TRUE))
-#  }  
-
   #add OGs analysis
   for (og in exp_OGs) {
     
@@ -387,7 +348,6 @@ for (i in 1:length(A2TEA.fa.seqs)) {
     
   names(A2TEA.fa.seqs)[i] <- attr(A2TEA.fa.seqs[[i]], which = "name")
 }
-
 
 
 ## Creation of HOG level tables 
@@ -620,7 +580,6 @@ for (j in 1:length(SFA)) {
   #removal of all singletons? - for now no
   SFA[[j]] <- left_join(SFA[[j]], HOG_file_long, by = c("Protein-Accession" = "gene")) %>% 
     relocate(HOG, .before = "Protein-Accession") #%>%
-#    filter(`HOG` != "NA")
   }
 
 
