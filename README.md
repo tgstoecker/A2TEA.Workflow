@@ -179,15 +179,7 @@ library(treeio)
 
 # define necessary classes
 # class for the expanded_OG - containing all different types of data we have on it
-setClass("expanded_OG", slots=list(genes="spec_tbl_df",
-                                   blast_table="tbl_df",
-                                   num_genes_HOG="numeric",
-                                   num_genes_extend="numeric",
-                                   num_genes_complete="numeric",
-                                   genes_HOG="tbl_df",
-                                   genes_extend_hits="tbl_df",
-                                   msa="AAMultipleAlignment", 
-                                   tree="phylo",
+setClass("expanded_OG", slots=list(blast_table="tbl_df",
                                    add_OG_analysis="list"))
 
 # class for the hypothese
@@ -198,25 +190,9 @@ setClass("hypothesis", slots=list(description="character",
                                   expanded_OGs="list",
                                   species_tree="phylo"))
 
-# class for extended BLAST hits info
-setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df",
-                    num_genes_HOG="numeric",
-                    num_genes_extend="numeric",
-                    num_genes_complete="numeric",
-                    genes_HOG="tbl_df",
-                    genes_extend_hits="tbl_df")
-         )
-
-
 #class for adding OGs analysis
-setClass("add_OG_analysis",
-         slots=list(add_OG_analysis="list")
-         )
-
-#another class for adding OGs analysis
 setClass("add_OG_set",
-         slots=list(genes="tbl_df",
+         slots=list(genes="spec_tbl_df",
                     msa="AAStringSet", 
                     tree="phylo"
                    )
