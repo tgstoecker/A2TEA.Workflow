@@ -2,7 +2,7 @@
 #we check if packages are installed first
 
 # list of cran packages
-cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble", "reshape2")
+cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble", "reshape2", "foreach", "doParallel")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
@@ -22,10 +22,15 @@ library(stringr)
 library(tidyr)
 library(tibble)
 library(reshape2)
+library(foreach)
+library(doParallel)
 
 message("Acquiring hypothesis variables:")
 num = snakemake@params[["num"]]
 name = snakemake@params[["name"]]
+
+#threads info for parallel FORK cluster
+threads = as.numeric(snakemake@threads)
 
 # define the number of additional best blast hits to include in the follow-up analyses
 add_OGs = snakemake@params[["add_OGs"]]
@@ -222,6 +227,7 @@ for (e in expanded_in) {
        
 }
 
+print("it's fine until here! - 1")
 
 # then we perform summing over all exp_counter_ columns based on user choices
 # at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
@@ -239,12 +245,15 @@ HOG_tibble <- HOG_tibble %>%
     purrr::pmap_dbl(., ~ sum(c(...) >= Nmin_compared_to))
   )
 
+print("it's fine until here! - 2")
+
 # lastly, retain rows/HOGs that pass x cutoff = number of expanded species
 # & drop unnecessary columns
 HOG_tibble <- HOG_tibble %>%
   filter(pass >= Nmin_expanded_in) %>%
   select(-contains("exp_counter_"), -pass)
 
+print("it's fine until here! - 3")
 
 # additional optional filter1 - expanded_in gene family complete criterium
 if (expanded_in_all_found == "YES") {
@@ -260,6 +269,7 @@ if (expanded_in_all_found == "YES") {
   select(-expanded_in_pass)
 }
 
+print("it's fine until here! - 4")
 
 # additional optional filter2 - compared_to gene family complete criterium
 if (compared_to_all_found == "YES") {
@@ -278,136 +288,216 @@ if (compared_to_all_found == "YES") {
 # new object: expanded_HOGs
 expanded_HOGs <- HOG_tibble
 
+print("it's fine until here! - 5")
 
 # based on filtering criteria create per hypothesis table with:
 # all HOGs and gene counts + additional column expansion (yes/no)
 # this is later used in the creation of final tea outputs to create a HOG level table per hypothesis
 
-#create expansion vector with length of expandsion HOGs
-expansion <- replicate(nrow(expanded_HOGs), "yes")
-expansion_tibble <- full_join(HOG_tibble_complete, tibble::add_column(expanded_HOGs, expansion, .after = "HOG"), 
+#need to check if there is at least one expanded (H)OG
+#if not replace_na woud throw error since we are changing types
+#all of the downstream stuff in this script only makes sense if we in fact do have expanded groups
+if (nrow(expanded_HOGs) > 0) {
+
+  #create expansion vector with length of expandsion HOGs
+  expansion <- replicate(nrow(expanded_HOGs), "yes")
+  print(expansion)
+  expansion_tibble <- full_join(HOG_tibble_complete, tibble::add_column(expanded_HOGs, expansion, .after = "HOG"), 
                        by = c("HOG"), suffix = c("", ".remove")) %>% 
                            tidyr::replace_na(list(expansion = "no")) %>%
                                select(-c(ends_with(".remove"))) 
 
-dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
-saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
+  dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
+  saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
+
+  print("it's fine until here! - 6")
+
+  head(expansion_tibble)
+
+  str(expansion_tibble$expansion)
+
+  head(expansion_tibble$expansion)
 
 
-# create genes column in ph_orthogroups file
-# row merge? - no unite function, really handy ;D
-ref_ph_orthogroups <- ph_orthogroups %>% tidyr::unite("genes", all_of(all_species), sep =", ", na.rm = TRUE, remove = TRUE)
+  # create genes column in ph_orthogroups file
+  # row merge? - no unite function, really handy ;D
+  ref_ph_orthogroups <- ph_orthogroups %>% tidyr::unite("genes", all_of(all_species), sep =", ", na.rm = TRUE, remove = TRUE)
 
 
-message("Creating .txt files for all expanded OGs with reciprocal best BLAST hits of species in respective hypothesis:")
+  message("Creating .txt files for all expanded OGs with reciprocal best BLAST hits of species in respective hypothesis:")
 
-#for each gene/protein name in an interesting OG do (is there a file just with names per OG?):
-#check "all_BLAST_reformatted" for all entries including these names and create new dataframe/tibble
-# then, perform filtering and retain certain set of genes/proteins per OG analysis
-#  then, create .txt file per OG with these gene names
-## come-up with filter criteria to have better trees?
-## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
-####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
-dir.create(paste("tea/", num, "/expansion_cp_target_OGs/", sep = ""))
+  #for each gene/protein name in an interesting OG do (is there a file just with names per OG?):
+  #check "all_BLAST_reformatted" for all entries including these names and create new dataframe/tibble
+  # then, perform filtering and retain certain set of genes/proteins per OG analysis
+  #  then, create .txt file per OG with these gene names
+  ## come-up with filter criteria to have better trees?
+  ## I could of course just keep everything and save the evalues, etc.; well, problem for later.. ;D
+  ####> output for snakemake? what about inidividual OG txt files, because starting here parallelisation can really impact
+  dir.create(paste("tea/", num, "/expansion_cp_target_OGs/", sep = ""))
 
-## define custom class for extended blast hits
-# need a list object to hold all data of this class
-extended_BLAST_hits <- list()
+  ## define custom class for extended blast hits
+  # need a list object to hold all data of this class
+#  extended_BLAST_hits <- list()
 
-# class for extended BLAST hits info
-setClass("extended_BLAST_hits", 
-         slots=list(blast_table="tbl_df")
-         )
+  # class for extended BLAST hits info
+#  setClass("extended_BLAST_hits", 
+#           slots=list(blast_table="tbl_df")
+#          )
 
 
-for (i in expanded_HOGs$HOG) {
-    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
-    BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
-                                             qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
-    sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
+#tt  for (i in expanded_HOGs$HOG) {
+#    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
+#    BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
+#                                             qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
+#    sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
     
     # get gene name of last gene to be added based on number of add_blast_hits
-    all_blast_genes <- na.omit(
-       unique(
-         c(
-           rbind(
-             sorted_BLAST_hits_exp_og_genes$qseqid_name, 
-             sorted_BLAST_hits_exp_og_genes$sseqid_name
-           )
-         )
-       )
-     ) 
+#    all_blast_genes <- na.omit(
+#       unique(
+#         c(
+#           rbind(
+#             sorted_BLAST_hits_exp_og_genes$qseqid_name, 
+#             sorted_BLAST_hits_exp_og_genes$sseqid_name
+#           )
+#         )
+#       )
+#     ) 
     
     # set of all extended blast hits (based on threshold) - vector of gene names (ordered!)
     # also nice: don't need a conditional since `%>% head(n = add_blast_hits)` will work,
     # even if add_blast_hits param is > setdiff(all_blast_genes, exp_og_genes) 
-    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
+#    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
   
     # non redundant set of gene names of HOG + n additional blast hits as defined in the user threshold
-    HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
+#    HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
 
     #create subset of sorted_BLAST_hits_exp_og_genes table in which only:
     # exp_og_genes & extended_blast_hits_genes are allowed to appear
     # this way we have cutoff for the nth best blast hit/gene but also keep all secondary hits
-    HOG_and_ext_blast_hits_table <- sorted_BLAST_hits_exp_og_genes %>%
-                                      filter(qseqid_name %in% HOG_and_ext_blast_hits_genes) %>%
-                                      filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
+#    HOG_and_ext_blast_hits_table <- sorted_BLAST_hits_exp_og_genes %>%
+#                                      filter(qseqid_name %in% HOG_and_ext_blast_hits_genes) %>%
+#                                      filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
 
-    write_lines(HOG_and_ext_blast_hits_genes,
-                paste("tea/", num, "/expansion_cp_target_OGs/", i, ".txt", sep = "")
-    )
+#tt    write_lines("",
+#tt                paste("tea/", num, "/expansion_cp_target_OGs/", i, ".txt", sep = "")
+#tt    )
  
     # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
-    ext_B_hits <- new("extended_BLAST_hits",
-      blast_table=HOG_and_ext_blast_hits_table
-            )
+#    ext_B_hits <- new("extended_BLAST_hits",
+#      blast_table=HOG_and_ext_blast_hits_table
+#            )
     # assign name based on name of the underlying expanded HOG
-    ext_B_hits <- list(ext_B_hits)
-    names(ext_B_hits) <- paste0(i)
+#    ext_B_hits <- list(ext_B_hits)
+#    names(ext_B_hits) <- paste0(i)
     
     # append to list object
-    extended_BLAST_hits <- c(extended_BLAST_hits, ext_B_hits)
-}
+#    extended_BLAST_hits <- c(extended_BLAST_hits, ext_B_hits)
+  
+#tt  }
 
-# save extended BLAST hits to hypothesis specific ("num") RDS file 
-#-> to be read and used in final_tea_computation.R script
-saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
-
-
-### Adding OGs instead of BLAST hits ###
-message("Adding OGs instead of BLAST hits")
-
-#transforming ph_orthogroups to long format - nice & neat lookup table ;D
-long_ph_orthogroups <- ph_orthogroups %>%
-  select(-OG, -`Gene Tree Parent Clade`) %>%
-  melt(., id.vars = c("HOG")) %>%
-  rename(species=variable, id=value) %>%
-  mutate(species = as.character(species)) %>%
-  separate_rows(id, sep = ", ") %>%
-  drop_na()
+  # save extended BLAST hits to hypothesis specific ("num") RDS file 
+  #-> to be read and used in final_tea_computation.R script
+#  saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
 
-#create final summary list - per OG (name) the cumulative steps of additional OGs
-summary_add_OG_analysis_list <- vector(mode = "list", length = length(expanded_HOGs$HOG))
+  ### Adding OGs instead of BLAST hits ###
+  message("Adding OGs instead of BLAST hits")
 
-#create classes for nested S3-list structure holding all additional OG sets per OG analysis
-setClass("add_OG_analysis", 
-         slots=list(add_OG_analysis="list")
-         )
+  #transforming ph_orthogroups to long format - nice & neat lookup table ;D
+  long_ph_orthogroups <- ph_orthogroups %>%
+    select(-OG, -`Gene Tree Parent Clade`) %>%
+    melt(., id.vars = c("HOG")) %>%
+    rename(species=variable, id=value) %>%
+    mutate(species = as.character(species)) %>%
+    separate_rows(id, sep = ", ") %>%
+    drop_na()
 
-setClass("add_OG_set", 
-         slots=list(genes="tbl_df")
-         )
+
+  print("it's fine until here! - 7")
+
+  #create final summary list - per OG (name) the cumulative steps of additional OGs
+  summary_add_OG_analysis_list <- vector(mode = "list", length = length(expanded_HOGs$HOG))
+
+  length(summary_add_OG_analysis_list)
+
+  #create classes for nested S3-list structure holding all additional OG sets per OG analysis
+  setClass("add_OG_analysis", 
+           slots=list(add_OG_analysis="list")
+          )
+
+  setClass("add_OG_set", 
+           slots=list(genes="tbl_df")
+          )
 
 
-dir.create(paste("tea/", num, "/add_OGs_sets/id_lists/", sep = ""))
+  dir.create(paste("tea/", num, "/add_OGs_sets/id_lists/", sep = ""))
 
-#similarly to the additional BLAST hits approach we iterate over the expanded OGs
-loop_index <- 0
-for (i in expanded_HOGs$HOG) {
-    
-    #not pretty but was quick solution
-    loop_index <- loop_index + 1
+  #removing all big files to minimize mem impact of FORK cluster
+  rm(datalist)
+  rm(all_BLAST)
+
+  #### FORK cluster since I expect a Linux machine
+  #### autostop=TRUE since I don't want to handle this manually
+  #with my.cluster & stopCluster(my.cluster) I could check the status
+
+  setup_cluster <- function(){
+
+    #define cluster
+    parallel::detectCores()
+    n.cores <- threads
+    n.cores
+
+    #create the cluster - FORK because this way libraries, variables etc. are copied to the clusters!
+    my.cluster <- parallel::makeForkCluster(
+      n.cores, 
+      type = "FORK",
+      autostop=TRUE
+    )
+   
+    #check cluster definition (optional)
+    print(my.cluster)
+
+    #register it to be used by %dopar%
+    doParallel::registerDoParallel(cl = my.cluster)
+
+    #check if it is registered (optional)
+    print(
+      foreach::getDoParRegistered()
+    )
+    #how many workers are available? (optional)
+    print(
+      foreach::getDoParWorkers()
+    )
+
+  }
+
+  #function to completely remove a fork cluster
+  burn_socks <- function(x){
+    close.connection(getConnection(x))
+  }
+
+  #function to truly get rid of old Cluster/sockets
+  rm_cluster <- function(){
+    stopImplicitCluster()
+
+    connections <- showConnections(all = FALSE) 
+    socket_connections <- as.data.frame(connections) %>%
+      filter(class == "sockconn") %>%
+      rownames()
+
+    message("Removing all unwanted FORK connections - purging closed cluster sockets")
+    message("This will kill zombie proesses and free up RAM")
+
+    lapply(X = socket_connections, 
+           FUN = burn_socks)
+
+  }
+
+  #setup & start FORK cluster
+  setup_cluster()
+
+  #we iterate over the expanded OGs
+  pre_summary_add_OG_analysis_list <- foreach(i = expanded_HOGs$HOG) %dopar% {
     
     exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
     BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
@@ -513,69 +603,82 @@ for (i in expanded_HOGs$HOG) {
     }
 
     #append current cum. list to summary list & name element after OG
-    summary_add_OG_analysis_list[[loop_index]] <- cum_add_OG_analysis_list
-    names(summary_add_OG_analysis_list)[loop_index] <- i
+    #actually we need to do this again and this is redundant;toDo
+    names(cum_add_OG_analysis_list) <- i
+    return(cum_add_OG_analysis_list)
     
-}
-
-
-## in this final step we use the summary list to create S3-list nest structure which contains all info 
-## of the summary but in the format we will embed in the final results object as part of the final_tea computation
-
-#length of add OGs analysis summary list
-summary_length <- length(summary_add_OG_analysis_list)
-
-#create empty list of length of the summary list
-add_og_complete_object <- vector(mode = "list", length = summary_length)
-
-#iterate over all OGs in summary list
-for (og in 1:summary_length) {
- 
-  #amount of sets for current OG - (necessary since less addtional OGs than max wished by user is possible)
-  curr_og_n_sets <- length(summary_add_OG_analysis_list[[og]])
-    
-  #empty list with n elements = n sets for currently analyzed OG
-  og_all_sets <- vector(mode = "list", length = curr_og_n_sets)
-    
-  for (set in 1:curr_og_n_sets) {
-
-    curr_set <- new("add_OG_set",
-               genes=as_tibble(
-                       unlist(
-                         summary_add_OG_analysis_list[[og]][set],
-                       )  
-                     ) 
-        )
-    curr_set <- list(curr_set)
-  
-    og_all_sets[set] <- curr_set
-    names(og_all_sets)[set] <- paste0("set_", set)
-      
   }
-    
-  curr_add_og <- new("add_OG_analysis",
-                     add_OG_analysis=og_all_sets
-                     )
 
-  curr_add_og <- list(curr_add_og) 
+  #after cluster is done - remove it
+  rm_cluster()
+
+  #some final formatting
+  for (i in 1:length(pre_summary_add_OG_analysis_list)) {
+    names(pre_summary_add_OG_analysis_list[[i]]) <- NULL
+  }
+
+  names(pre_summary_add_OG_analysis_list) <- expanded_HOGs$HOG
+
+  summary_add_OG_analysis_list <- pre_summary_add_OG_analysis_list
+
+
+
+  ## in this final step we use the summary list to create S3-list nest structure which contains all info 
+  ## of the summary but in the format we will embed in the final results object as part of the final_tea computation
+
+  #length of add OGs analysis summary list
+  summary_length <- length(summary_add_OG_analysis_list)
+
+  #create empty list of length of the summary list
+  add_og_complete_object <- vector(mode = "list", length = summary_length)
+
+  #iterate over all OGs in summary list
+  for (og in 1:summary_length) {
  
-  add_og_complete_object[og] <- curr_add_og
+    #amount of sets for current OG - (necessary since less addtional OGs than max wished by user is possible)
+    curr_og_n_sets <- length(summary_add_OG_analysis_list[[og]])
+    
+    #empty list with n elements = n sets for currently analyzed OG
+    og_all_sets <- vector(mode = "list", length = curr_og_n_sets)
+    
+    for (set in 1:curr_og_n_sets) {
 
-  names(add_og_complete_object)[og]  <- names(summary_add_OG_analysis_list[og])
-}
+      curr_set <- new("add_OG_set",
+                      genes=as_tibble(
+                        unlist(
+                          summary_add_OG_analysis_list[[og]][set],
+                        )  
+                      ) 
+                  )
+      curr_set <- list(curr_set)
+  
+      og_all_sets[set] <- curr_set
+      names(og_all_sets)[set] <- paste0("set_", set)
+      
+    }
+    
+    curr_add_og <- new("add_OG_analysis",
+                       add_OG_analysis=og_all_sets
+                      )
 
+    curr_add_og <- list(curr_add_og) 
+ 
+    add_og_complete_object[og] <- curr_add_og
 
-# save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
-saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_object/add_OG_analysis_object.RDS", sep = ""))
+    names(add_og_complete_object)[og]  <- names(summary_add_OG_analysis_list[og])
+  }
 
-# nested snakemake checkpoints are annoying at the moment 
-# quick fix - create empty addtional set_num files which we can ignore but nonetheless exist
-message("adding empty missing files - current workaround to avoid nested snakemake checkpoints")
+  # save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
+  saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_object/add_OG_analysis_object.RDS", sep = ""))
 
-#max_n_sets + 1 since user choice is the number of ADDITIONAL sets but we have ti remember the expanded OG itself (always set_num = 1)
-max_n_sets = add_OGs + 1
+  # nested snakemake checkpoints are annoying at the moment 
+  # quick fix - create empty addtional set_num files which we can ignore but nonetheless exist
+  message("adding empty missing files - current workaround to avoid nested snakemake checkpoints")
 
-for (n in names(add_og_complete_object)) {
+  #max_n_sets + 1 since user choice is the number of ADDITIONAL sets but we have ti remember the expanded OG itself (always set_num = 1)
+  max_n_sets = add_OGs + 1
+
+  for (n in names(add_og_complete_object)) {
     
     og_n_sets <- length(
          list.files(path = paste0("tea/", num, "/add_OGs_sets/id_lists/", n))
@@ -594,6 +697,35 @@ for (n in names(add_og_complete_object)) {
         }
     }
     
+  }
+
+
+#all of the previous only runs in case we actually find an expanded group in this particular hypothesis
+#if this not the case we have to perform considerably less work (although of course the hypothesis is rather uninformative)
+} else {
+  #just add expansion column with "no" for all rows
+  expansion_tibble <- HOG_tibble_complete %>%
+                        mutate(expansion = "no")
+
+  dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
+  saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
+
+  message("No expanded OGs for this hypothesis - creating empty outputs")
+  #extended_BLAST_hits <- "empty"
+  # save extended BLAST hits to hypothesis specific ("num") RDS file 
+  #-> to be read and used in final_tea_computation.R script
+  #saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
+
+  add_og_complete_object <- "empty"
+  # save summary table for aditional OG analysis to hypothesis specific ("num") RDS file
+  saveRDS(add_og_complete_object, paste("tea/", num, "/add_OGs_object/add_OG_analysis_object.RDS", sep = ""))
+ 
+  dir.create(paste("tea/", num, "/expansion_cp_target_OGs/", sep = ""))
+
+  #create empty file under add_OG id_lists
+  dir.create(paste0("tea/", num, "/add_OGs_sets/id_lists/"))
+  file.create(paste0("tea/", num, "/add_OGs_sets/id_lists/", "empty.txt"))
+
 }
 
 #####
