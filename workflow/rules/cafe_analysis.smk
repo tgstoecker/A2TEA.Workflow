@@ -125,9 +125,22 @@ rule cafe5_complete_set:
         table = "cafe/{hypothesis}/HOG_table_reformatted_complete.tsv",
         filtered_results = rules.cafe5_filtered_set.output,
     output:
-        directory("cafe/{hypothesis}/cafe_complete_results"),
+        directory("cafe/{hypothesis}/cafe_complete_results")
     params:
         lambda_value = get_lambda_value,
+        hypothesis = "{hypothesis}",
+    conda:
+        "../envs/expansion.yaml"
     shell:
-        "CAFE5/bin/cafe5 --cores 64 -i {input.table} -t {input.tree} -o {output} -k 3 -l {params.lambda_value} -P 0.05"
-    
+        """
+        CAFE5/bin/cafe5 --cores 64 -i {input.table} -t {input.tree} -o {output} -k 3 -l {params.lambda_value} -P 0.05;
+        if ! [ -s {output}/Gamma_family_results.txt ]; then
+          echo "Will create dummy file with p=0.999 for current hypothesis"
+          ls -1 tea/{params.hypothesis}/expansion_cp_target_OGs/ |\
+            sed 's/.txt//' |\
+            awk '{{print $1,$2=0.999}}' OFS="\\t" |\
+            sed '1i#FamilyID\tpvalue' > {output}/Gamma_family_results.txt
+        else
+          echo "CAFE results computed"
+        fi
+        """
