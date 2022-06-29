@@ -20,6 +20,7 @@ dependencies:
   - r-upsetr
   - r-cowplot
   - r-ggplotify
+  - r-gtools
 #==3.0.1
 #  - bioconductor-biostrings 
 #==2.60.0

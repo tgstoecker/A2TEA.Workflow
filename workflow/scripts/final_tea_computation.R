@@ -29,7 +29,7 @@ package.check <- lapply(
 )
 
 # list of cran packages
-cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "tidyverse", "ape", "stringr")
+cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "tidyverse", "ape", "stringr", "gtools")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
@@ -56,6 +56,7 @@ library(ggplotify)
 library(ape)
 library(stringr)
 library(survcomp)
+library(gtools)
 
 # get user choice for DEG FDR cutoff value
 DEG_FDR = snakemake@params["DEG_FDR"]
@@ -225,6 +226,11 @@ setClass("add_OG_set",
 
 #remove protein_names in the snakemake pipeline - directories clean enough
 for (hypothesis in hypotheses$hypothesis) {  
+   
+    #to catch hypotheses making problems
+    print("Working on:")
+    print(hypothesis)
+
     # read-in extended_BLAST_hits.RDS object of hypothesis
     extended_BLAST_hits <- readRDS(paste0("tea/", hypothesis, "/extended_BLAST_hits/extended_BLAST_hits.RDS"))
 
@@ -238,6 +244,10 @@ for (hypothesis in hypotheses$hypothesis) {
 
     for (exp_OG in names(add_OG_analysis)) {
       
+      #to know faulty OGs
+      print("Working on:")
+      print(exp_OG)
+
       for (set in 1:length(add_OG_analysis[[exp_OG]]@add_OG_analysis)) {
       
         #adding msa info
@@ -247,7 +257,8 @@ for (hypothesis in hypotheses$hypothesis) {
         add_OG_analysis[[exp_OG]]@add_OG_analysis[[set]]@tree <- read.tree(paste0("tea/", hypothesis, "/add_OGs_sets/trees/", exp_OG, "/add_OGs_set_num-", set, ".tree.add"))
 
       }
-      
+      #to not run into "too many open connections" problem
+      closeAllConnections()
     }
 
 
@@ -306,23 +317,35 @@ for (hypothesis in hypotheses_list) {
 }
 
 
+#reorder with mixedsort so that "10" comes after 2, etc.
+HYPOTHESES.a2tea <- HYPOTHESES.a2tea[mixedsort(names(HYPOTHESES.a2tea))]
+
+print("All done with: HYPOTHESES.a2tea creation")
+
 # final object is called:
 # HYPOTHESES.a2tea
+#saveRDS(HYPOTHESES.a2tea, "save_HYPOTHESES.a2tea")
 
 
 ## Creating a non-redundant fasta file containing all genes part of the final objects
-n_hypotheses <- length(HYPOTHESES.a2tea)
+#n_hypotheses <- length(HYPOTHESES.a2tea)
 
 A2TEA.fa.seqs <- vector(mode = "list")
 
-for (hypothesis in 1:n_hypotheses) {
+for (hypothesis in hypotheses$hypothesis) {
     
+  print("Now, working on hypothesis:")
+  print(hypothesis)
+
   exp_OGs <- names(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs)
     
   #add OGs analysis
   for (og in exp_OGs) {
+
+      print("Now, working on OG:")
+      print(og)
     
-    n_sets <- length(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs[[og]])
+    n_sets <- length(HYPOTHESES.a2tea[[hypothesis]]@expanded_OGs[[og]]@add_OG_analysis)
       
     for (set in 1:n_sets) {
         
@@ -335,7 +358,8 @@ for (hypothesis in 1:n_hypotheses) {
                          as.string = TRUE))
 
     }
-      
+    #to not run into "too many open connections" problem
+    closeAllConnections()
   }  
     
 }

@@ -227,8 +227,6 @@ for (e in expanded_in) {
        
 }
 
-print("it's fine until here! - 1")
-
 # then we perform summing over all exp_counter_ columns based on user choices
 # at least Nmin_expanded_in expanded species that are expanded in at least Nmin_compared_to compared_to species
 # create new column
@@ -245,15 +243,12 @@ HOG_tibble <- HOG_tibble %>%
     purrr::pmap_dbl(., ~ sum(c(...) >= Nmin_compared_to))
   )
 
-print("it's fine until here! - 2")
-
 # lastly, retain rows/HOGs that pass x cutoff = number of expanded species
 # & drop unnecessary columns
 HOG_tibble <- HOG_tibble %>%
   filter(pass >= Nmin_expanded_in) %>%
   select(-contains("exp_counter_"), -pass)
 
-print("it's fine until here! - 3")
 
 # additional optional filter1 - expanded_in gene family complete criterium
 if (expanded_in_all_found == "YES") {
@@ -269,7 +264,6 @@ if (expanded_in_all_found == "YES") {
   select(-expanded_in_pass)
 }
 
-print("it's fine until here! - 4")
 
 # additional optional filter2 - compared_to gene family complete criterium
 if (compared_to_all_found == "YES") {
@@ -288,7 +282,6 @@ if (compared_to_all_found == "YES") {
 # new object: expanded_HOGs
 expanded_HOGs <- HOG_tibble
 
-print("it's fine until here! - 5")
 
 # based on filtering criteria create per hypothesis table with:
 # all HOGs and gene counts + additional column expansion (yes/no)
@@ -301,7 +294,7 @@ if (nrow(expanded_HOGs) > 0) {
 
   #create expansion vector with length of expandsion HOGs
   expansion <- replicate(nrow(expanded_HOGs), "yes")
-  print(expansion)
+  #print(expansion)
   expansion_tibble <- full_join(HOG_tibble_complete, tibble::add_column(expanded_HOGs, expansion, .after = "HOG"), 
                        by = c("HOG"), suffix = c("", ".remove")) %>% 
                            tidyr::replace_na(list(expansion = "no")) %>%
@@ -309,15 +302,6 @@ if (nrow(expanded_HOGs) > 0) {
 
   dir.create(paste("tea/", num, "/expansion_tibble/", sep = ""))
   saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
-
-  print("it's fine until here! - 6")
-
-  head(expansion_tibble)
-
-  str(expansion_tibble$expansion)
-
-  head(expansion_tibble$expansion)
-
 
   # create genes column in ph_orthogroups file
   # row merge? - no unite function, really handy ;D
@@ -337,67 +321,67 @@ if (nrow(expanded_HOGs) > 0) {
 
   ## define custom class for extended blast hits
   # need a list object to hold all data of this class
-#  extended_BLAST_hits <- list()
+  extended_BLAST_hits <- list()
 
   # class for extended BLAST hits info
-#  setClass("extended_BLAST_hits", 
-#           slots=list(blast_table="tbl_df")
-#          )
+  setClass("extended_BLAST_hits", 
+           slots=list(blast_table="tbl_df")
+          )
 
 
-#tt  for (i in expanded_HOGs$HOG) {
-#    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
-#    BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
-#                                             qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
-#    sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
+  for (i in expanded_HOGs$HOG) {
+    exp_og_genes <- unlist(strsplit(ref_ph_orthogroups[ref_ph_orthogroups$HOG == i,]$genes, split = ", "))
+    BLAST_hits_exp_og_genes <- dplyr::filter(all_BLAST_reformatted, 
+                                             qseqid_name %in% exp_og_genes | sseqid_name %in% exp_og_genes)
+    sorted_BLAST_hits_exp_og_genes <- arrange(BLAST_hits_exp_og_genes, evalue, -bitscore, -pident)
     
     # get gene name of last gene to be added based on number of add_blast_hits
-#    all_blast_genes <- na.omit(
-#       unique(
-#         c(
-#           rbind(
-#             sorted_BLAST_hits_exp_og_genes$qseqid_name, 
-#             sorted_BLAST_hits_exp_og_genes$sseqid_name
-#           )
-#         )
-#       )
-#     ) 
+    all_blast_genes <- na.omit(
+       unique(
+         c(
+           rbind(
+             sorted_BLAST_hits_exp_og_genes$qseqid_name, 
+             sorted_BLAST_hits_exp_og_genes$sseqid_name
+           )
+         )
+       )
+     ) 
     
     # set of all extended blast hits (based on threshold) - vector of gene names (ordered!)
     # also nice: don't need a conditional since `%>% head(n = add_blast_hits)` will work,
     # even if add_blast_hits param is > setdiff(all_blast_genes, exp_og_genes) 
-#    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
+    extended_blast_hits_genes <- setdiff(all_blast_genes, exp_og_genes) %>% head(n = add_OGs)
   
     # non redundant set of gene names of HOG + n additional blast hits as defined in the user threshold
-#    HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
+    HOG_and_ext_blast_hits_genes <- c(exp_og_genes, extended_blast_hits_genes)
 
     #create subset of sorted_BLAST_hits_exp_og_genes table in which only:
     # exp_og_genes & extended_blast_hits_genes are allowed to appear
     # this way we have cutoff for the nth best blast hit/gene but also keep all secondary hits
-#    HOG_and_ext_blast_hits_table <- sorted_BLAST_hits_exp_og_genes %>%
-#                                      filter(qseqid_name %in% HOG_and_ext_blast_hits_genes) %>%
-#                                      filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
+    HOG_and_ext_blast_hits_table <- sorted_BLAST_hits_exp_og_genes %>%
+                                      filter(qseqid_name %in% HOG_and_ext_blast_hits_genes) %>%
+                                      filter(sseqid_name %in% HOG_and_ext_blast_hits_genes)
 
 #tt    write_lines("",
 #tt                paste("tea/", num, "/expansion_cp_target_OGs/", i, ".txt", sep = "")
 #tt    )
  
     # for each exp. HOG create an extended_BLAST_hits S4 object and collect as part of list
-#    ext_B_hits <- new("extended_BLAST_hits",
-#      blast_table=HOG_and_ext_blast_hits_table
-#            )
+    ext_B_hits <- new("extended_BLAST_hits",
+      blast_table=HOG_and_ext_blast_hits_table
+            )
     # assign name based on name of the underlying expanded HOG
-#    ext_B_hits <- list(ext_B_hits)
-#    names(ext_B_hits) <- paste0(i)
+    ext_B_hits <- list(ext_B_hits)
+    names(ext_B_hits) <- paste0(i)
     
     # append to list object
-#    extended_BLAST_hits <- c(extended_BLAST_hits, ext_B_hits)
+    extended_BLAST_hits <- c(extended_BLAST_hits, ext_B_hits)
   
-#tt  }
+  }
 
   # save extended BLAST hits to hypothesis specific ("num") RDS file 
   #-> to be read and used in final_tea_computation.R script
-#  saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
+  saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
 
   ### Adding OGs instead of BLAST hits ###
@@ -411,9 +395,6 @@ if (nrow(expanded_HOGs) > 0) {
     mutate(species = as.character(species)) %>%
     separate_rows(id, sep = ", ") %>%
     drop_na()
-
-
-  print("it's fine until here! - 7")
 
   #create final summary list - per OG (name) the cumulative steps of additional OGs
   summary_add_OG_analysis_list <- vector(mode = "list", length = length(expanded_HOGs$HOG))
@@ -435,6 +416,12 @@ if (nrow(expanded_HOGs) > 0) {
   #removing all big files to minimize mem impact of FORK cluster
   rm(datalist)
   rm(all_BLAST)
+  rm(all_blast_genes)
+  rm(HOG_and_ext_blast_hits_table)
+  rm(HOG_and_ext_blast_hits_genes)
+  rm(sorted_BLAST_hits_exp_og_genes)
+  rm(extended_BLAST_hits)
+  rm(ext_B_hits)
 
   #### FORK cluster since I expect a Linux machine
   #### autostop=TRUE since I don't want to handle this manually

@@ -124,6 +124,7 @@ rule cafe5_complete_set:
         tree = "cafe/{hypothesis}/SpeciesTree_rooted_node_labels.txt.ultrametric.tre",
         table = "cafe/{hypothesis}/HOG_table_reformatted_complete.tsv",
         filtered_results = rules.cafe5_filtered_set.output,
+        expansion = rules.expansion_checkpoint_finish.output,
     output:
         directory("cafe/{hypothesis}/cafe_complete_results")
     params:
