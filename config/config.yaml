@@ -10,7 +10,7 @@ threads_star: 6
 threads_index_sorted_bams_with_dups: 4
 threads_index_sorted_bams_without_dups: 4
 threads_featureCounts: 2
-
+threads_expansion_calc: 2
 
 ### Trimmomatic
 #not yet implemented
@@ -97,7 +97,7 @@ chunks_number: 2
 # if set to e.g. 3 for each expanded OG we include the next three "closest" OGs
 # if there aren't any usable blast hits less than 3 will be added
 # set to 0 if you aren't interested in this (only the base OG which will be analyzed)
-add_OGs: 10
+add_OGs: 3
 
 
 # FDR cutoff for significance if differential gene expresssion analysis
