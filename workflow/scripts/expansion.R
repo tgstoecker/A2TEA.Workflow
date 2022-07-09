@@ -36,8 +36,10 @@ threads = as.numeric(snakemake@threads)
 add_OGs = snakemake@params[["add_OGs"]]
 
 # define the minimum expansion factor & expansion difference to call an expansion (part of hypothesis.tsv)
+# + minimum number of genes of expanded species to even consider an OG
 expansion_factor = as.numeric(snakemake@params[["expansion_factor"]])
 expansion_difference = as.numeric(snakemake@params[["expansion_difference"]])
+expanded_genes_min = as.numeric(snakemake@params[["expanded_genes_min"]])
 
 # get user choice whether to perform ploidy normalization or not
 ploidy_normalization = as.character(snakemake@params[["ploidy_normalization"]])
@@ -278,6 +280,11 @@ if (compared_to_all_found == "YES") {
   # remove compared_to_pass column
   select(-compared_to_pass)
 }
+
+# optional hard filter for at least # genes in all expanded species
+# this is useful in difficult ploidy cases and solves downstream issues in small OGs
+HOG_tibble <- HOG_tibble %>%
+  filter(if_all(contains(expanded_in), ~ . > expanded_genes_min))
 
 # new object: expanded_HOGs
 expanded_HOGs <- HOG_tibble
@@ -698,10 +705,10 @@ if (nrow(expanded_HOGs) > 0) {
   saveRDS(expansion_tibble, paste("tea/", num, "/expansion_tibble/expansion_tibble.rds", sep = ""))
 
   message("No expanded OGs for this hypothesis - creating empty outputs")
-  #extended_BLAST_hits <- "empty"
+  extended_BLAST_hits <- "empty"
   # save extended BLAST hits to hypothesis specific ("num") RDS file 
   #-> to be read and used in final_tea_computation.R script
-  #saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
+  saveRDS(extended_BLAST_hits, paste("tea/", num, "/extended_BLAST_hits/extended_BLAST_hits.RDS", sep = ""))
 
   add_og_complete_object <- "empty"
   # save summary table for aditional OG analysis to hypothesis specific ("num") RDS file

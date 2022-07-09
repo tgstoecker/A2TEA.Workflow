@@ -46,6 +46,7 @@ rule expansion_computation:
         add_OGs = config["add_OGs"],
         expansion_factor = get_expansion_factor,
         expansion_difference = get_expansion_difference,
+        expanded_genes_min = get_expanded_genes_min,
 	ploidy_normalization = get_ploidy_normalization,
         Nmin_expanded_in = get_Nmin_expanded_in,
         Nmin_compared_to = get_Nmin_compared_to,

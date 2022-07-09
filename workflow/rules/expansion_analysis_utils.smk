@@ -88,6 +88,10 @@ def get_expansion_factor(wildcards):
 def get_expansion_difference(wildcards):
     return hypotheses.loc["min_expansion_difference"][wildcards.hypothesis]
 
+# get user defined threshold for minimum # of genes for expanded species per OG for each hypothesis by parsing hypotheses.tsv
+def get_expanded_genes_min(wildcards):
+    return hypotheses.loc["Nmin_expanded_genes"][wildcards.hypothesis]
+
 # get whether or not the user wants to nomalize by species ploidy
 def get_ploidy_normalization(wildcards):
     return hypotheses.loc["ploidy_normalization"][wildcards.hypothesis]
