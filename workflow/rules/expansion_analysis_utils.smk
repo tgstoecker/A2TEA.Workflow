@@ -70,15 +70,15 @@ def get_all_hypothesis_species(wildcards):
     return output
 
 #create superset of longest isoforms for all species
-def create_all_superset_species_fa():
+#def create_all_superset_species_fa():
     #we add a directory check to workaround the non-existence the first time the workflow is started
-    if os.path.isdir('resources/longest_isoforms'):
-        output = os.listdir('resources/longest_isoforms')
-        path_prefix = 'resources/longest_isoforms/'
-        output = [path_prefix + x for x in output]
-    else:
-        output = "placeholder"
-    return output
+#    if os.path.isdir('resources/longest_isoforms'):
+#    output = os.listdir('resources/longest_isoforms')
+#    path_prefix = 'resources/longest_isoforms/'
+#    output = [path_prefix + x for x in output]
+#    else:
+#        output = "placeholder"
+#    return output
 
 # get user defined expansion_factor for each hypothesis by parsing hypotheses.tsv
 def get_expansion_factor(wildcards):

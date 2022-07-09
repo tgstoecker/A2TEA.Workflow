@@ -22,14 +22,16 @@
 rule create_superset_fasta:
     input:
         ORTHOFINDER + "complete.check",
+#        "resources/longest_isoforms/{species}.fa",
     output:
         "tea/superset_fasta/superset_species.fa",
-    params:
-        superset_species_fa = create_all_superset_species_fa(),
+    #params:
+    #    superset_species_fa = create_all_superset_species_fa(),
     conda:
         "../envs/expansion.yaml"
     shell:
-        "cat {params.superset_species_fa} > {output}"
+#        "cat {params.superset_species_fa} > {output}"
+        "cat resources/longest_isoforms/*.fa > {output}"
 
 rule expansion_computation:
     input:
