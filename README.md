@@ -86,7 +86,7 @@ samples.tsv:
   
 hypotheses.tsv (formulate hypotheses regarding your supplied data):  
 (!NOTE: "min_expansion_factor" & "min_expansion_difference" are seperate criteria - if either one is passed the orthologous group will be used in downstream steps)  
-- hypothesis - (integer) index number of hypothesis starting at 1
+- hypothesis - (integer) index number of hypothesis starting at 1 (don't skip any integers!)
 - name - (string) descriptive name (in quotations!); e.g. "Expanded in Arabidopsis compared to Monocots"
 - expanded_in - (string) one or multiple species (seperated by ";") which are checked for gene family expansion events compared to one or multiple species (seperated by ";") under compared_to
 - compared_to - (string) see above
@@ -94,6 +94,7 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 - Nmin_compared_to - (integer) minimum number of compared_to species that need to fulfill expansion criteria (but in the opposite way aka contraction) for the gene family to be called expanded
 - min_expansion_factor - (integer) minimum factor of expansion between expanded_in and compared_to species (!NOTE: set to unrealistically high integer - e.g. 100 - to use only "min_expansion_difference" criterium)
 - min_expansion_difference - (integer) minimum # of additional genes expanded_in species possesses in contrast to compared_to species (per orthologous group) (!NOTE: set to unrealistically high integer - e.g. 100 - to use only "min_expansion_factor" criterium)
+- Nmin_expanded_genes - (integer) minimum # of genes of expanded species required to consider the OG for expansion; this option can be left at 0 for most analyses (ratio/difference selection) but helps if the ratio/difference based methods lead to unexpected results in very small OGs in cases where ploidy normalization was performed
 - expanded_in_all_found - (boolean) does every memeber of expanded_in species have to be present (not expanded!) in the orthologous_group
 - compared_to_all_found - (boolean) does every memeber of compared_to species have to be present (not expanded!) in the orthologous_group
   
@@ -139,7 +140,10 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
 7) For reads, annotation and fastas both gzipped and uncompressed files are supported.
 8) The amount of cores specified on the command-line sets the maximum that snakemake will be able to use. If rule threads set in the Snakefile exceed this limit, they will be automatically scaled down. This means that if you diverge from my standard (= 24 cores) A2TEA will still run, however by modifying the threads for individual rules (in config.yaml / the Snakefile itself) you can improve performance for your particular computational setup.  
 9) With "auto_isoform_filtering" you can choose whether to try an automated approach for filtering the peptide fastas for their longest isoform or doing this yourself before starting the workflow. If the option is not set to "YES" the filtering is skipped.
-10) With "add_blast_hits" you can define the max number of additional best blast hits to include in the follow-up analyses. Tree visualizations often are more informative if we use more than an individual (H)OG.  
+10) With "add_OGs:" in the config.yaml you can define the max number of closest orthologous groups to include in the follow-up analyses. The next based blast hit belonging to another OG will lead to include this OG in an addtional set; if set to e.g. 3 for each expanded OG we include the next three "closest" OGs
+; if there aren't any usable blast hits less than 3 will be added. Tree visualizations often are more informative if we use more than an individual OG and allow to pinpoint mistakes in the tree generation or the MSA.  
+11) Make sure that hypotheses in the hypotheses.tsv are numbered 1:N and you don't skip any number or start with anoher integer!  
+12) It is possible for a hypothesis to NOT have any expanded OGs - in this case the workflow will provide you with a snakemake error message during the extraction of fasta sequences for expanded OGs: `missing input files for rule fasta_extraction ... wildcards: hypothesis={hypothesis}, OG=empty.txt, ...`. As the dummy file `empty.txt` was written under `tea/{hypothesis}/add_OGs_sets/id_lists/` no expanded OGs exist for the `{hypothesis}`based on the chosen parameters. The user can decide to either adapt parameters or remove the hypothesis from the experiment by deleting it from the config/hypotheses.tsv file. In the latter case, please make sure to adapt the associated hypothesis numbers in the file as well (see 11.)) to 1:N. After this continue/rerun the workflow with the additional flag `--rerun-incomplete`.  
 
 
 # Common resons for errors: 
