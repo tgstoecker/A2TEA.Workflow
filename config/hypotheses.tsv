@@ -6,7 +6,7 @@ Nmin_expanded_in	1	1	1	1	1
 Nmin_compared_to	2	1	1	1	1
 min_expansion_factor	2	2	3	2	2
 min_expansion_difference	10	10	10	10	10
-Nmin_expanded_genes	4	4	4	4	4
+Nmin_expanded_genes	0	2	1	0	0
 ploidy_normalization	YES	NO	YES	YES	YES
 expanded_in_all_found	YES	NO	YES	NO	NO
 compared_to_all_found	YES	NO	YES	NO	NO
