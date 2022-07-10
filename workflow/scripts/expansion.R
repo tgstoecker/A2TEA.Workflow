@@ -284,7 +284,7 @@ if (compared_to_all_found == "YES") {
 # optional hard filter for at least # genes in all expanded species
 # this is useful in difficult ploidy cases and solves downstream issues in small OGs
 HOG_tibble <- HOG_tibble %>%
-  filter(if_all(contains(expanded_in), ~ . > expanded_genes_min))
+  filter(if_all(contains(expanded_in), ~ . >= expanded_genes_min))
 
 # new object: expanded_HOGs
 expanded_HOGs <- HOG_tibble
