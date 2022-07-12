@@ -153,7 +153,7 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
 # Output  
 The final output is a single file - tea/A2TEA_finished.RData.  
 This file can be used in R by using the load() command.  
-Doing this, provides 4 seperate objects in your R environment containing all results in a compact form factor:  
+Doing this, provides several seperate objects in your R environment containing all results in a compact form factor:  
 - HYPOTHESES.a2tea - List object with one S4 object per hypothesis. 
 Each S4 object contains several layers of nested information.   
 E.g. `HYPOTHESES.a2tea$hypothesis_2@expanded_OGs$N0.HOG0001225` would refer to a specific expanded orthologous group and S4 data object that contains:
