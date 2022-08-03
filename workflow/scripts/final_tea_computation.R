@@ -607,54 +607,6 @@ for (j in 1:length(SFA)) {
   }
 
 
-#"SFA" stands for Species Functional Annotation 
-SFA_OG_level <- vector(mode = "list", length = length(HOG_level_list))
-
-#create per hypothesis a HOG level GO annotation tibble that is non-redundant and free from unannotated HOGs
-#add everything to the SFA_OG_level list object
-for (i in 1:length(HOG_level_list)) {
-    
-    h_expanded_in <- unlist(str_split(hypotheses$expanded_in[i], ";"))
-    h_compared_to <- unlist(str_split(hypotheses$compared_to[i], ";"))
-    h_species <- unique(c(h_expanded_in, h_compared_to))
-    
-
-    #such an easy solution for combining df/tibbles that are list elements ;D
-    #h_species is hypothesis specific, so we always pick the subset of species and genes that we need
-    SFA_short <- bind_rows(SFA[h_species])
-
-    #dummy encoding for all singletons/genes without a HOG
-    #if we were to leave them as NA they are aggregated into one row
-    SFA_short <- SFA_short %>%
-      mutate(
-      HOG = case_when(
-        is.na(HOG) ~ paste0("singleton_rownum_", dplyr::row_number()),
-        TRUE ~ HOG
-      )
-    )
-
-  SFA_short <- SFA_short %>% 
-    select(HOG, `Protein-Accession`, `Gene-Ontology-Term`) %>%
-    group_by(HOG) %>%
-    #remove redundancy while collapsing with ", "
-    summarise(`Gene-Ontology-Term` = paste(unique(`Gene-Ontology-Term`), collapse=", ")) %>%
-    #we should remove all rows that have NO GO terms associated
-    #and remove all NAs from the Gene-Ontology-Term column if they have at least 1 GO term
-    #remove inline NAs in Gene-Ontology-Term column
-    mutate(
-      `Gene-Ontology-Term` = str_remove_all(`Gene-Ontology-Term`, "NA, |, NA") 
-    ) %>% 
-    #remove lines with only NA in Gene-Ontology-Term column
-    filter(!str_detect(`Gene-Ontology-Term`, 'NA'))
-
-    
-    #assign name of species to the ith element in list
-    names(SFA_OG_level)[[i]] <- paste0("hypothesis_", i)
-    #assign actual tibble with functional annotation of species to ith element of list
-    SFA_OG_level[[i]] <- SFA_short
-}
-
-
 #######
 ### ### Adding overview of all species (superset of all hypothesis) table - how many genes per OG + how many sigDE
 ##-> adding as as LAST element an overview table for all species to HOG_level_list
@@ -790,6 +742,9 @@ names(all_species_overview) <- "all_species_overview"
 HOG_level_list <- c(HOG_level_list, all_species_overview)
 
 
+### add complete species tree to .RData since this is actually more sensible for the WebApp than the subset trees
+all_speciesTree <- read.tree("orthofinder/final-results/Species_Tree/SpeciesTree_rooted_node_labels.txt")
+
 
 #########################################################################################################
 
@@ -800,7 +755,7 @@ save(hypotheses,
      HOG_DE.a2tea, 
      HOG_level_list,
      SFA,
-     SFA_OG_level,
+     all_speciesTree,
      file = "tea/A2TEA_finished.RData",
      compress = "xz", 
      compression_level = 9)
