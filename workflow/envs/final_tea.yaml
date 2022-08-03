@@ -16,6 +16,7 @@ dependencies:
   - bioconductor-deseq2
   - bioconductor-ggtree 
   - bioconductor-biostrings
+  - bioconductor-survcomp
   - r-seqinr
   - r-upsetr
   - r-cowplot
