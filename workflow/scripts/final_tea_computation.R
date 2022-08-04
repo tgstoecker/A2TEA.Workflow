@@ -8,6 +8,9 @@ r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
 options(repos = r)
 
+#fix for: libicui18n.so.68: cannot open shared object file
+#reinstall of stringi connects libraries correctly
+install.packages("stringi", repos="http://cran.us.r-project.org")
 
 ## Install packages
 # if they are not installed (check via the following neat lapply approach)
