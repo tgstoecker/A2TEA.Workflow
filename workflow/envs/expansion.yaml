@@ -18,6 +18,7 @@ dependencies:
 #  - r-tibble
   - r-tibble >=3.1.7
   - r-reshape2
+  - r-stringi
   - ucsc-fasomerecords ==377
   - muscle ==3.8.1551
   - trimal =>1.4

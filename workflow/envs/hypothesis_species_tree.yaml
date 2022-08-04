@@ -12,3 +12,4 @@ dependencies:
   - r-tibble
   - r-tidyr
   - r-ape ==5.5
+  - r-stringi
