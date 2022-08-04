@@ -1,3 +1,7 @@
+#fix for: libicui18n.so.68: cannot open shared object file
+#reinstall of stringi connects libraries correctly
+install.packages("stringi")
+
 # we are using readr 1.4.0 from conda - doesn't support some of the cool newer features like col_select
 library(readr)
 library(stringr)
