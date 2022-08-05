@@ -3,7 +3,7 @@
 
 #fix for: libicui18n.so.68: cannot open shared object file
 #reinstall of stringi connects libraries correctly
-install.packages("stringi", repos="http://cran.us.r-project.org")
+#install.packages("stringi", repos="http://cran.us.r-project.org")
 
 # list of cran packages
 cran_packages = c("readr", "plyr", "dplyr", "stringr", "tibble")
