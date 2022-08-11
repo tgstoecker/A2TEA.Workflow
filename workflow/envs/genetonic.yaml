@@ -1,0 +1,12 @@
+channels:
+  - bioconda
+  - conda-forge
+  - r
+dependencies:
+  - bioconductor-genetonic
+  - bioconductor-topgo
+  - bioconductor-deseq2
+  - r-dplyr
+  - r-tidyr
+  - r::r-stringr
+  - r::r-stringi
