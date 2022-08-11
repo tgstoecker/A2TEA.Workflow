@@ -1,3 +1,13 @@
+#logging
+log <- file(snakemake@log[[1]], open="wt")
+sink(log, append=TRUE)
+sink(log, append=TRUE, type="message")
+
+# Restore output to console
+#sink() 
+#sink(type="message")
+
+
 library(GeneTonic)
 library(topGO)
 library(dplyr)
@@ -12,11 +22,29 @@ dea_species_raw = readRDS(snakemake@input[["dea"]])
 #get functional annotation
 SFA = readRDS(snakemake@input[["SFA"]])
 
+DEG_FDR = as.numeric(snakemake@params[["DEG_FDR"]])
+
 #get current species
 species = snakemake@params[["species"]]
 
 #get current ontology
 ontology = snakemake@params[["ontology"]]
+
+
+
+#check if to compute at all
+#edge case: no/few genes diff. exp. for a species
+#if less than 10 diff. exp. genes just skip and write empty files
+empty_test <- results(dea_species_raw) %>%
+  as.data.frame() %>%
+  filter(padj < DEG_FDR)
+
+if (nrow(empty_test) < 10) {
+  #save empty the object
+  saveRDS(object=empty_test, file=snakemake@output[[1]])
+  message(paste0("Less than 10 sig. diff. exp. genes/transcripts for species: ", species))
+  message("Writing empty file!")
+} else {
 
 
 #Part1 - dds
@@ -77,7 +105,7 @@ genes_per_GO <- all_set %>%
 int_set_df <- results_dea_species %>%
   as.data.frame() %>%
   mutate(id = rownames(.)) %>%
-  filter(padj <= 0.1)
+  filter(padj <= DEG_FDR)
 
 int_set <- int_set_df %>% pull(id)
 
@@ -154,3 +182,6 @@ gtl <- GeneTonic_list(
 
 #save the object
 saveRDS(object=gtl, file=snakemake@output[[1]])
+
+
+}

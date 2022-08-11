@@ -6,7 +6,8 @@ rule create_GeneTonic_list_files:
         "GeneTonic/{species}/GeneTonic_{species}_{ontology}.rds"
     params:
         species="{species}",
-        ontology="{ontology}"
+        ontology="{ontology}",
+        DEG_FDR = config["DEG_FDR"]
     log:
         "logs/GeneTonic/{species}/gtl_{species}_{ontology}.log"
     conda:
