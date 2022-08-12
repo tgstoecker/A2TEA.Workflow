@@ -58,8 +58,8 @@ rowData(dea_species) <- rowData(dea_species) %>%
 
 #Part2 - dea
 dea_species_filtered <- dea_species_raw
-keep <- rowSums(counts(dea_species_filtered) >= 10) >= 6
-dea_species_filtered <- dea_species_filtered[keep, ]
+#keep <- rowSums(counts(dea_species_filtered) >= 10) >= 6
+#dea_species_filtered <- dea_species_filtered[keep, ]
 
 results_dea_species <- results(dea_species_filtered)
 

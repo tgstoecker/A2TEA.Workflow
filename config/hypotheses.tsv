@@ -1,12 +1,12 @@
-hypothesis	1	2	3	4	5
-name	"Expanded in Arabidopsis compared to Monocots"	"Expanded in barley compared to maize"	"bla"	"bla2"	"bla3"
-expanded_in	Arabidopsis_thaliana	Hordeum_vulgare	Zea_mays	Hordeum_vulgare;Zea_mays	Hordeum_vulgare;Zea_mays
-compared_to	Zea_mays;Hordeum_vulgare	Zea_mays	Hordeum_vulgare;Arabidopsis_thaliana	Arabidopsis_thaliana	Hordeum_vulgare;Arabidopsis_thaliana
-Nmin_expanded_in	1	1	1	1	1
-Nmin_compared_to	2	1	1	1	1
-min_expansion_factor	2	2	3	2	2
-min_expansion_difference	10	10	10	10	10
-Nmin_expanded_genes	0	2	1	0	0
-ploidy_normalization	YES	NO	YES	YES	YES
-expanded_in_all_found	YES	NO	YES	NO	NO
-compared_to_all_found	YES	NO	YES	NO	NO
+hypothesis	1	2
+name	"Expanded in barley compared to rice and maize"	"Expanded in barley compared to maize"
+expanded_in	Hordeum_vulgare	Hordeum_vulgare
+compared_to	Zea_mays;Oryza_sativa	Zea_mays
+Nmin_expanded_in	1	1
+Nmin_compared_to	2	1
+min_expansion_factor	2	2
+min_expansion_difference	10	10
+Nmin_expanded_genes	2	2
+ploidy_normalization	YES	NO
+expanded_in_all_found	YES	NO
+compared_to_all_found	YES	NO

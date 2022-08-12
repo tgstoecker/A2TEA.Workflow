@@ -1,6 +1,12 @@
-#set logging to file and terminal
+#logging
 log <- file(snakemake@log[[1]], open="wt")
-sink(log, append=FALSE, split=FALSE, type="message")
+sink(log, append=TRUE)
+sink(log, append=TRUE, type="message")
+
+# Restore output to console
+#sink() 
+#sink(type="message")
+
 
 
 #setting CRAN repository
@@ -32,7 +38,7 @@ package.check <- lapply(
 )
 
 # list of cran packages
-cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "tidyverse", "ape", "stringr", "gtools")
+cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "dplyr", "ape", "stringr", "gtools", "tibble", "readr", "tidyr")
 # load or install&load all
 package.check <- lapply(
   cran_packages,
@@ -49,7 +55,11 @@ package.check <- lapply(
 library(DESeq2)
 #library(BiocGenerics) # comes with DESeq2
 #library(apeglm) # currently difficulties with install # better DESseq2 calc; later 
-library(tidyverse)
+#library(tidyverse)
+library(dplyr)
+library(tibble)
+library(readr)
+library(tidyr)
 library(ggtree)
 library(Biostrings)
 library(seqinr)

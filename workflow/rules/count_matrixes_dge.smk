@@ -71,6 +71,8 @@ if len(GEN_FASTA_SPECIES) != 0:
             "R/deseq2/{species}/dea_gen/dea_{species}"
         params:
             species = lambda wildcards: samples.species[samples.species == wildcards.species],
+        log:
+            "logs/deseq2/{species}.log"
         conda:
             "../envs/deseq2_tximport.yaml"
         script:
@@ -92,6 +94,8 @@ if len(CDNA_FASTA_SPECIES) != 0:
 #            annotation = lambda wildcards: species_table.annotation[species_table.index == wildcards.species],
             species = lambda wildcards: samples.species[samples.species == wildcards.species],
             quantification_level = config["transcript_level_quantification"],
+        log:
+            "logs/tximport/{species}.log"
         conda:
             "../envs/deseq2_tximport.yaml"
         script:
@@ -103,6 +107,8 @@ if len(CDNA_FASTA_SPECIES) != 0:
             "R/tximport/{species}/DESeqDataSet_{species}"
         output:
             "R/deseq2/{species}/dea_cdna/dea_{species}"
+        log:
+            "logs/deseq2/{species}.log"
         conda:
             "../envs/deseq2_tximport.yaml"
         script:

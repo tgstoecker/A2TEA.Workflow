@@ -1,3 +1,13 @@
+#logging
+log <- file(snakemake@log[[1]], open="wt")
+sink(log, append=TRUE)
+sink(log, append=TRUE, type="message")
+
+# Restore output to console
+#sink() 
+#sink(type="message")
+
+
 #setting CRAN repository
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"

@@ -1,12 +1,15 @@
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - r
 dependencies:
+  - r-base>=4.1.0
+  - bioconductor-genomeinfodbdata==1.2.6
+  - bioconductor-go.db==3.13.0
   - bioconductor-genetonic
   - bioconductor-topgo
   - bioconductor-deseq2
   - r-dplyr
   - r-tidyr
-  - r::r-stringr
-  - r::r-stringi
+  - r-stringr
+  - r-stringi

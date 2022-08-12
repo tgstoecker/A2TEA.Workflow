@@ -1,3 +1,12 @@
+#logging
+log <- file(snakemake@log[[1]], open="wt")
+sink(log, append=TRUE)
+sink(log, append=TRUE, type="message")
+
+# Restore output to console
+#sink() 
+#sink(type="message")
+
 #backup R-based installation if conda didn't work or wasn't used
 #we check if packages are installed first
 

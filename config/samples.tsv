@@ -1,20 +1,17 @@
 species	sample	unit	condition	fq1	fq2	fragment_length_mean	fragment_length_sd
-Hordeum_vulgare	Scarlett	control_1	control	Scarlett_control_1.1.fq.gz	Scarlett_control_1.2.fq.gz		
-Hordeum_vulgare	Scarlett	control_2	control	Scarlett_control_2.1.fq.gz	Scarlett_control_2.2.fq.gz		
-Hordeum_vulgare	Scarlett	control_3	control	Scarlett_control_3.1.fq.gz	Scarlett_control_3.2.fq.gz		
-Hordeum_vulgare	Scarlett	treatment_1	treatment	Scarlett_drought_1.1.fq.gz	Scarlett_drought_1.2.fq.gz		
-Hordeum_vulgare	Scarlett	treatment_2	treatment	Scarlett_drought_2.1.fq.gz	Scarlett_drought_2.2.fq.gz		
-Hordeum_vulgare	Scarlett	treatment_3	treatment	Scarlett_drought_3.1.fq.gz	Scarlett_drought_3.2.fq.gz		
+Hordeum_vulgare	Scarlett	control_1	control	Scarlett_control_1.1.fq.gz	Scarlett_control_1.2.fq.gz	100	15
+Hordeum_vulgare	Scarlett	control_2	control	Scarlett_control_2.1.fq.gz	Scarlett_control_2.2.fq.gz	100	15
+Hordeum_vulgare	Scarlett	control_3	control	Scarlett_control_3.1.fq.gz	Scarlett_control_3.2.fq.gz	100	15
+Hordeum_vulgare	Scarlett	treatment_1	treatment	Scarlett_drought_1.1.fq.gz	Scarlett_drought_1.2.fq.gz	100	15
+Hordeum_vulgare	Scarlett	treatment_2	treatment	Scarlett_drought_2.1.fq.gz	Scarlett_drought_2.2.fq.gz	100	15
+Hordeum_vulgare	Scarlett	treatment_3	treatment	Scarlett_drought_3.1.fq.gz	Scarlett_drought_3.2.fq.gz	100	15
 Zea_mays	B73	control_1	control	B73_con_1.fq.gz		100	15
 Zea_mays	B73	control_2	control	B73_con_2.fq.gz		100	15
 Zea_mays	B73	control_3	control	B73_con_3.fq.gz		100	15
 Zea_mays	B73	treatment_1	treatment	B73_drought_1.fq.gz		100	15
 Zea_mays	B73	treatment_2	treatment	B73_drought_2.fq.gz		100	15
 Zea_mays	B73	treatment_3	treatment	B73_drought_3.fq.gz		100	15
-Arabidopsis_thaliana	Col-0	control_1	control	ERR754084_1.fastq.gz	ERR754084_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	control_2	control	ERR754066_1.fastq.gz	ERR754066_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	control_3	control	ERR754077_1.fastq.gz	ERR754077_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	treatment_1	treatment	ERR754069_1.fastq.gz	ERR754069_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	treatment_2	treatment	ERR754087_1.fastq.gz	ERR754087_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	treatment_3	treatment	ERR754064_1.fastq.gz	ERR754064_2.fastq.gz	100	15
-Arabidopsis_thaliana	Col-0	treatment_4	treatment	ERR754059_1.fastq.gz	ERR754059_2.fastq.gz	100	15
+Oryza_sativa	Chilbo	control_1	control	Chilbo_con_1.1.fq.gz	Chilbo_con_1.2.fq.gz	100	15
+Oryza_sativa	Chilbo	control_2	control	Chilbo_con_2.1.fq.gz	Chilbo_con_2.2.fq.gz	100	15
+Oryza_sativa	Chilbo	treatment_1	treatment	Chilbo_drought_1.1.fq.gz	Chilbo_drought_1.2.fq.gz	100	15
+Oryza_sativa	Chilbo	treatment_2	treatment	Chilbo_drought_2.1.fq.gz	Chilbo_drought_2.2.fq.gz	100	15

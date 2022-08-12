@@ -62,6 +62,8 @@ rule expansion_computation:
         "tea/{hypothesis}/add_OGs_object/add_OG_analysis_object.RDS",
         directory("tea/{hypothesis}/expansion_tibble/"),
         "tea/{hypothesis}/extended_BLAST_hits/extended_BLAST_hits.RDS",
+    log:
+        "logs/expansion/{hypothesis}/expansion.log",
     threads: config["threads_expansion_calc"]
     conda:
         "../envs/expansion.yaml"
