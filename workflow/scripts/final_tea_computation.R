@@ -20,35 +20,35 @@ options(repos = r)
 
 ## Install packages
 # if they are not installed (check via the following neat lapply approach)
-if (!requireNamespace("BiocManager", quietly=TRUE))
-    install.packages("BiocManager")
+#if (!requireNamespace("BiocManager", quietly=TRUE))
+#    install.packages("BiocManager")
 
 # list of bioconductor packages
-bioc_packages = c("ggtree", "ggtreeExtra", "Biostrings", "DESeq2", "survcomp")
+#bioc_packages = c("ggtree", "ggtreeExtra", "Biostrings", "DESeq2", "survcomp")
 
 # load or install&load all
-package.check <- lapply(
-  bioc_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-    BiocManager::install(x)
-    library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  bioc_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#    BiocManager::install(x)
+#    library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 # list of cran packages
-cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "dplyr", "ape", "stringr", "gtools", "tibble", "readr", "tidyr")
+#cran_packages = c("UpSetR", "cowplot", "ggplotify", "seqinr", "dplyr", "ape", "stringr", "gtools", "tibble", "readr", "tidyr")
 # load or install&load all
-package.check <- lapply(
-  cran_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
-      library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  cran_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
+#      library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 
 ## Load all necessary packages

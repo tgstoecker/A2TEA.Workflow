@@ -16,17 +16,17 @@ sink(log, append=TRUE, type="message")
 
 
 # list of cran packages
-cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble", "reshape2", "foreach", "doParallel")
+#cran_packages = c("readr", "plyr", "dplyr", "stringr", "tidyr", "tibble", "reshape2", "foreach", "doParallel")
 # load or install&load all
-package.check <- lapply(
-  cran_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
-      library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  cran_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
+#      library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 #load libraries
 library(readr)

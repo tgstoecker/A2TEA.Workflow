@@ -5,6 +5,7 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
+  - autoconf
   - binutils=2.36.1=hdd6e379_1
   - binutils_impl_linux-64=2.36.1=h193b22a_1
   - binutils_linux-64=2.36=hf3e587d_32

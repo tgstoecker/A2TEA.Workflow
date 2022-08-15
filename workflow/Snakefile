@@ -49,6 +49,10 @@ ONTOLOGIES = ['BP', 'MF', 'CC']
 #reads_dir = config["reads_dir"]
 
 
+#the container
+containerized: "docker://tgstoecker/a2tea_pipeline:latest"
+
+
 ### all snakemake files to be included in the workflow ###
 ## (!) keep _utils.smk before the coressponding base rules; utils always contain python functions and should be handled first ##
 include: "rules/common_utils.smk"

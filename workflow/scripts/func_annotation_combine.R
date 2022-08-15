@@ -9,9 +9,9 @@ sink(log, append=TRUE, type="message")
 
 
 #setting CRAN repository
-r = getOption("repos")
-r["CRAN"] = "http://cran.us.r-project.org"
-options(repos = r)
+#r = getOption("repos")
+#r["CRAN"] = "http://cran.us.r-project.org"
+#options(repos = r)
 
 #fix for: libicui18n.so.68: cannot open shared object file
 #reinstall of stringi connects libraries correctly

@@ -11,31 +11,31 @@ sink(log, append=TRUE, type="message")
 #we check if packages are installed first
 
 # list of bioconductor packages
-bioc_packages = c("GenomicFeatures", "tximport", "rhdf5", "DESeq2")
+#bioc_packages = c("GenomicFeatures", "tximport", "rhdf5", "DESeq2")
 
 # load or install&load all
-package.check <- lapply(
-  bioc_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-    BiocManager::install(x)
-    library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  bioc_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#    BiocManager::install(x)
+#    library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 # list of cran packages
-cran_packages = c("readr")
+#cran_packages = c("readr")
 # load or install&load all
-package.check <- lapply(
-  cran_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
-      library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  cran_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#      install.packages(x, dependencies = TRUE, repos = "http://cran.us.r-project.org")
+#      library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 
 #load libraries

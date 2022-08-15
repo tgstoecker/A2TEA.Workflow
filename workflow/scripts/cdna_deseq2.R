@@ -11,18 +11,18 @@ sink(log, append=TRUE, type="message")
 #we check if packages are installed first
 
 # list of bioconductor packages
-bioc_packages = c("DESeq2")
+#bioc_packages = c("DESeq2")
 
 # load or install&load all
-package.check <- lapply(
-  bioc_packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-    BiocManager::install(x)
-    library(x, character.only = TRUE)
-    }
-  }
-)
+#package.check <- lapply(
+#  bioc_packages,
+#  FUN = function(x) {
+#    if (!require(x, character.only = TRUE)) {
+#    BiocManager::install(x)
+#    library(x, character.only = TRUE)
+#    }
+#  }
+#)
 
 
 #load libraries
