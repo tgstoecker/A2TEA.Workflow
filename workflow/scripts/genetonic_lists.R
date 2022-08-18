@@ -170,7 +170,11 @@ for (i in seq_len(nrow(res_enrich_scores))) {
   }
 }
 
-res_enrich_scores_filtered <- res_enrich_scores[-need_removed,]
+if (!is.null(need_removed)) {
+  res_enrich_scores_filtered <- res_enrich_scores[-need_removed,]
+} else {
+  res_enrich_scores_filtered <- res_enrich_scores
+}
 
 
 gtl <- GeneTonic_list(
