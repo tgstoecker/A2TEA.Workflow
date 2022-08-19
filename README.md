@@ -1,4 +1,9 @@
 # A2TEA
+
+[![Snakemake](https://img.shields.io/badge/snakemake->=7.12.1-brightgreen.svg)](https://snakemake.readthedocs.io)
+[![](https://img.shields.io/github/last-commit/tgstoecker/A2TEA.WebApp.svg)](https://github.com/tgstoecker/A2TEA.WebApp/commits/master)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
+
 Automated Assessment of Trait-specific Evolutionary Adaptations
 
 This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses - most notably gene family expansion events.
