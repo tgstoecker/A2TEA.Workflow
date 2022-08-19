@@ -1,4 +1,4 @@
-# A2TEA
+# A2TEA.Workflow
 
 [![Snakemake](https://img.shields.io/badge/snakemake->=7.12.1-brightgreen.svg)](https://snakemake.readthedocs.io)
 [![](https://img.shields.io/github/last-commit/tgstoecker/A2TEA.WebApp.svg)](https://github.com/tgstoecker/A2TEA.WebApp/commits/master)
