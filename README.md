@@ -113,7 +113,7 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 6) Run A2TEA with (exchange XX for the amount of cores you can offer):  
 `snakemake --cores XX --use-conda`  (add `--use-singularity` if you want to use the singularity image - option 2)
 
-# Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
+## Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
 cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
 However, since our approach focuses on gene loci, the transcript-level quantification of kallisto needs to be aggregated to gene level as part of the differential expression analysis.  
 This is done via the "makeTxDbFromGFF" function of the "GenomicFeatures" package in R (requires as input gff3 of gtf file).  
@@ -122,7 +122,7 @@ In such cases, changes to the tximport.R script in scripts/ might be necessary -
 For both tximport and (cDNA route) or featureCounts (gDNA route) require an annotation file.
 The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation file to a common .gtf standard so that downstream steps work.  
     
-# Some additional important pointers on usage:
+## Some additional important pointers on usage:
 1) Make sure that there are no ":" in your peptide fasta headers (e.g. custom headers) - this will lead to problems because orthofinder exchanges ":" for "_"  
 2) As explained under General Usage 5) it is important that pep. fasta headers and either gene or transcript names as found in the annotation match. If you perform isoform filtering yourself, take note that transcripts not found in the pep. fasta won't be part of the downstream phylogenetic and combinatory analyses. These additional transcripts will however be quantified and their differential expression calculated. In the final diff. exp. output HOG_DE.a2tea they will appear but will be put into the singleton category. Depending on your downstream analyses you should consider removing such cases. An easy workaround is simply removing all secondary transcripts/isoforms from the annotation files as well before starting A2TEA.  
 3) Species name between samples.tsv, species.tsv & hypotheses.tsv HAS to match up!  
@@ -138,7 +138,7 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
 12) It is possible for a hypothesis to NOT have any expanded OGs - in this case the workflow will provide you with a snakemake error message during the extraction of fasta sequences for expanded OGs: `missing input files for rule fasta_extraction ... wildcards: hypothesis={hypothesis}, OG=empty.txt, ...`. As the dummy file `empty.txt` was written under `tea/{hypothesis}/add_OGs_sets/id_lists/` no expanded OGs exist for the `{hypothesis}`based on the chosen parameters. The user can decide to either adapt parameters or remove the hypothesis from the experiment by deleting it from the config/hypotheses.tsv file. In the latter case, please make sure to adapt the associated hypothesis numbers in the file as well (see 11.)) to 1:N. After this continue/rerun the workflow with the additional flag `--rerun-incomplete`.  
 
 
-# Common resons for errors: 
+## Common resons for errors: 
 - falsely formatted annotations; e.g. gene_id field is called different in some lines geneID  
 - format of fasta files -> same lengths of lines and shorter; otherwise samtools faidx etc. won't work  
   
