@@ -192,7 +192,7 @@ setClass("add_OG_set",
          )
 ``` 
 
-### :framed_picture: The workflow visualized:  
+# :framed_picture: The workflow visualized:  
 Note that checkpoint rules (spawned due to DAG re-evaluation - e.g. unknown number of output files at the  beginning of the workflow) are not included in this tree diagram.
 ![Alt text](./latest_rulegraph.svg)
 
