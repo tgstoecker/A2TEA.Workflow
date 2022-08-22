@@ -1,3 +1,5 @@
+<img src="a2tea_hexsticker.png" align="right" alt="" width="120" />
+
 # A2TEA.Workflow
 
 [![Snakemake](https://img.shields.io/badge/snakemake->=7.12.1-brightgreen.svg)](https://snakemake.readthedocs.io)
@@ -6,10 +8,11 @@
 
 Automated Assessment of Trait-specific Evolutionary Adaptations
 
-This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses - most notably gene family expansion events.
+This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses -> gene family expansion events.
 We use Orthofinder2 to infer gene duplication events and correlate these with significant physiological reaction patterns in the compared species.
 
 At the moment for each species A2TEA requires as input RNA-Seq reads (both PE/SE possible) suitable for a differential expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta.  
+Functional information per species can be provided by the user or can be optionally inferred by our tool [AHRD](https://github.com/groupschoof/AHRD) during the workflow.
 
 
 # Setup:
@@ -22,47 +25,32 @@ Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster rep
 
 `conda install -c conda-forge mamba`
 
-In it's current form, A2TEA requires at least snakemake v7.0.0 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake>=7.0.0"`
+In it's current form, A2TEA requires at least snakemake v7.12.1 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake>=7.12.1"`
 
 Download/Clone the current release of the A2TEA workflow into the directory.
 
-`git clone https://bitbucket.team.uni-bonn.de/scm/cbig/a2tea.git`
+`git clone https://github.com/tgstoecker/A2TEA.Workflow.git`
 
 Setup the AHRD_Snakemake subworkflow by navigating into the cloned A2TEA directory and entering:
-
 ```
 git submodule init
 git submodule update
 ```
+Note that this is not necessary if you provide functional information on a per gene/transcript level for each species yourself.
 
-
-# Installation
-## Option 1 (recommended):
+# :arrow_double_down: Setup & Installation
+## Option 1:
 Use installation of software during runtime by starting the workflow with the `--use-conda` option.
-This will install seperate small conda environments for groups of or individual rules and is more stable.
+This will install seperate small conda environments for groups of or individual rules. However, if requirements & dependencies change some environments might fail to build.
 
+## Option 2 (Docker container with Singularity - **recommended**)
+By using the latest version of our docker container image via the combination of the commands `--use-conda --use-singularity` we can circumvent most potential issues that can arise when using option 1.  
+From the Snakemake docs:  
+*"Snakemake will first pull the defined container image, and then create the requested conda environment from within the container. The conda environments will still be stored in your working environment, such that they don’t have to be recreated unless they have changed. The hash under which the environments are stored includes the used container image url, such that changes to the container image also lead to new environments to be created. When a job is executed, Snakemake will first enter the container and then activate the conda environment."*  
+This is perfect in most cases but somewhat slower.  
+If during the checkpoint steps many hypotheses are analyzed and the user chose many additional closest orthologous groups be added for multiple sequence alignment, tree building, etc. it can be a good idea to stop the run (CTRL + C) and continue without the `--use-singularity` option.  This is due to the workflow re-evaluating the DAG at this point and scheduling a huge amount of novel jobs (several ten- to hundreds of thousands), for each of which the container environment will be entered and the appropiate environment loaded seperately.
 
-## Option 2 (not recommended! & not yet updated):
-The included workflow/envscomplete_environment.yaml file can be used to install all required software into an isolated Conda environment with a name of your choice - in the following we will call it "A2TEA":
-
-`mamba env create --name A2TEA --file workflow/envscomplete_environment.yaml`
-
-Activating the environment
-To activate the snakemake-tutorial environment, execute
-
-`conda activate A2TEA`
-
-Now you can use the installed tools and our workflow without any software dependency issues.
-For detailed options of snakemake see: https://snakemake.readthedocs.io/en/v5.5.1/executable.html
-
-Should you want to remove the conda environment, execute
-`conda env remove -n A2TEA`  
-
-## Option 3 (not yet existing)
-Singularity container
-
-
-# General usage
+# :control_knobs: General usage
 ## Recommended steps
 1) Add or symlink all fastq files to the rawreads directory:  
   FASTQ files -> rawreads/  
@@ -105,7 +93,7 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
   
 4) Using the activated environment perform a dry-run and check for problems with:    
 `snakemake -np`  
-   Ignore warning messages (pink) "The code used to generate one or several output files has changed: ...". 
+   Ignore warning messages (pink) such as "The code used to generate one or several output files has changed: ...". 
 
 5) Configure the config.yaml file to your needs  
 - here you can adjust options for trimming, thread usage per rule and much more
@@ -123,18 +111,17 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 
 
 6) Run A2TEA with (exchange XX for the amount of cores you can offer):  
-`snakemake --cores XX --use-conda`  (remove `use-conda` if you installed all software into one conda environment - option 2)
+`snakemake --cores XX --use-conda`  (add `--use-singularity` if you want to use the singularity image - option 2)
 
 # Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
 cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
 However, since our approach focuses on gene loci, the transcript-level quantification of kallisto needs to be aggregated to gene level as part of the differential expression analysis.  
 This is done via the "makeTxDbFromGFF" function of the "GenomicFeatures" package in R (requires as input gff3 of gtf file).  
-It works really well for the annotation files I have tested so far but this is i.m.O. a source of potential errors if e.g. non-standard annotations are used.  
+It works really well for the annotation files we have tested so far but this is a potential source of errors if e.g. non-standard annotations are used.  
 In such cases, changes to the tximport.R script in scripts/ might be necessary - or one switches to the genomic FASTA/ STAR-based approach which directly quantifies at gene-level.  
-For both tximport and (cDNA route) or featureCounts (gDNA route) we require an annotation file.
+For both tximport and (cDNA route) or featureCounts (gDNA route) require an annotation file.
 The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation file to a common .gtf standard so that downstream steps work.  
-  
-  
+    
 # Some additional important pointers on usage:
 1) Make sure that there are no ":" in your peptide fasta headers (e.g. custom headers) - this will lead to problems because orthofinder exchanges ":" for "_"  
 2) As explained under General Usage 5) it is important that pep. fasta headers and either gene or transcript names as found in the annotation match. If you perform isoform filtering yourself, take note that transcripts not found in the pep. fasta won't be part of the downstream phylogenetic and combinatory analyses. These additional transcripts will however be quantified and their differential expression calculated. In the final diff. exp. output HOG_DE.a2tea they will appear but will be put into the singleton category. Depending on your downstream analyses you should consider removing such cases. An easy workaround is simply removing all secondary transcripts/isoforms from the annotation files as well before starting A2TEA.  
@@ -155,7 +142,7 @@ The workflow uses gffread to standardize any supplied gff, gff3, gtf annotation 
 - falsely formatted annotations; e.g. gene_id field is called different in some lines geneID  
 - format of fasta files -> same lengths of lines and shorter; otherwise samtools faidx etc. won't work  
   
-# Output  
+# :beginner: Output  
 The final output is a single file - tea/A2TEA_finished.RData.  
 This file can be used in R by using the load() command.  
 Doing this, provides several seperate objects in your R environment containing all results in a compact form factor:  
@@ -169,8 +156,12 @@ See the class definitions below for more details.
 - HOG_DE.a2tea - Dataframe/Tibble with DESeq2 results for all genes + additional columns  
 - A2TEA.fa.seqs - Non-redundant list object containg corresponding AA fasta sequences of all genes/transcripts in the final analysis. (includes those of exp. OGs + those in additonal BLAST hits & additional OGs based on user chosen parameters).
 - SFA/SFA_OG_level - gene/transcript level tables that contains functional predicitons (human readable & GO terms) - see AHRD info
+- hypotheses - a copy of the user defined hypotheses definitions for the underlying workflow run
+- all_speciesTree - phylogenetic tree of all species in the workflow run (non-redundant superset of hypotheses) as inferred Orthofinder/STAG/Stride
 
-You can use the the A2TEA_finished.RData output in your own R instance or use our WebApp (!name) which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets.
+You can use the the A2TEA_finished.RData output in your own R terminal/Rstudio or use our **[A2TEA.WebApp](https://github.com/tgstoecker/A2TEA.WebApp)** which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets. We feature a tutorial for its usage and details on how to work with the results of a A2TEA.Workflow analysis run.
+
+For R console work with obtained results the bare requirement is to run the following code chunk defining the classes.
 
 ```
 #required packages for classes
@@ -201,6 +192,7 @@ setClass("add_OG_set",
          )
 ``` 
 
-### The workflow in its current form:
+### :framed_picture: The workflow visualized:  
+Note that checkpoint rules (spawned due to DAG re-evaluation - e.g. unknown number of output files at the  beginning of the workflow) are not included in this tree diagram.
 ![Alt text](./latest_rulegraph.svg)
 
