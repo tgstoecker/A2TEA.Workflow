@@ -9,7 +9,7 @@
 Automated Assessment of Trait-specific Evolutionary Adaptations
 
 This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses -> gene family expansion events.
-We use Orthofinder2 to infer gene duplication events and correlate these with significant physiological reaction patterns in the compared species.
+We use Orthofinder2 to infer gene duplication events and integrate these with significant physiological reaction patterns in the compared species.
 
 At the moment for each species A2TEA requires as input RNA-Seq reads (both PE/SE possible) suitable for a differential expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta.  
 Functional information per species can be provided by the user or can be optionally inferred by our tool [AHRD](https://github.com/groupschoof/AHRD) during the workflow.
