@@ -228,6 +228,6 @@ setClass("add_OG_set",
 ``` 
 
 # :framed_picture: The workflow visualized:  
-Note that checkpoint rules (spawned due to DAG re-evaluation - e.g. unknown number of output files at the  beginning of the workflow) are not included in this tree diagram.
+Note that checkpoint rules (spawned due to DAG re-evaluation - e.g. unknown number of output files at the beginning of the workflow) are not included in this tree diagram. Between the "expansion" checkpoint and "expansion_checkpoint_finish" aggregation rule many jobs are spawned as here for each set of additionally considered orthologous groups of and incl. the expanded orthologous group (and per hypothesis) sequence extraction, multiple sequence alignments & phylogenetic tree building are performed.  
 ![Alt text](./latest_rulegraph.svg)
 
