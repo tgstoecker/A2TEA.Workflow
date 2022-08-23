@@ -138,6 +138,9 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 	export SINGULARITY_TMPDIR=/full-path-to-A2TEA.Workflow/workflow/singularity_run/tmp/
 	export SINGULARITY_CACHEDIR=/full-path-to-A2TEA.Workflow/workflow/singularity_run/cache/
 	```
+- Also when using the `--use-singularity` option, be aware to make sure that snakemake can find your input files. One can run into problems when not considering that e.g. some read or fasta files are only linked from a distant directory elsewhere on the filesystem.  
+To circumvent this, you can make sure that directories are bind-mounted when singularity is run by addtionally specifying e.g.: `--singularity-args '-B /path/to/directory'`.
+Generally speaking the safest way is always to have all input files as part of the A2TEA.Workflow directory itself.
 
 ## Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
 cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
