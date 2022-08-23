@@ -28,7 +28,9 @@ Then, you can install [mamba](https://github.com/QuantStack/mamba) (a faster rep
 
 `conda install -c conda-forge mamba`
 
-In it's current form, A2TEA requires at least snakemake v7.12.1 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake>=7.12.1"`
+In it's current form, A2TEA requires at least snakemake v7.12.1 - install or upgrade with `mamba install -c conda-forge -c bioconda "snakemake>=7.12.1"`.  
+To circumvent dependency issues we also offer a containerized solution via a docker image hosted on dockerhub that can be used (details further below).  
+Usage only requires Singularity to be installed, e.g.: `mamba  install -c conda-forge singularity`.  
 
 Download/Clone the current release of the A2TEA workflow into the directory.
 
@@ -76,8 +78,8 @@ Peptide fastas are reduced to 2000 proteins; sequencing reads are subsampled to 
 The fasta/annotation files and sequencing reads are hosted - here.  
 Fasta & annotation files are all either downloaded from ensemblPlants and still possess their original name or in the case of the functional annotations were computed using [AHRD](https://github.com/groupschoof/AHRD).  
 NCBI SRA accession IDs of sequencing reads:
-- Hordeum vulgare: SRR6782243, SRR6782244, SRR6782247, SRR6782257 - SRR6782249, SRR6782250, SRR6782254
-- Zea mays: SRR2043219, SRR2043217, SRR2043191, SRR2043190 - SRR2043220, SRR2043226, SRR2043227, SRR2043228
+- Hordeum vulgare: SRR6782243, SRR6782247, SRR6782257, SRR6782249, SRR6782250, SRR6782254
+- Zea mays: SRR2043219, SRR2043217, SRR2043190, SRR2043220, SRR2043226, SRR2043227
 - Oryza sativa japonica: SRR5134063, SRR5134064, SRR5134065, SRR5134066
 
 These correspond to the following studies relating to drought stress:  
