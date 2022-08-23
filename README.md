@@ -72,9 +72,20 @@ Note that you need to have singularity installed - e.g. `mamba  install -c conda
 
 # :ballot_box_with_check: Test run & data
 When cloning this repo the workflow is set up to run a three species analysis with *Hordeum vulgare*, *Zea mays* & *Oryza sativa japonica* and their reaction patterns to drought stress.  
-The fasta files and sequencing reads are hosted - here.  
-By running the the script `get_test_data.sh` these input files are automatically downloaded and put into the correct places.  
-We recommend performing this step, reading the next passage which list several considerations regarding input data and then starting a trial run of the workflow.  
+The fasta/annotation files and sequencing reads are hosted - here.  
+Fasta & annotation files are all either downloaded from ensemblPlants and still possess their original name or in the case of the functional annotations were computed using [AHRD](https://github.com/groupschoof/AHRD).  
+NCBI SRA IDs of sequencing reads:
+- Hordeum vulgare:
+- Zea mays
+- Oryza sativa japonica
+
+These correspond to the following studies relating to drought stress:  
+- a
+- b
+- c
+
+By running the the script `get_test_data.sh` all of these input files are automatically downloaded and put into the correct places.  
+**We recommend performing this step, reading the next passage which lists several considerations regarding input data and then starting a trial run of the workflow.**  
 
 # :control_knobs: General usage
 ## Recommended steps
