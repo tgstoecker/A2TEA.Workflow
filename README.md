@@ -70,6 +70,12 @@ This is perfectly stable in most cases but slower.
 If during the checkpoint steps many hypotheses are analyzed and the user chose many additional closest orthologous groups be added for multiple sequence alignment, tree building, etc. it can be a good idea to stop the run (CTRL + C) and continue without the `--use-singularity` option.  This is due to the workflow re-evaluating the DAG at this point and scheduling a huge amount of novel jobs (several ten- to hundreds of thousands), for each of which the container environment will be entered and the appropiate environment loaded seperately.  
 Note that you need to have singularity installed - e.g. `mamba  install -c conda-forge singularity`.  
 
+# :ballot_box_with_check: Test run & data
+When cloning this repo the workflow is set up to run a three species analysis with *Hordeum vulgare*, *Zea mays* & *Oryza sativa japonica* and their reaction patterns to drought stress.  
+The fasta files and sequencing reads are hosted - here.  
+By running the the script `get_test_data.sh` these input files are automatically downloaded and put into the correct places.  
+We recommend performing this step, reading the next passage which list several considerations regarding input data and then starting a trial run of the workflow.  
+
 # :control_knobs: General usage
 ## Recommended steps
 1) Add or symlink all fastq files to the rawreads directory:  
