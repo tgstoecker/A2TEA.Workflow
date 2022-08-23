@@ -72,17 +72,18 @@ Note that you need to have singularity installed - e.g. `mamba  install -c conda
 
 # :ballot_box_with_check: Test run & data
 When cloning this repo the workflow is set up to run a three species analysis with *Hordeum vulgare*, *Zea mays* & *Oryza sativa japonica* and their reaction patterns to drought stress.  
+Peptide fastas are reduced to 2000 proteins; sequencing reads are subsampled to 2M reads.  
 The fasta/annotation files and sequencing reads are hosted - here.  
 Fasta & annotation files are all either downloaded from ensemblPlants and still possess their original name or in the case of the functional annotations were computed using [AHRD](https://github.com/groupschoof/AHRD).  
-NCBI SRA IDs of sequencing reads:
-- Hordeum vulgare:
-- Zea mays
-- Oryza sativa japonica
+NCBI SRA accession IDs of sequencing reads:
+- Hordeum vulgare: SRR6782243, SRR6782244, SRR6782247, SRR6782257 - SRR6782249, SRR6782250, SRR6782254
+- Zea mays: SRR2043219, SRR2043217, SRR2043191, SRR2043190 - SRR2043220, SRR2043226, SRR2043227, SRR2043228
+- Oryza sativa japonica: SRR5134063, SRR5134064, SRR5134065, SRR5134066
 
 These correspond to the following studies relating to drought stress:  
-- a
-- b
-- c
+- Hordeum vulgare: [https://doi.org/10.1186/s12864-019-5634-0](https://doi.org/10.1186/s12864-019-5634-0)  
+- Zea mays: [https://doi.org/10.1104/pp.16.01045](https://doi.org/10.1104/pp.16.01045)  
+- Oryza sativa japonica: [https://doi.org/10.3389/fpls.2017.00580](https://doi.org/10.3389/fpls.2017.00580)  
 
 By running the the script `get_test_data.sh` all of these input files are automatically downloaded and put into the correct places.  
 **We recommend performing this step, reading the next passage which lists several considerations regarding input data and then starting a trial run of the workflow.**  
