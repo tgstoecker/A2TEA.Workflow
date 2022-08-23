@@ -6,14 +6,17 @@
 [![](https://img.shields.io/github/last-commit/tgstoecker/A2TEA.WebApp.svg)](https://github.com/tgstoecker/A2TEA.WebApp/commits/master)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
 
-Automated Assessment of Trait-specific Evolutionary Adaptations
+**A**utomated **A**ssessment of **T**rait-specific **E**volutionary **A**daptations
 
-This workflow combines RNA-seq analyses, differential gene expression, with evolutionary analyses -> gene family expansion events.
+A2TEA is a tool facilitating exploration of genetic diversity and uncovering evolutionary adaptation to stresses by exploiting genome comparisons and existing RNA-Seq data. In order to identify candidate genes, gene family expansion events - as an important driver of adaptation - are integrated with differential gene expression to link genes to functions.
+
+This workflow combines RNA-seq analyses (differential gene expression) with evolutionary analyses -> gene family expansion events.
 We use Orthofinder2 to infer gene duplication events and integrate these with significant physiological reaction patterns in the compared species.
 
 At the moment for each species A2TEA requires as input RNA-Seq reads (both PE/SE possible) suitable for a differential expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta.  
 Functional information per species can be provided by the user or can be optionally inferred by our tool [AHRD](https://github.com/groupschoof/AHRD) during the workflow.
 
+You can use the the A2TEA_finished.RData output in your own R terminal/Rstudio or use our **[A2TEA.WebApp](https://github.com/tgstoecker/A2TEA.WebApp)** which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets. We feature a tutorial for its usage and details on how to work with the results of a A2TEA.Workflow analysis run.
 
 # Setup:
 Install the Python 3 version of Miniconda.
@@ -31,24 +34,41 @@ Download/Clone the current release of the A2TEA workflow into the directory.
 
 `git clone https://github.com/tgstoecker/A2TEA.Workflow.git`
 
-Setup the AHRD_Snakemake subworkflow by navigating into the cloned A2TEA directory and entering:
+
+### If you can't provide functional annotations for your genes/transcripts/proteins you will need to also do the following:
+1. Open the Snakefile under `workflow/Snakefile` and uncomment the following lines:
+```
+configfile: "workflow/rules/AHRD_Snakemake/config/config.yaml"
+#and
+include: "rules/AHRD_Snakemake/workflow/rules/download.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/diamond.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/get_ahrd.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/extract_header_and_length.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/create_ahrd_input.smk"
+include: "rules/AHRD_Snakemake/workflow/rules/run_ahrd.smk"
+```
+2. Setup the AHRD_Snakemake subworkflow by navigating into the cloned A2TEA.Workflow directory and entering:
 ```
 git submodule init
 git submodule update
 ```
-Note that this is not necessary if you provide functional information on a per gene/transcript level for each species yourself.
+
+3. In the `config/species.tsv` add `AHRD` in the column `function` for all species for which novel functional information needs to be generated.
+
+Note again, that these steps are not necessary if you provide functional information on a per gene/transcript level for each species yourself.
 
 # :arrow_double_down: Setup & Installation
-## Option 1:
+## Option 1 (runtime installation - **faster & should be tried first**):
 Use installation of software during runtime by starting the workflow with the `--use-conda` option.
-This will install seperate small conda environments for groups of or individual rules. However, if requirements & dependencies change some environments might fail to build.
+This will install seperate small conda environments for groups of or individual rules. However, if requirements & dependencies change, some environments might fail to build.
 
-## Option 2 (Docker container with Singularity - **recommended**)
+## Option 2 (Docker container with Singularity - **guaranteed stability but slower**)
 By using the latest version of our docker container image via the combination of the commands `--use-conda --use-singularity` we can circumvent most potential issues that can arise when using option 1.  
 From the Snakemake docs:  
 *"Snakemake will first pull the defined container image, and then create the requested conda environment from within the container. The conda environments will still be stored in your working environment, such that they don’t have to be recreated unless they have changed. The hash under which the environments are stored includes the used container image url, such that changes to the container image also lead to new environments to be created. When a job is executed, Snakemake will first enter the container and then activate the conda environment."*  
-This is perfect in most cases but somewhat slower.  
-If during the checkpoint steps many hypotheses are analyzed and the user chose many additional closest orthologous groups be added for multiple sequence alignment, tree building, etc. it can be a good idea to stop the run (CTRL + C) and continue without the `--use-singularity` option.  This is due to the workflow re-evaluating the DAG at this point and scheduling a huge amount of novel jobs (several ten- to hundreds of thousands), for each of which the container environment will be entered and the appropiate environment loaded seperately.
+This is perfectly stable in most cases but slower.  
+If during the checkpoint steps many hypotheses are analyzed and the user chose many additional closest orthologous groups be added for multiple sequence alignment, tree building, etc. it can be a good idea to stop the run (CTRL + C) and continue without the `--use-singularity` option.  This is due to the workflow re-evaluating the DAG at this point and scheduling a huge amount of novel jobs (several ten- to hundreds of thousands), for each of which the container environment will be entered and the appropiate environment loaded seperately.  
+Note that you need to have singularity installed - e.g. `mamba  install -c conda-forge singularity`.  
 
 # :control_knobs: General usage
 ## Recommended steps
@@ -111,7 +131,13 @@ hypotheses.tsv (formulate hypotheses regarding your supplied data):
 
 
 6) Run A2TEA with (exchange XX for the amount of cores you can offer):  
-`snakemake --cores XX --use-conda`  (add `--use-singularity` if you want to use the singularity image - option 2)
+`snakemake --cores XX --use-conda`  (add `--use-singularity` if you want to use the singularity image - option 2)  
+- Note that a dry-run can be performed which is likely to tell you of missing files etc. with `snakemake --cores XX --use-conda -np`.  
+- When using the `--use-singularity` option, depending on your compute environment, it can be advantageous to explicitly define the `tmp/` and `cache/` locations. This is due to these locations often defaulting to shared /tmp/ locations that may be quite limited in terms of storage space or general user permissions. To circumvent this, we provide two directories `workflow/singularity_run/tmp/` and `workflow/singularity_run/cache/` which you can use as locations by explicitly defining/exporting the appropiate environment variables:
+	```
+	export SINGULARITY_TMPDIR=/full-path-to-A2TEA.Workflow/workflow/singularity_run/tmp/
+	export SINGULARITY_CACHEDIR=/full-path-to-A2TEA.Workflow/workflow/singularity_run/cache/
+	```
 
 ## Important note on cDNA vs genomic fasta as choice for a species/ecotype/etc.:
 cDNA input leads to kallisto as quantification software. This is much faster than using STAR and also requires much less resources.  
