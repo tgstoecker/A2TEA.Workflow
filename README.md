@@ -71,7 +71,23 @@ From the Snakemake docs:
 This is perfectly stable in most cases but slower.  
 If during the checkpoint steps many hypotheses are analyzed and the user chose many additional closest orthologous groups be added for multiple sequence alignment, tree building, etc. it can be a good idea to stop the run (CTRL + C) and continue without the `--use-singularity` option.  This is due to the workflow re-evaluating the DAG at this point and scheduling a huge amount of novel jobs (several ten- to hundreds of thousands), for each of which the container environment will be entered and the appropiate environment loaded seperately.  
 Note that you need to have singularity installed - e.g. `mamba  install -c conda-forge singularity`.  
-
+  
+Since on some systems or shared clusters the standard /tmp directory is quite small it can be necessary to change this to another directory.  
+A easy solution is to reate a tmp directory inside the workflow directory and set the tmpdir singularity env variable to this.  
+```
+mkdir /scratch2/cropbio/stoecker/A2TEA-pipeline/master_dev/a2tea/tmp/
+export SINGULARITY_TMPDIR=/scratch2/cropbio/stoecker/A2TEA-pipeline/master_dev/a2tea/tmp/
+```
+  
+Snakemake scripts sometimes can't find input files when using singularity - this is probably because the correct directories haven't been bind-mounted when singularity was run.  
+Adding this to the snakemake command usually helps:  
+```
+--singularity-args '-B /scratch2/cropbio/stoecker/A2TEA-pipeline/master_dev/a2tea'
+#remember however that if you bind mount directories you have to make sure all input files can be found
+#linking files from a mounted connection somewhere else on the file system
+#therefore just copy every input file into the A2TEA.Workflow directory to be on the safe side
+```
+  
 # :ballot_box_with_check: Test run & data
 When cloning this repo the workflow is set up to run a three species analysis with *Hordeum vulgare*, *Zea mays* & *Oryza sativa japonica* and their reaction patterns to drought stress.  
 Peptide fastas are reduced to 2000 proteins; sequencing reads are subsampled to 2M reads.  
