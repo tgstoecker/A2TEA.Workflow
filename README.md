@@ -5,6 +5,7 @@
 [![Snakemake](https://img.shields.io/badge/snakemake->=7.12.1-brightgreen.svg)](https://snakemake.readthedocs.io)
 [![](https://img.shields.io/github/last-commit/tgstoecker/A2TEA.WebApp.svg)](https://github.com/tgstoecker/A2TEA.WebApp/commits/master)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable)
+[![DOI](https://zenodo.org/badge/526283448.svg)](https://zenodo.org/badge/latestdoi/526283448)
 
 **A**utomated **A**ssessment of **T**rait-specific **E**volutionary **A**daptations
 
