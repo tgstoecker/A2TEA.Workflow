@@ -4,7 +4,10 @@
 wget \
   --no-check-certificate \
   --content-disposition \
-  "https://uni-bonn.sciebo.de/s/vBGB09QBTAGAlMT/download"
+  https://zenodo.org/record/7089022/files/A2TEA.workflow_test_data.tar.gz?download=1
+
+#alternative from sciebo
+#  "https://uni-bonn.sciebo.de/s/vBGB09QBTAGAlMT/download"
 
 #unpack
 tar -xvf A2TEA.workflow_test_data.tar.gz
