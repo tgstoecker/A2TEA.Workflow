@@ -19,6 +19,9 @@ Functional information per species can be provided by the user or can be optiona
 
 You can use the the A2TEA_finished.RData output in your own R terminal/Rstudio or use our **[A2TEA.WebApp](https://github.com/tgstoecker/A2TEA.WebApp)** which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets. We feature a tutorial for its usage and details on how to work with the results of a A2TEA.Workflow analysis run.
 
+See the published paper!: [https://f1000research.com/articles/11-1137](https://f1000research.com/articles/11-1137)  
+See the downstream R Shiny WebApp in action!: [https://tgstoecker.shinyapps.io/A2TEA-WebApp/](https://tgstoecker.shinyapps.io/A2TEA-WebApp/)  
+
 # Setup:
 Install the Python 3 version of Miniconda.
 you can get it here: https://docs.conda.io/en/latest/miniconda.html
