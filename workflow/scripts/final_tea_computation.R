@@ -99,6 +99,16 @@ for (i in 1:length(dea_list_short)){
     species_list <- c(species_list, str_sub(dea_list_short[[i]], start=5))
 }
 
+############ TEST
+#h_expanded_in <- unlist(str_split(hypotheses$expanded_in[i], ";"))
+#    h_compared_to <- unlist(str_split(hypotheses$compared_to[i], ";"))
+#    #restrict to those with expression data
+#    h_species <- intersect(c(h_expanded_in, h_compared_to), species_list)
+#print(str(h_species))
+#print(h_species)
+############ TEST
+
+
 list_AllSpeciesDEResultsDataFrames <- list()
 
 for (i in species_list) {
@@ -458,33 +468,44 @@ if (length(sig_diff_species_check) > 0) {
 
 #handling per hypothesis as hypothesis specific total sig. diff. calculation and join with HOG_level_list 
 for (i in 1:length(HOG_level_list)) {
-    
+
+    print(paste0("Working on hyp ", i))
+
     h_expanded_in <- unlist(str_split(hypotheses$expanded_in[i], ";"))
     h_compared_to <- unlist(str_split(hypotheses$compared_to[i], ";"))
-    h_species <- c(h_expanded_in, h_compared_to)
+    #restrict to those with expression data
+    h_species <- intersect(c(h_expanded_in, h_compared_to), species_list)
 
-    # adding a column summing the rowwise sig. DE counts for all species   
-    #need to assign to a hypothesis specific name since this is a loop - duhh...
-    h_sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG %>% 
-      mutate(
-        total_sigDE = rowSums(select(., paste0(h_species, "_sigDE")), na.rm=TRUE)  
-      )   
+    if(length(h_species) != 0) {
 
-    h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
-      group_by(HOG) %>%
-      # mutate all NAs to 0s#
-      mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
-      # merge rows per HOG - results in one line per HOG
-      select(HOG, paste0(h_species, "_sigDE"), total_sigDE) %>%
-      distinct() %>%
-      summarise_all(list(sum))
+      # adding a column summing the rowwise sig. DE counts for all species   
+      #need to assign to a hypothesis specific name since this is a loop - duhh...
+      h_sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG %>% 
+        mutate(
+          total_sigDE = rowSums(select(., paste0(h_species, "_sigDE")), na.rm=TRUE)  
+        )   
 
-    # change the zeros back to NAs
-    h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
-                                       na_if(0)
+      h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
+        group_by(HOG) %>%
+        # mutate all NAs to 0s#
+        mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
+        # merge rows per HOG - results in one line per HOG
+        select(HOG, paste0(h_species, "_sigDE"), total_sigDE) %>%
+        distinct() %>%
+        summarise_all(list(sum))
+
+        # change the zeros back to NAs
+        # dplyr forced <1.1.0 – this na_if() behaviour is not possible anymore (now type stable)
+        # https://stackoverflow.com/a/75462444
+        h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
+                                         na_if(0)
     
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>% rename_at(vars(-HOG, -expansion), ~ paste0(., '_total'))
-    HOG_level_list[[i]] <- full_join(HOG_level_list[[i]], h_sig_genes_per_species_and_HOG, by = c("HOG"))
+        HOG_level_list[[i]] <- HOG_level_list[[i]] %>% rename_at(vars(-HOG, -expansion), ~ paste0(., '_total'))
+        HOG_level_list[[i]] <- full_join(HOG_level_list[[i]], h_sig_genes_per_species_and_HOG, by = c("HOG"))
+    } 
+    else {
+       HOG_level_list[[i]] <- HOG_level_list[[i]] %>% rename_at(vars(-HOG, -expansion), ~ paste0(., '_total'))
+    }
 }
 
 
@@ -499,6 +520,7 @@ for (i in 1:length(HOG_level_list)) {
 str(HOG_level_list)
 
 
+print("Made it to norm calcs")
 
 ## Calculating enrichment/overrepresentation of sig. diff. exp. genes of expanded_in species per HOG
 #normalization of expanded/compared sig. diff. genes with N species per group
@@ -508,49 +530,56 @@ for (i in 1:length(hypotheses$hypothesis)) {
     length_expanded_in <- length(h_expanded_in)
     length_compared_to <- length(h_compared_to)
     
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
-      mutate(
-        norm_sum_expanded_sigDE = rowSums(select(., paste0(h_expanded_in, "_sigDE")), na.rm=TRUE) / length_expanded_in
-      )
+    #restrict to those with expression data
+    h_species_expanded <- intersect(h_expanded_in, species_list)
+    h_species_compared <- intersect(h_compared_to, species_list)
+
+    #only perform these steps when there are species in expanded and compared with expression data
+    if(length(h_species_expanded) != 0 & length(h_species_compared) != 0) {
+
+      HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+        mutate(
+          norm_sum_expanded_sigDE = rowSums(select(., paste0(h_expanded_in, "_sigDE")), na.rm=TRUE) / length_expanded_in
+        )
     
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
-      mutate(
-        norm_sum_compared_sigDE = rowSums(select(., paste0(h_compared_to, "_sigDE")), na.rm=TRUE) / length_compared_to
-      )
+      HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+        mutate(
+          norm_sum_compared_sigDE = rowSums(select(., paste0(h_compared_to, "_sigDE")), na.rm=TRUE) / length_compared_to
+        )
       
-    #compute column sums for norm_sum_expanded_sigDE and norm_sum_compared_sigDE
-    #variable nuames correspond to the classic urn problem
-    sum_white <- HOG_level_list[[i]] %>% 
-      summarise(summed = sum(norm_sum_expanded_sigDE)) %>%
-      pull()
+      #compute column sums for norm_sum_expanded_sigDE and norm_sum_compared_sigDE
+      #variable nuames correspond to the classic urn problem
+      sum_white <- HOG_level_list[[i]] %>% 
+        summarise(summed = sum(norm_sum_expanded_sigDE)) %>%
+        pull()
     
-    sum_black <- HOG_level_list[[i]] %>% 
-      summarise(summed = sum(norm_sum_compared_sigDE)) %>%
-      pull()
+      sum_black <- HOG_level_list[[i]] %>% 
+        summarise(summed = sum(norm_sum_compared_sigDE)) %>%
+        pull()
     
     
-    #calculate 
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
-      rowwise() %>%
-       mutate(
-        oaes_hyper = phyper(norm_sum_expanded_sigDE - 1, 
-                             sum_white, 
-                             sum_black, 
-                             norm_sum_expanded_sigDE + norm_sum_compared_sigDE, 
-                             lower.tail = FALSE)
-        ) %>% ungroup() %>%      
-      mutate(
-        oaes_hyper = case_when(
+      #calculate 
+      HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+        rowwise() %>%
+          mutate(
+          oaes_hyper = phyper(norm_sum_expanded_sigDE - 1, 
+                              sum_white, 
+                              sum_black, 
+                              norm_sum_expanded_sigDE + norm_sum_compared_sigDE, 
+                              lower.tail = FALSE)
+          ) %>% ungroup() %>%      
+        mutate(
+          oaes_hyper = case_when(
                         oaes_hyper == 1 ~ NA_real_,
                         TRUE ~ oaes_hyper
                    )
-      )
-
+        )
+    }
 }
 
 
 ## adding the computed CAFE p-values to the HOG_level_list(s)
-for (hypothesis_num in 1:length(HOG_level_list)) {
+for(hypothesis_num in 1:length(HOG_level_list)) {
 
   cafe_tibble <- read_tsv(paste0("cafe/", hypothesis_num, "/cafe_complete_results/Gamma_family_results.txt"))[1:2]
 
@@ -559,9 +588,15 @@ for (hypothesis_num in 1:length(HOG_level_list)) {
                                                   cafe_tibble, 
                                                   by = c("HOG" = "#FamilyID")
                                                  ) %>%
-                                        rename(cafe_pvalue = pvalue) %>%
-                                        relocate(cafe_pvalue, .after = oaes_hyper) %>%
-                                        arrange(oaes_hyper)
+                                        rename(cafe_pvalue = pvalue) 
+
+  if("oaes_hyper" %in% colnames(HOG_level_list[[hypothesis_num]])){
+    HOG_level_list[[hypothesis_num]] <- HOG_level_list[[hypothesis_num]] %>%
+      relocate(cafe_pvalue, .after = oaes_hyper) %>%
+      arrange(oaes_hyper)
+  }
+
+  HOG_level_list[[hypothesis_num]]
 }
 
 #cafe only outputs p-values until 0.001 - so I will as a quick hack change all 0s to 0.001
@@ -582,27 +617,31 @@ for (hypothesis_num in 1:length(HOG_level_list)) {
 ## combine overrep. analysis of sig. exp. genes with cafe value of gene expansion
 for (i in 1:length(hypotheses$hypothesis)) {
  
-    #calculate the tea-value - trait-associated evolutionary adaption value
-    HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
-      rowwise() %>%
-      mutate(
-        tea_value = case_when(
-                      is.na(oaes_hyper) ~ NA_real_,
-                      is.na(cafe_pvalue) ~ NA_real_,
-                      is.na(oaes_hyper) & is.na(cafe_pvalue) ~ NA_real_,
-                      TRUE ~ 1 # don't really get why I can't do it here:
-                               # combine.test(c(oaes_hyper, cafe_pvalue), na.rm = TRUE)
-                    )          # results in error as soon as both elements are NA
-                               # seems like case_when calls everything anyways, even though the previous cases
-                               # should make it skip the line..; anyways quick workaround with second mutate()
-      ) %>%
-      mutate(
-        tea_value = case_when(
-                      tea_value == 1 ~ combine.test(c(oaes_hyper, cafe_pvalue), na.rm = TRUE)
-                    )
-      ) %>%
-      ungroup() %>%
-      arrange(tea_value) 
+    #again, only if we have oaes hyper so enough expression data to work with
+    if("oaes_hyper" %in% colnames(HOG_level_list[[i]])){
+
+      #calculate the tea-value - trait-associated evolutionary adaption value
+      HOG_level_list[[i]] <- HOG_level_list[[i]] %>%
+        rowwise() %>%
+        mutate(
+          tea_value = case_when(
+                        is.na(oaes_hyper) ~ NA_real_,
+                        is.na(cafe_pvalue) ~ NA_real_,
+                        is.na(oaes_hyper) & is.na(cafe_pvalue) ~ NA_real_,
+                        TRUE ~ 1 # don't really get why I can't do it here:
+                                 # combine.test(c(oaes_hyper, cafe_pvalue), na.rm = TRUE)
+                      )          # results in error as soon as both elements are NA
+                                 # seems like case_when calls everything anyways, even though the previous cases
+                                 # should make it skip the line..; anyways quick workaround with second mutate()
+        ) %>%
+        mutate(
+          tea_value = case_when(
+                        tea_value == 1 ~ combine.test(c(oaes_hyper, cafe_pvalue), na.rm = TRUE)
+                      )
+        ) %>%
+        ungroup() %>%
+        arrange(tea_value) 
+    }
 }
 
 
@@ -723,19 +762,26 @@ if (length(sig_diff_species_check) > 0) {
     print("No species without any sig. diff. expressed genes ;D")
 }
 
+#for final output: remove all rows with NA in species column in HOG
+HOG_DE.a2tea <- HOG_DE.a2tea %>%
+  filter(!is.na(species))
 
+#restrict to those with expression data
+all_rna_species <- intersect(all_species, species_list)
 
 h_sig_genes_per_species_and_HOG <- sig_genes_per_species_and_HOG  %>%
   group_by(HOG) %>%
   # mutate all NAs to 0s#
   mutate_at(vars(-group_cols()), ~replace(., is.na(.), 0)) %>%
   # merge rows per HOG - results in one line per HOG
-  select(HOG, paste0(all_species, "_sigDE")) %>%
+  select(HOG, paste0(all_rna_species, "_sigDE")) %>%
   distinct() %>%
   summarise_all(list(sum))
 
   
 # change the zeros back to NAs
+# dplyr forced <1.1.0 – this na_if() behaviour is not possible anymore (now type stable)
+# https://stackoverflow.com/a/75462444
 h_sig_genes_per_species_and_HOG <- h_sig_genes_per_species_and_HOG  %>%
                                        na_if(0)
 #
@@ -743,7 +789,8 @@ all_HOG_tibble <- all_HOG_tibble %>% rename_at(vars(-HOG), ~ paste0(., '_total')
 all_HOG_tibble <- full_join(all_HOG_tibble, h_sig_genes_per_species_and_HOG, by = c("HOG"))
     
 #substitute remaining NAs for 0s
-all_HOG_tibble <- all_HOG_tibble %>% mutate_all(~replace(., is.na(.), 0))
+all_HOG_tibble <- all_HOG_tibble %>% 
+  mutate_all(~replace(., is.na(.), 0))
 
 #make it a list
 all_species_overview <- list(all_HOG_tibble)

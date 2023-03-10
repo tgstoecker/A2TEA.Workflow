@@ -3,10 +3,10 @@ channels:
   - bioconda
   - r
 dependencies:
-  - r-base>=4.1.0
-  - bioconductor-genomeinfodbdata==1.2.6
-  - bioconductor-go.db==3.13.0
-  - bioconductor-genetonic
+#  - r-base>=4.1.0
+#  - bioconductor-genomeinfodbdata==1.2.6
+#  - bioconductor-go.db==3.13.0
+  - bioconductor-genetonic==2.2
   - bioconductor-topgo
   - bioconductor-deseq2
   - r-dplyr

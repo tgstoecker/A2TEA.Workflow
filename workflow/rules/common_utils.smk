@@ -52,10 +52,14 @@ def get_PE_fastqs(wildcards):
 
 
 def is_genomic_fasta_present(w):
-    """Determine whether species is to be analysed with genomic or transcriptomic read workflow"""
     """If genomic fasta is given in species table, genomic workflow is chosen"""
-    genomic_fasta_present = pd.isnull(species_table.loc[(w), "cDNA_fasta"])
+    genomic_fasta_present = pd.notnull(species_table.loc[(w), "gen_fasta"])
     return genomic_fasta_present
+
+def is_transcriptomic_fasta_present(w):
+    """If transcriptomic fasta is given in species table, genomic workflow is chosen"""
+    transcriptomic_fasta_present = pd.notnull(species_table.loc[(w), "cDNA_fasta"])
+    return transcriptomic_fasta_present
 
 
 def all_species_with_genomic_fasta(sp):
@@ -65,19 +69,18 @@ def all_species_with_genomic_fasta(sp):
             gen_fasta_species.append(i)
     return gen_fasta_species
 
-
 def all_species_with_cDNA_fasta(sp):
     cDNA_fasta_species = []
     for i in sp:
-        if is_genomic_fasta_present(i) == False:
+        if is_transcriptomic_fasta_present(i) == True:
             cDNA_fasta_species.append(i)
     return cDNA_fasta_species
 
 
 GEN_FASTA_SPECIES = all_species_with_genomic_fasta(SPECIES)
 CDNA_FASTA_SPECIES = all_species_with_cDNA_fasta(SPECIES)
-ALL_SPECIES = GEN_FASTA_SPECIES + CDNA_FASTA_SPECIES
-
+#ALL_SPECIES = GEN_FASTA_SPECIES + CDNA_FASTA_SPECIES
+RNA_SPECIES = GEN_FASTA_SPECIES + CDNA_FASTA_SPECIES
 
 #create subsets of samples depending on which input is given
 CDNA_FASTA_SAMPLES = samples[samples['species'].isin(CDNA_FASTA_SPECIES)]

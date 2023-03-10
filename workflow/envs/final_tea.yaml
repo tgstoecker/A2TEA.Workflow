@@ -9,7 +9,7 @@ dependencies:
   - r-stringr
   - r-stringi
   - r-ape ==5.5
-  - r-dplyr >=1.0
+  - r-dplyr ==1.0.10
   - r-plyr
   - r-tidyr
   - r-tibble

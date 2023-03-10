@@ -92,5 +92,5 @@ include: "rules/final_tea.smk"
 rule all:
     input:
         "multiqc/multiqc_report.html",
-        expand("GeneTonic/{species}/GeneTonic_{species}_{ontology}.rds", species=SPECIES, ontology=ONTOLOGIES),
+        expand("GeneTonic/{species}/GeneTonic_{species}_{ontology}.rds", species=RNA_SPECIES, ontology=ONTOLOGIES),
         "tea/A2TEA_finished.RData",
