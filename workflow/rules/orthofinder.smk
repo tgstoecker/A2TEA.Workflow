@@ -235,7 +235,6 @@ rule Orthofinder_Trees:
         orthofinder_dir = ORTHOFINDER + "Results_*",
         tree_program = "fasttree",
         msa_program = "mafft",
-#        mafft as alternative?
     log:
         "logs/orthofinder/trees.log"
     benchmark:

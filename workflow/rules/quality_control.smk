@@ -75,7 +75,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             log:
                 "logs/multiqc/multiqc.log"
             shell:
-                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} {params.star} {params.featureCounts} -o multiqc/"
+                "multiqc --verbose {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} {params.star} {params.featureCounts} -o multiqc/"
 
 
 if len(GEN_FASTA_SPECIES) != 0:
@@ -104,7 +104,7 @@ if len(GEN_FASTA_SPECIES) != 0:
             log:
                 "logs/multiqc/multiqc.log"
             shell:
-                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.star} {params.featureCounts} -o multiqc/"
+                "multiqc --verbose {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.star} {params.featureCounts} -o multiqc/"
 
 
 if len(GEN_FASTA_SPECIES) == 0:
@@ -131,7 +131,7 @@ if len(GEN_FASTA_SPECIES) == 0:
             log:
                 "logs/multiqc/multiqc.log"
             shell:
-                "multiqc {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
+                "multiqc --verbose {params.plot} -d fastqc/raw/ fastqc/trimmed/ {params.trimmomatic} {params.kallisto} -o multiqc/"
 
 
 

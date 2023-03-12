@@ -2,6 +2,7 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+  - python ==3.10
   - orthofinder =2.5.4
   - muscle =5.1
   - mafft =7.490

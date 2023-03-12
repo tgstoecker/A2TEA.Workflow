@@ -1,6 +1,6 @@
 rule final_tea_output:
     input:
-        expand("R/deseq2/dea_final/dea_{species}", species=SPECIES),
+        expand("R/deseq2/dea_final/dea_{species}", species=RNA_SPECIES),
         expand("checks/expansion/{hypothesis}_finished_add_OG_analysis.txt", hypothesis=HYPOTHESES),
         expand(rules.cafe5_complete_set.output, hypothesis=HYPOTHESES),
         SFA = "results/functional_annotation/species_functional_annotation.rds",
