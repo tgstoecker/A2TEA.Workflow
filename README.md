@@ -14,8 +14,10 @@ A2TEA is a tool facilitating exploration of genetic diversity and uncovering evo
 This workflow combines RNA-seq analyses (differential gene expression) with evolutionary analyses -> gene family expansion events.
 We use Orthofinder2 to infer gene duplication events and integrate these with significant physiological reaction patterns in the compared species.
 
-At the moment for each species A2TEA requires as input RNA-Seq reads (both PE/SE possible) suitable for a differential expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta.  
-Functional information per species can be provided by the user or can be optionally inferred by our tool [AHRD](https://github.com/groupschoof/AHRD) during the workflow.
+The newest releases of the workflow and WebApp now allow for final results without the need for transcriptomic data for *all* species during the workflow steps.  
+Nevertheless, if possible the workflow should be run with input RNA-Seq reads (both PE/SE possible) suitable for a differential expression experiments (control vs. treatment), either a genomic or transcriptomic fasta file + annotation (.gtf) as well as a peptide fasta per species.  
+This way, valuable phylogenetic information from species without available expression information for the conditions under investigation can be included.  
+Functional information per species can be provided by the user or can be optionally inferred by our tool [AHRD](https://github.com/groupschoof/AHRD) during the workflow.  
 
 You can use the the A2TEA_finished.RData output in your own R terminal/Rstudio or use our **[A2TEA.WebApp](https://github.com/tgstoecker/A2TEA.WebApp)** which was specifically designed to allow for interactive inspection, visualization, filtering & export of the results and subsets. We feature a tutorial for its usage and details on how to work with the results of a A2TEA.Workflow analysis run.
 
@@ -116,7 +118,7 @@ By running the the script `get_test_data.sh` all of these input files are automa
   FASTQ files -> rawreads/  
   The config/samples.tsv that you need to adapt to your data/experiments expects the files to be located here.
 
-2) Add or symlink all fasta & annotation files to a directory of your choosing - or jut take note where this data is located on your file system.
+2) Add or symlink all fasta & annotation files to a directory of your choosing - or just take note where this data is located on your file system.
    The species.tsv file (explained in detail in 3.)) allows A2TEA to find these files.
    E.g. if you create a directory called 'FS/' in the main A2TEA directory and copy/symlink all fasta/annotation files there, then you have to refer to them as e.g. FS/fasta.fa in the species.tsv file.
 
@@ -124,6 +126,7 @@ By running the the script `get_test_data.sh` all of these input files are automa
 3) Modify species.tsv, samples.tsv & hypotheses.tsv files  
 species.tsv:  
 - provide species name, species ploidy, a peptide fasta, an annotation file (.gff;.gff3;.gtf) as well as either a genomic or cDNA fasta (alignment or pseudoalignment), respectively
+- if you don't possess transcriptomic data for a species simply leave the genomic, cDNA fasta and annotation positions empty
 - files can be gzipped, or functioning URLs
 - under 'function' choose for each species either "AHRD" or provide a tab seperated file with functional annotation information
 	- a validity check of user supplied function annotation tables is performed
