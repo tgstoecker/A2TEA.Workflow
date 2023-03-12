@@ -1,6 +1,6 @@
 FROM condaforge/mambaforge:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="21649585c3b64284a2cb1afeec59e94c594c9e0981efcdb40cc84bdb49e716ca"
+LABEL io.github.snakemake.conda_env_hash="ad40e71b7f00dc1985a36a3b8e0a29fa4a3b3cc8522abe7ebe48b068ae2ba056"
 
 RUN mamba install -c anaconda -c bioconda numpy python-newick --yes
 
@@ -130,7 +130,7 @@ COPY workflow/envs/fastqc.yaml /conda-envs/08d4368302a4bdf7eda6b536495efe7d/envi
 
 # Conda environment:
 #   source: workflow/envs/final_tea.yaml
-#   prefix: /conda-envs/a71318534f09b3d75a3f0a8ce84943e9
+#   prefix: /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b
 #   channels:
 #     - conda-forge
 #     - r
@@ -142,7 +142,7 @@ COPY workflow/envs/fastqc.yaml /conda-envs/08d4368302a4bdf7eda6b536495efe7d/envi
 #     - r-stringr
 #     - r-stringi
 #     - r-ape ==5.5
-#     - r-dplyr >=1.0
+#     - r-dplyr ==1.0.10
 #     - r-plyr
 #     - r-tidyr
 #     - r-tibble
@@ -168,8 +168,8 @@ COPY workflow/envs/fastqc.yaml /conda-envs/08d4368302a4bdf7eda6b536495efe7d/envi
 #   #==1.1.1
 #   #  - r-ggplotify 
 #   #==0.0.7
-RUN mkdir -p /conda-envs/a71318534f09b3d75a3f0a8ce84943e9
-COPY workflow/envs/final_tea.yaml /conda-envs/a71318534f09b3d75a3f0a8ce84943e9/environment.yaml
+RUN mkdir -p /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b
+COPY workflow/envs/final_tea.yaml /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/func_annotation.yaml
@@ -193,24 +193,24 @@ COPY workflow/envs/func_annotation.yaml /conda-envs/1f9823bb4ea54784adba0c077308
 
 # Conda environment:
 #   source: workflow/envs/genetonic.yaml
-#   prefix: /conda-envs/e34a338fd8994f90dad7023c1c0c79c0
+#   prefix: /conda-envs/bdff40fb0e3851052f5c011c708696e6
 #   channels:
 #     - conda-forge
 #     - bioconda
 #     - r
 #   dependencies:
-#     - r-base>=4.1.0
-#     - bioconductor-genomeinfodbdata==1.2.6
-#     - bioconductor-go.db==3.13.0
-#     - bioconductor-genetonic
+#   #  - r-base>=4.1.0
+#   #  - bioconductor-genomeinfodbdata==1.2.6
+#   #  - bioconductor-go.db==3.13.0
+#     - bioconductor-genetonic==2.2
 #     - bioconductor-topgo
 #     - bioconductor-deseq2
 #     - r-dplyr
 #     - r-tidyr
 #     - r-stringr
 #     - r-stringi
-RUN mkdir -p /conda-envs/e34a338fd8994f90dad7023c1c0c79c0
-COPY workflow/envs/genetonic.yaml /conda-envs/e34a338fd8994f90dad7023c1c0c79c0/environment.yaml
+RUN mkdir -p /conda-envs/bdff40fb0e3851052f5c011c708696e6
+COPY workflow/envs/genetonic.yaml /conda-envs/bdff40fb0e3851052f5c011c708696e6/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/gffread.yaml
@@ -267,29 +267,29 @@ COPY workflow/envs/longest_isoforms.yaml /conda-envs/7514380e99d2eb02c197b4e2521
 
 # Conda environment:
 #   source: workflow/envs/multiqc.yaml
-#   prefix: /conda-envs/4b6368e5b5776f48ad511fbf8ac895a1
+#   prefix: /conda-envs/80d75427ea1f8e6cede9c5f260e8fc1e
 #   channels:
-#     - bioconda
 #     - conda-forge
-#     - defaults
+#     - bioconda
 #   dependencies:
-#     - multiqc ==1.11
-RUN mkdir -p /conda-envs/4b6368e5b5776f48ad511fbf8ac895a1
-COPY workflow/envs/multiqc.yaml /conda-envs/4b6368e5b5776f48ad511fbf8ac895a1/environment.yaml
+#     - multiqc ==1.13
+RUN mkdir -p /conda-envs/80d75427ea1f8e6cede9c5f260e8fc1e
+COPY workflow/envs/multiqc.yaml /conda-envs/80d75427ea1f8e6cede9c5f260e8fc1e/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/orthofinder.yaml
-#   prefix: /conda-envs/50785e6402c8e5961b0a8d05aee26e92
+#   prefix: /conda-envs/f3a5d3d9a9b0e83518f7e8ea5c907726
 #   channels:
 #     - bioconda
 #     - conda-forge
 #   dependencies:
+#     - python ==3.10
 #     - orthofinder =2.5.4
 #     - muscle =5.1
 #     - mafft =7.490
 #     - fasttree =2.1.11
-RUN mkdir -p /conda-envs/50785e6402c8e5961b0a8d05aee26e92
-COPY workflow/envs/orthofinder.yaml /conda-envs/50785e6402c8e5961b0a8d05aee26e92/environment.yaml
+RUN mkdir -p /conda-envs/f3a5d3d9a9b0e83518f7e8ea5c907726
+COPY workflow/envs/orthofinder.yaml /conda-envs/f3a5d3d9a9b0e83518f7e8ea5c907726/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/samtools.yaml
@@ -344,19 +344,20 @@ RUN mamba env create --prefix /conda-envs/3ad9877d8ed81c644892fb2075504468 --fil
     mamba env create --prefix /conda-envs/4dfa9f2a63759e03fdd1f98ad42cff79 --file /conda-envs/4dfa9f2a63759e03fdd1f98ad42cff79/environment.yaml && \
     mamba env create --prefix /conda-envs/f077ee9ed9ca292e10af2b6ba2a97a35 --file /conda-envs/f077ee9ed9ca292e10af2b6ba2a97a35/environment.yaml && \
     mamba env create --prefix /conda-envs/08d4368302a4bdf7eda6b536495efe7d --file /conda-envs/08d4368302a4bdf7eda6b536495efe7d/environment.yaml && \
-    mamba env create --prefix /conda-envs/a71318534f09b3d75a3f0a8ce84943e9 --file /conda-envs/a71318534f09b3d75a3f0a8ce84943e9/environment.yaml && \
+    mamba env create --prefix /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b --file /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b/environment.yaml && \
     mamba env create --prefix /conda-envs/1f9823bb4ea54784adba0c0773084167 --file /conda-envs/1f9823bb4ea54784adba0c0773084167/environment.yaml && \
-    mamba env create --prefix /conda-envs/e34a338fd8994f90dad7023c1c0c79c0 --file /conda-envs/e34a338fd8994f90dad7023c1c0c79c0/environment.yaml && \
+    mamba env create --prefix /conda-envs/bdff40fb0e3851052f5c011c708696e6 --file /conda-envs/bdff40fb0e3851052f5c011c708696e6/environment.yaml && \
     mamba env create --prefix /conda-envs/513cb7fbdf7a03430541b6b159b4883c --file /conda-envs/513cb7fbdf7a03430541b6b159b4883c/environment.yaml && \
     mamba env create --prefix /conda-envs/3c31eb44b46b6379c1567d42e31fdb5a --file /conda-envs/3c31eb44b46b6379c1567d42e31fdb5a/environment.yaml && \
     mamba env create --prefix /conda-envs/2687ce120ad54e66f96628e8052b5229 --file /conda-envs/2687ce120ad54e66f96628e8052b5229/environment.yaml && \
     mamba env create --prefix /conda-envs/7514380e99d2eb02c197b4e252198117 --file /conda-envs/7514380e99d2eb02c197b4e252198117/environment.yaml && \
-    mamba env create --prefix /conda-envs/4b6368e5b5776f48ad511fbf8ac895a1 --file /conda-envs/4b6368e5b5776f48ad511fbf8ac895a1/environment.yaml && \
-    mamba env create --prefix /conda-envs/50785e6402c8e5961b0a8d05aee26e92 --file /conda-envs/50785e6402c8e5961b0a8d05aee26e92/environment.yaml && \
+    mamba env create --prefix /conda-envs/80d75427ea1f8e6cede9c5f260e8fc1e --file /conda-envs/80d75427ea1f8e6cede9c5f260e8fc1e/environment.yaml && \
+    mamba env create --prefix /conda-envs/f3a5d3d9a9b0e83518f7e8ea5c907726 --file /conda-envs/f3a5d3d9a9b0e83518f7e8ea5c907726/environment.yaml && \
     mamba env create --prefix /conda-envs/d88dfc5ec33fa1063ba19945425fc600 --file /conda-envs/d88dfc5ec33fa1063ba19945425fc600/environment.yaml && \
     mamba env create --prefix /conda-envs/c7b04a2f0842ab902ff601e084929aef --file /conda-envs/c7b04a2f0842ab902ff601e084929aef/environment.yaml && \
     mamba env create --prefix /conda-envs/1bc593050c78940738bc64ed099dc3be --file /conda-envs/1bc593050c78940738bc64ed099dc3be/environment.yaml && \
-    mamba env create --prefix /conda-envs/74871c16a29b0fef6bdb5c883e400542 --file /conda-envs/74871c16a29b0fef6bdb5c883e400542/environment.yaml
+    mamba env create --prefix /conda-envs/74871c16a29b0fef6bdb5c883e400542 --file /conda-envs/74871c16a29b0fef6bdb5c883e400542/environment.yaml && \
+    mamba clean --all -y
 
 #Step 3: install stringi for R environments via R
 #currently only way to install libraries correctly...
@@ -367,7 +368,7 @@ R -e "install.packages('stringi', repos = 'http://cran.us.r-project.org'); if (!
 conda deactivate
 
 #final_tea.yaml
-RUN conda init && . ~/.bashrc && conda activate /conda-envs/a71318534f09b3d75a3f0a8ce84943e9 && \
+RUN conda init && . ~/.bashrc && conda activate /conda-envs/a5a1fbfe0b7a52815d65a25b7eeb527b && \
 R -e "install.packages('stringi', repos = 'http://cran.us.r-project.org'); if (!library(stringi, logical.return=T)) quit(status=10)" && \
 conda deactivate
 
@@ -377,7 +378,7 @@ R -e "install.packages('stringi', repos = 'http://cran.us.r-project.org'); if (!
 conda deactivate
 
 ##genetonic.yaml
-RUN conda init && . ~/.bashrc && conda activate /conda-envs/e34a338fd8994f90dad7023c1c0c79c0 && \
+RUN conda init && . ~/.bashrc && conda activate /conda-envs/bdff40fb0e3851052f5c011c708696e6 && \
 R -e "install.packages('stringi', repos = 'http://cran.us.r-project.org'); if (!library(stringi, logical.return=T)) quit(status=10)" && \
 conda deactivate
 
@@ -388,4 +389,3 @@ conda deactivate
 
 #Step 4: cleanup
 RUN mamba clean --all -y
-
