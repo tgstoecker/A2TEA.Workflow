@@ -152,9 +152,29 @@ HOG_file_long <- HOG_file_merged %>%
 
 
 ## Adding specific HOG or singleton info as HOG column to DE tables
-HOG_DE.a2tea <- full_join(combined_AllSpeciesDEResultsDataFrames, HOG_file_long, 
-              by = c("gene")) %>% 
-                replace_na(list(HOG = "singleton"))
+
+#in case of species without expression data, we add gene-species info via the SFA tables first
+if(length(species_list) != length(SFA)) {
+
+  #restrict to those with expression data
+  species_gene_tb <- tibble()
+
+  for(i in 1:length(SFA)) { 
+    species_gene_part <- SFA[[i]]["Protein-Accession"] %>% 
+      dplyr::rename(gene = `Protein-Accession`) %>%
+      mutate(species=names(SFA[i]))
+
+    species_gene_tb <- dplyr::bind_rows(species_gene_tb, species_gene_part)
+  }
+
+  #restrict to species without expression data
+  species_gene_tb <- species_gene_tb %>% filter(!species %in% species_list)
+
+  combined_AllSpeciesDEResultsDataFrames <- bind_rows(combined_AllSpeciesDEResultsDataFrames, species_gene_tb)
+}
+
+HOG_DE.a2tea <- full_join(combined_AllSpeciesDEResultsDataFrames, HOG_file_long, by = c("gene")) %>% 
+                  replace_na(list(HOG = "singleton"))
 
 
 #add column for significance - level is set by user in config.yaml ["DEG_FDR"]
@@ -763,8 +783,21 @@ if (length(sig_diff_species_check) > 0) {
 }
 
 #for final output: remove all rows with NA in species column in HOG
-HOG_DE.a2tea <- HOG_DE.a2tea %>%
-  filter(!is.na(species))
+#HOG_DE.a2tea <- HOG_DE.a2tea %>%
+#  filter(!is.na(species))
+
+#species_gene_tb <- tibble()
+
+#for(i in 1:length(SFA)) { 
+#  species_gene_part <- SFA[[i]]["Protein-Accession"] %>% 
+#    dplyr::rename(gene = `Protein-Accession`) %>%
+#    mutate(species=names(SFA[i]))
+
+#  species_gene_tb <- dplyr::bind_rows(species_gene_tb, species_gene_part)
+#}
+
+
+
 
 #restrict to those with expression data
 all_rna_species <- intersect(all_species, species_list)
@@ -813,6 +846,8 @@ save(hypotheses,
      HYPOTHESES.a2tea, 
      A2TEA.fa.seqs,
      HOG_DE.a2tea, 
+     HOG_file_long,
+     combined_AllSpeciesDEResultsDataFrames,
      HOG_level_list,
      SFA,
      all_speciesTree,
