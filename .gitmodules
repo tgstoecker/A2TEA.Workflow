@@ -1,3 +1,4 @@
 [submodule "AHRD_Snakemake"]
 	path = workflow/rules/AHRD_Snakemake
 	url = https://github.com/groupschoof/AHRD_Snakemake
+	branch = main
