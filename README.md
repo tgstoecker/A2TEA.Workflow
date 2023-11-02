@@ -9,6 +9,9 @@
 
 **A**utomated **A**ssessment of **T**rait-specific **E**volutionary **A**daptations
 
+## **02.11.2023: The A2TEA.Workflow is is no longer maintained in this repository - all future development will happen in [https://github.com/groupschoof/A2TEA.Workflow](https://github.com/groupschoof/A2TEA.Workflow)**
+
+
 A2TEA is a tool facilitating exploration of genetic diversity and uncovering evolutionary adaptation to stresses by exploiting genome comparisons and existing RNA-Seq data. In order to identify candidate genes, gene family expansion events - as an important driver of adaptation - are integrated with differential gene expression to link genes to functions.
 
 This workflow combines RNA-seq analyses (differential gene expression) with evolutionary analyses -> gene family expansion events.
